@@ -1,0 +1,21 @@
+-- 12_csmap.sql (v1)
+-- R-026(b): what Oracle maps bytes 0..255 of US7ASCII, WE8MSWIN1252 and CL8MSWIN1251 to (truth only, no dump).
+-- Errors here do not stop make_types.sh. Writes /fixtures/truth_csmap.txt (768 lines expected).
+SET ECHO OFF
+SET TERMOUT OFF
+SET FEEDBACK OFF
+SET HEADING OFF
+SET PAGESIZE 0
+SET LINESIZE 32767
+SET TRIMSPOOL ON
+SET VERIFY OFF
+SET DEFINE OFF
+WHENEVER SQLERROR EXIT FAILURE ROLLBACK
+SPOOL /fixtures/truth_csmap.txt
+SELECT cs || '|' || TO_CHAR(n, 'FM0X') || '|' || DUMP(UTL_I18N.RAW_TO_NCHAR(HEXTORAW(TO_CHAR(n, 'FM0X')), cs), 16)
+  FROM (SELECT LEVEL - 1 AS n FROM dual CONNECT BY LEVEL <= 256),
+       (SELECT 'US7ASCII' AS cs FROM dual UNION ALL SELECT 'WE8MSWIN1252' FROM dual
+        UNION ALL SELECT 'CL8MSWIN1251' FROM dual)
+ ORDER BY cs, n;
+SPOOL OFF
+EXIT

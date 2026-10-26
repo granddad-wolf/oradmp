@@ -1,0 +1,96 @@
+== header
+header path marker        : none (conventional path)
+exp version line          : EXPORT:V11.02.00
+exporting user line       : UCORPUS_RU
+export mode line          : RTABLES
+RECORDLENGTH              : 2048
+three text numbers        : 0, 72, 0  (18c / 11g fixtures: 0, 72, 0)
+client charset, byte 1-2  : 171 (CL8MSWIN1251 (id assumed))
+ids after the text lines  : client 171 (CL8MSWIN1251 (id assumed)) | database? 171 (CL8MSWIN1251 (id assumed)) | national? 2000 (AL16UTF16)
+date text in record 1     : (not found)
+last non-zero byte of record 1 at offset 0xa7
+file size                 : 180224 bytes = 88 records of 2048 (mod = 0)
+export mode line: 'RTABLES' (RTABLES = table mode, RUSERS = owner mode)
+
+== second record (starts at 2048 = 0x800)
+METRICST line at R + 0x104  (fixtures: R + 0x104; METRICST = table mode, METRICSU = owner mode)
+block 1 ids (+0x3c, +0x3e): 171 (CL8MSWIN1251 (id assumed)) | 2000 (AL16UTF16)    (fixtures: database set | national set)
+block 2 ids (+0x3c, +0x3e): 171 (CL8MSWIN1251 (id assumed)) | 171 (CL8MSWIN1251 (id assumed))    (fixtures: both = client set)
+string list (8 strings, consumed exactly): '+00:00' | '' | 'BYTE' | 'UNUSED' | '2' | 'INTERPRETED' | 'DISABLE:ALL' | ''
+
+== end of data
+second EXIT line ends at 0x2bfc3; bytes after it: 61, non-zero: 0
+
+== tables (2)
+
+R_STAT: conventional path, 7 columns, 2000 rows, table section at 0x90d, rows 0xb15-0x18ba9 (98452 bytes)
+  #   column                     type / charset            decl  nulls    min     mean    max >decl  bad
+  1   ID                         NUMBER                      22      0      2      2.9      3     0    0
+  2   GRP                        NUMBER                      22      0      2      2.0      2     0    0
+  3   TXT                        VARCHAR2/NVARCHAR2 171,1    40    117      3      5.5      8     0    0
+  4   CODE                       CHAR 171,1                   6      0      6      6.0      6     0    0
+  5   DT                         DATE                         7      0      7      7.0      7     0    0
+  6   AMT                        NUMBER                      22    181      1      3.2      4     0    0
+  7   NOTE                       VARCHAR2/NVARCHAR2 171,1   100    285      6      8.4      9     0    0
+  text column TXT                 : values with bytes >= 0x80: 1883, of them not valid UTF-8: 1883, bytes 0xC0-0xFF inside them: 10350 of 10350 high bytes; "?" bytes in all values: 0; NOT decodable as cp1251: 0
+
+R_TEXT: conventional path, 7 columns, 309 rows, table section at 0x19fd6, rows 0x1a1d9-0x2ad7b (68514 bytes)
+  #   column                     type / charset            decl  nulls    min     mean    max >decl  bad
+  1   ID                         NUMBER                      22      0      2      2.7      3     0    0
+  2   V                          VARCHAR2/NVARCHAR2 171,1   200     44      1     74.9    200     0    0
+  3   C                          CHAR 171,1                  12      1     12     12.0     12     0    0
+  4   VC                         VARCHAR2/NVARCHAR2 171,1    20      1      1     10.5     20     0    0
+  5   N                          VARCHAR2/NVARCHAR2 2000,    80     29      2     40.6     80     0    0
+  6   LV                         VARCHAR2/NVARCHAR2 171,1  4000    278      2    723.9   3000     0    0
+  7   D                          DATE                         7      1      7      7.0      7     0    0
+  text column V                   : values with bytes >= 0x80: 263, of them not valid UTF-8: 263, bytes 0xC0-0xFF inside them: 19807 of 19822 high bytes; "?" bytes in all values: 1; NOT decodable as cp1251: 0
+  text column C                   : values with bytes >= 0x80: 306, of them not valid UTF-8: 306, bytes 0xC0-0xFF inside them: 3642 of 3650 high bytes; "?" bytes in all values: 1; NOT decodable as cp1251: 0
+  text column VC                  : values with bytes >= 0x80: 306, of them not valid UTF-8: 306, bytes 0xC0-0xFF inside them: 3216 of 3223 high bytes; "?" bytes in all values: 1; NOT decodable as cp1251: 0
+  text column LV                  : values with bytes >= 0x80: 29, of them not valid UTF-8: 29, bytes 0xC0-0xFF inside them: 22426 of 22433 high bytes; "?" bytes in all values: 1; NOT decodable as cp1251: 0
+
+== character data, all single-byte-set text columns together
+values with bytes >= 0x80: 2787; of them not valid UTF-8: 2787
+reading: 100.0% of the non-ASCII values are NOT valid UTF-8: the text is in a single-byte set
+
+== statement items (counts only)
+      16  ANALSTATS TS
+      16  ANALSTATS TS  -> field
+      13  METRICET
+      13  METRICST
+       5  TABLE
+       4  ANALSTATS IS
+       4  ANALSTATS IS  -> field
+       3  CREATE INDEX
+       2  ALTER TABLE
+       2  ANALCOMPUTE TS
+       2  CREATE TABLE
+       2  ENDTABLE
+       2  EXIT
+       2  INSERT INTO
+       1  CALTER TABLE
+       1  CALTER TABLE  -> field
+       1  COMMENT ON COLUMN
+       1  COMMENT ON COLUMN  -> field
+       1  COMMENT ON TABLE
+       1  COMMENT ON TABLE  -> field
+       1  CREATE UNIQUE INDEX
+plain fields: 8, fields in pieces (fd ff): 15, longest field: 1189 bytes
+rule G / rule K: 0 item(s) where they differ (a G-only item is a field that no line of the K list introduces: a candidate for a missing line), 0 G candidates rejected as text lines, 0 fields in pieces without the fd ff marker
+
+== fields by the kind of the line before them (counts and lengths only)
+  line before                     fields      bytes    min      max  pieces  with>=80 bytes>=80 "?" bytes
+  ANALSTATS TS                        16       6576     84     1189      14         0         0        0
+  ANALSTATS IS                         4        396     95      103       0         0         0        0
+  CALTER TABLE                         1         97     97       97       1         1         3        0
+  COMMENT ON COLUMN                    1         19     19       19       0         1        14        0
+  COMMENT ON TABLE                     1          8      8        8       0         1         6        0
+  ("with>=80" = fields holding a byte >= 0x80; "bytes>=80" = how many such bytes; "?" bytes = count of 0x3f.
+   In a comment field of a US7ASCII-client dump, bytes>=80 = 0 and many "?" mean the text was lost.)
+
+== comparison with the export log (2 tables in the log)
+  OK   R_STAT: log 2000 rows, file 2000 rows
+  OK   R_TEXT: log 309 rows, file 309 rows
+
+== problems (0)
+
+RESULT: WHOLE FILE WALKED, NO PROBLEMS

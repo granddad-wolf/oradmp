@@ -1,0 +1,46 @@
+
+Connected to: Oracle Database 18c Express Edition Release 18.0.0.0.0 - Production
+Version 18.4.0.0.0
+Export done in AL32UTF8 character set and AL16UTF16 NCHAR character set
+. exporting pre-schema procedural objects and actions
+EXP-00008: ORACLE error 6550 encountered
+ORA-06550: line 1, column 14:
+PLS-00201: identifier 'SYS.DBMS_CUBE_EXP' must be declared
+ORA-06550: line 1, column 7:
+PL/SQL: Statement ignored
+EXP-00083: The previous problem occurred when calling SYS.DBMS_CUBE_EXP.schema_info_exp
+. exporting foreign function library names for user CORPUS_OWN 
+. exporting PUBLIC type synonyms
+. exporting private type synonyms
+. exporting object type definitions for user CORPUS_OWN 
+About to export CORPUS_OWN's objects ...
+. exporting database links
+. exporting sequence numbers
+. exporting cluster definitions
+. about to export CORPUS_OWN's tables via Conventional Path ...
+. . exporting table                        O_CHILD          3 rows exported
+. . exporting table                        O_EMPTY          0 rows exported
+. . exporting table                       O_PARENT          2 rows exported
+. exporting synonyms
+. exporting views
+. exporting stored procedures
+. exporting operators
+. exporting referential integrity constraints
+. exporting triggers
+. exporting indextypes
+. exporting bitmap, functional and extensible indexes
+. exporting posttables actions
+. exporting materialized views
+. exporting snapshot logs
+. exporting job queues
+. exporting refresh groups and children
+. exporting dimensions
+. exporting post-schema procedural objects and actions
+EXP-00008: ORACLE error 6550 encountered
+ORA-06550: line 1, column 14:
+PLS-00201: identifier 'SYS.DBMS_CUBE_EXP' must be declared
+ORA-06550: line 1, column 7:
+PL/SQL: Statement ignored
+EXP-00083: The previous problem occurred when calling SYS.DBMS_CUBE_EXP.schema_info_exp
+. exporting statistics
+Export terminated successfully with warnings.

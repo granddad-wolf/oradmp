@@ -1,0 +1,3 @@
+R_LOB2|1|66|66|66|Typ=1 Len=4: c0,c1,c2,c3|Typ=1 Len=8: 4,10,4,11,4,12,4,13|Typ=1 Len=4: fe,ff,a8,b8|Typ=1 Len=8: 4,4e,4,4f,4,1,4,51
+R_LOB2|2|20000|20000|20000|Typ=1 Len=4: c0,c1,c2,c3|Typ=1 Len=8: 4,10,4,11,4,12,4,13|Typ=1 Len=4: a8,b8,c0,c1|Typ=1 Len=8: 4,1,4,51,4,10,4,11
+R_LOB2|3|NULL|NULL|NULL|NULL|NULL|NULL|NULL

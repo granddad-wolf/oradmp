@@ -1,0 +1,8 @@
+
+Connected to: Oracle Database 18c Express Edition Release 18.0.0.0.0 - Production
+Version 18.4.0.0.0
+Export done in AL32UTF8 character set and AL16UTF16 NCHAR character set
+
+About to export specified tables via Conventional Path ...
+. . exporting table                          T_BN4         32 rows exported
+Export terminated successfully without warnings.

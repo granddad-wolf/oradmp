@@ -1,0 +1,43 @@
+SQL> SELECT banner FROM v$version WHERE ROWNUM = 1;
+
+BANNER                                                                          
+--------------------------------------------------------------------------------
+Oracle Database 11g Express Edition Release 11.2.0.2.0 - 64bit Production       
+
+1 row selected.
+
+SQL> DROP TABLE t_seg0 PURGE;
+
+Table dropped.
+
+SQL> DROP TABLE t_seg1 PURGE;
+
+Table dropped.
+
+SQL> DROP TABLE t_seg2 PURGE;
+DROP TABLE t_seg2 PURGE
+           *
+ERROR at line 1:
+ORA-00942: table or view does not exist 
+
+
+SQL> CREATE TABLE t_seg0 (id NUMBER, name VARCHAR2(20), d DATE) SEGMENT CREATION IMMEDIATE;
+
+Table created.
+
+SQL> CREATE TABLE t_seg2 (id NUMBER, name VARCHAR2(20), d DATE) SEGMENT CREATION DEFERRED;
+CREATE TABLE t_seg2 (id NUMBER, name VARCHAR2(20), d DATE) SEGMENT CREATION DEFERRED
+*
+ERROR at line 1:
+ORA-00439: feature not enabled: Deferred Segment Creation 
+
+
+SQL> SELECT table_name, segment_created FROM user_tables WHERE table_name LIKE 'T_SEG_';
+
+TABLE_NAME                     SEG                                              
+------------------------------ ---                                              
+T_SEG0                         YES                                              
+
+1 row selected.
+
+SQL> SPOOL OFF

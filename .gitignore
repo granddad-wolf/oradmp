@@ -1,0 +1,31 @@
+# Oracle corpus: scratch and large files
+corpus/work/
+corpus/**/schema_*.dmp
+corpus/**/schema_*.log
+corpus/**/truth_rows.txt
+corpus/**/t_rows_*.dmp
+corpus/**/t_big_*
+
+# Real data must never be committed
+real_dumps/
+*.real.dmp
+
+# Python / Rust build output
+target/
+__pycache__/
+.venv/
+*.so
+*.pyd
+
+survey_real*.txt
+survey_v34_real.txt
+
+#fuzz/corpus/
+#fuzz/artifacts/
+#fuzz/target/
+
+CLAUDE.md
+
+uv.lock
+/docs/prompts/
+/.claude/

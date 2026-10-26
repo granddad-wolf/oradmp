@@ -1,0 +1,50 @@
+
+SQL*Loader: Release 11.2.0.2.0 - Production on Sun Oct 25 12:53:15 2026
+
+Copyright (c) 1982, 2009, Oracle and/or its affiliates.  All rights reserved.
+
+Control File:   /work/long4.ctl
+Data File:      /work/long4b.dat
+  Bad File:     /work/long4b.bad
+  Discard File:  none specified
+ 
+ (Allow all discards)
+
+Number to load: ALL
+Number to skip: 0
+Errors allowed: 50
+Bind array:     1 rows, maximum of 1048576 bytes
+Continuation:    none specified
+Path used:      Conventional
+
+Table T_LONG4, loaded from every logical record.
+Insert option in effect for this table: APPEND
+
+   Column Name                  Position   Len  Term Encl Datatype
+------------------------------ ---------- ----- ---- ---- ---------------------
+ID                                  FIRST     *   |       CHARACTER            
+L                                    NEXT *****   |       CHARACTER            
+    Maximum field length is 100000
+V                                    NEXT    10   |       CHARACTER            
+
+
+Table T_LONG4:
+  7 Rows successfully loaded.
+  0 Rows not loaded due to data errors.
+  0 Rows not loaded because all WHEN clauses were failed.
+  0 Rows not loaded because all fields were null.
+
+
+Space allocated for bind array:                 100273 bytes(1 rows)
+Read   buffer bytes: 1048576
+
+Total logical records skipped:          0
+Total logical records read:             7
+Total logical records rejected:         0
+Total logical records discarded:        0
+
+Run began on Sun Oct 25 12:53:15 2026
+Run ended on Sun Oct 25 12:53:15 2026
+
+Elapsed time was:     00:00:00.05
+CPU time was:         00:00:00.01

@@ -1,0 +1,52 @@
+-- 16_tsp.sql (v1, 2026-10-25)
+-- R-047: TIMESTAMP(f) for f = 1 to 5, 7, 8. Run as CORPUS by make_pending.sh (18c and 11g). Decimal DUMP, as the request says.
+-- DO NOT change table names or column definitions.
+
+SET ECHO OFF
+SET TERMOUT OFF
+SET FEEDBACK OFF
+SET HEADING OFF
+SET PAGESIZE 0
+SET LINESIZE 32767
+SET TRIMSPOOL ON
+SET VERIFY OFF
+SET DEFINE OFF
+SET SQLBLANKLINES ON
+SET LONG 100000
+SET SERVEROUTPUT ON SIZE UNLIMITED
+WHENEVER SQLERROR EXIT FAILURE ROLLBACK
+
+BEGIN
+  FOR t IN (SELECT table_name FROM user_tables WHERE table_name = 'T_TSP') LOOP
+    EXECUTE IMMEDIATE 'DROP TABLE "' || t.table_name || '" PURGE';
+  END LOOP;
+END;
+/
+CREATE TABLE t_tsp (id NUMBER(2), t1 TIMESTAMP(1), t2 TIMESTAMP(2), t3 TIMESTAMP(3), t4 TIMESTAMP(4),
+                    t5 TIMESTAMP(5), t7 TIMESTAMP(7), t8 TIMESTAMP(8));
+-- row 1: fraction zero everywhere
+INSERT INTO t_tsp VALUES (1, TIMESTAMP '2020-01-02 03:04:05', TIMESTAMP '2020-01-02 03:04:05',
+  TIMESTAMP '2020-01-02 03:04:05', TIMESTAMP '2020-01-02 03:04:05', TIMESTAMP '2020-01-02 03:04:05',
+  TIMESTAMP '2020-01-02 03:04:05', TIMESTAMP '2020-01-02 03:04:05');
+-- row 2: the largest fraction each precision holds
+INSERT INTO t_tsp VALUES (2, TIMESTAMP '2020-01-02 03:04:05.9', TIMESTAMP '2020-01-02 03:04:05.99',
+  TIMESTAMP '2020-01-02 03:04:05.999', TIMESTAMP '2020-01-02 03:04:05.9999',
+  TIMESTAMP '2020-01-02 03:04:05.99999', TIMESTAMP '2020-01-02 03:04:05.9999999',
+  TIMESTAMP '2020-01-02 03:04:05.99999999');
+-- row 3: one literal with 9 digits in every column (Oracle rounds to the column's precision)
+INSERT INTO t_tsp VALUES (3, TIMESTAMP '2020-01-02 03:04:05.123456789', TIMESTAMP '2020-01-02 03:04:05.123456789',
+  TIMESTAMP '2020-01-02 03:04:05.123456789', TIMESTAMP '2020-01-02 03:04:05.123456789',
+  TIMESTAMP '2020-01-02 03:04:05.123456789', TIMESTAMP '2020-01-02 03:04:05.123456789',
+  TIMESTAMP '2020-01-02 03:04:05.123456789');
+-- row 4: NULL everywhere
+INSERT INTO t_tsp VALUES (4, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+COMMIT;
+SPOOL /fixtures/truth_tsp.txt
+SELECT column_name || '|' || data_type || '|' || data_length || '|' || data_scale
+  FROM user_tab_columns WHERE table_name = 'T_TSP' ORDER BY column_id;
+SELECT id || '|' || DUMP(t1) || '|' || DUMP(t2) || '|' || DUMP(t3) || '|' || DUMP(t4) || '|' || DUMP(t5)
+       || '|' || DUMP(t7) || '|' || DUMP(t8) FROM t_tsp ORDER BY id;
+SELECT id || '|' || TO_CHAR(t1, 'YYYY-MM-DD HH24:MI:SS.FF9') || '|' || TO_CHAR(t3, 'YYYY-MM-DD HH24:MI:SS.FF9')
+       || '|' || TO_CHAR(t8, 'YYYY-MM-DD HH24:MI:SS.FF9') FROM t_tsp ORDER BY id;
+SPOOL OFF
+EXIT

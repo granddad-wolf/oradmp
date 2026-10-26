@@ -1,0 +1,10 @@
+1|tstz=2016-03-26 19:34:55.123456 +05:30 +05:30|Typ=181 Len=13: 78,74,3,1a,f,5,38,7,5b,ca,0,19,5a|tsltz=<NULL>|NULL|session_tz=+00:00
+2|tstz=2016-03-26 19:34:55.123456 +00:00 +00:00|Typ=181 Len=13: 78,74,3,1a,14,23,38,7,5b,ca,0,14,3c|tsltz=<NULL>|NULL|session_tz=+00:00
+3|tstz=2016-03-26 19:34:55.123456 -08:00 -08:00|Typ=181 Len=13: 78,74,3,1b,4,23,38,7,5b,ca,0,c,3c|tsltz=<NULL>|NULL|session_tz=+00:00
+4|tstz=2016-03-26 19:34:55.123456 +03:00 EUROPE/MOSCOW|Typ=181 Len=13: 78,74,3,1a,11,23,38,7,5b,ca,0,86,48|tsltz=<NULL>|NULL|session_tz=+00:00
+5|tstz=2016-03-26 19:34:55.123456 +00:00 UTC|Typ=181 Len=13: 78,74,3,1a,14,23,38,7,5b,ca,0,d0,4|tsltz=<NULL>|NULL|session_tz=+00:00
+6|tstz=2016-07-01 12:00:00.000000 -04:00 AMERICA/NEW_YORK|Typ=181 Len=13: 78,74,7,1,11,1,1,0,0,0,0,81,90|tsltz=<NULL>|NULL|session_tz=+00:00
+7|tstz=<NULL>|NULL|tsltz=<NULL>|NULL|session_tz=+00:00
+101|tstz=<NULL>|NULL|tsltz=2016-03-26 19:34:55.123456|Typ=231 Len=11: 78,74,3,1a,14,23,38,7,5b,ca,0|session_tz=+00:00
+102|tstz=<NULL>|NULL|tsltz=2016-03-26 19:34:55.123456|Typ=231 Len=11: 78,74,3,1a,14,23,38,7,5b,ca,0|session_tz=+00:00
+103|tstz=<NULL>|NULL|tsltz=<NULL>|NULL|session_tz=+00:00

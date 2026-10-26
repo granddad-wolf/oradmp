@@ -1,0 +1,18 @@
+;;; 
+Export: Release 18.0.0.0.0 - Production on Sun Oct 4 22:12:34 2026
+Version 18.4.0.0.0
+
+Copyright (c) 1982, 2018, Oracle and/or its affiliates.  All rights reserved.
+;;; 
+Connected to: Oracle Database 18c Express Edition Release 18.0.0.0.0 - Production
+Starting "CORPUS"."SYS_EXPORT_TABLE_01":  corpus/********@//localhost:1521/XEPDB1 tables=t_date directory=fixtures_dir dumpfile=t_date_dp_18c.dmp logfile=t_date_dp_18c.log reuse_dumpfiles=y 
+Processing object type TABLE_EXPORT/TABLE/TABLE_DATA
+Processing object type TABLE_EXPORT/TABLE/STATISTICS/TABLE_STATISTICS
+Processing object type TABLE_EXPORT/TABLE/STATISTICS/MARKER
+Processing object type TABLE_EXPORT/TABLE/TABLE
+. . exported "CORPUS"."T_DATE"                           5.664 KB      11 rows
+Master table "CORPUS"."SYS_EXPORT_TABLE_01" successfully loaded/unloaded
+******************************************************************************
+Dump file set for CORPUS.SYS_EXPORT_TABLE_01 is:
+  /fixtures/t_date_dp_18c.dmp
+Job "CORPUS"."SYS_EXPORT_TABLE_01" successfully completed at Sun Oct 4 22:12:42 2026 elapsed 0 00:00:07

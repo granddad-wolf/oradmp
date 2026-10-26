@@ -1,0 +1,23 @@
+# cargo-deny configuration (ADR-45 item 5; the [graph] targets block is ADR-49). A dependency under another licence is a note to the Architect,
+# not a new `allow` line; no `exceptions` without a decision record.
+[graph]
+# the targets we build now or in T-16 (ADR-49); a target added to the build is added here first
+targets = [
+    "x86_64-unknown-linux-gnu",
+    "aarch64-unknown-linux-gnu",
+    "x86_64-pc-windows-msvc",
+    "x86_64-apple-darwin",
+    "aarch64-apple-darwin",
+]
+
+[licenses]
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Unicode-3.0",
+    "Zlib",
+]

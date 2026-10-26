@@ -1,0 +1,44 @@
+[package]
+name = "oradmp-fuzz"
+version = "0.0.0"
+edition = "2021"
+publish = false
+description = "cargo-fuzz targets of oradmp-core (T-14); not part of the workspace, not shipped"
+
+[package.metadata]
+cargo-fuzz = true
+
+# Its own workspace: the root workspace and the root Cargo.lock are not touched by the fuzz crate (ADR-62 item 5).
+[workspace]
+
+[dependencies]
+libfuzzer-sys = "0.4"
+oradmp-core = { path = "../crates/oradmp-core" }
+
+# A panic is a finding. Overflow checks and debug assertions stay on in the release profile cargo-fuzz uses, so
+# an arithmetic overflow that the release build of the library would wrap silently is a crash here too.
+[profile.release]
+debug = 1
+debug-assertions = true
+overflow-checks = true
+
+[[bin]]
+name = "walk"
+path = "fuzz_targets/walk.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "read"
+path = "fuzz_targets/read.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "values"
+path = "fuzz_targets/values.rs"
+test = false
+doc = false
+bench = false

@@ -1,0 +1,18 @@
+
+Connected to: Oracle Database 18c Express Edition Release 18.0.0.0.0 - Production
+Version 18.4.0.0.0
+Export done in AL32UTF8 character set and AL16UTF16 NCHAR character set
+
+About to export specified tables via Direct Path ...
+. . exporting table                        T_PART2
+. . exporting composite partition                   P1
+. . exporting subpartition                 SYS_SUBP368         21 rows exported
+. . exporting subpartition                 SYS_SUBP369         29 rows exported
+. . exporting composite partition              P_EMPTY
+. . exporting subpartition                 SYS_SUBP370          0 rows exported
+. . exporting subpartition                 SYS_SUBP371          0 rows exported
+. . exporting composite partition                   P3
+. . exporting subpartition                 SYS_SUBP372         21 rows exported
+. . exporting subpartition                 SYS_SUBP373         29 rows exported
+. . exporting table                        T_FRAME          7 rows exported
+Export terminated successfully without warnings.

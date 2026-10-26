@@ -1,0 +1,124 @@
+== header
+header path marker        : none (conventional path)
+exp version line          : EXPORT:V11.02.00
+exporting user line       : UCORPUS
+export mode line          : RTABLES
+RECORDLENGTH              : 8192
+three text numbers        : 0, 72, 0  (18c / 11g fixtures: 0, 72, 0)
+client charset, byte 1-2  : 1 (US7ASCII)
+ids after the text lines  : client 1 (US7ASCII) | database? 873 (AL32UTF8) | national? 2000 (AL16UTF16)
+date text in record 1     : Wed Oct 7 22:39:48 2026
+last non-zero byte of record 1 at offset 0xa1
+file size                 : 32768 bytes = 4 records of 8192 (mod = 0)
+export mode line: 'RTABLES' (RTABLES = table mode, RUSERS = owner mode)
+
+== second record (starts at 8192 = 0x2000)
+METRICST line at R + 0x104  (fixtures: R + 0x104; METRICST = table mode, METRICSU = owner mode)
+block 1 ids (+0x3c, +0x3e): 873 (AL32UTF8) | 2000 (AL16UTF16)    (fixtures: database set | national set)
+block 2 ids (+0x3c, +0x3e): 1 (US7ASCII) | 1 (US7ASCII)    (fixtures: both = client set)
+string list (8 strings, consumed exactly): '+00:00' | '' | 'BYTE' | 'UNUSED' | '2' | 'INTERPRETED' | 'DISABLE:ALL' | ''
+
+== end of data
+second EXIT line ends at 0x6682; bytes after it: 6526, non-zero: 0
+
+== tables (5)
+
+T_STC1: conventional path, 5 columns, 50 rows, table section at 0x210d, rows 0x22bc-0x27ca (1294 bytes)
+  #   column                     type / charset            decl  nulls    min     mean    max >decl  bad
+  1   ID                         NUMBER                      22      0      2      2.0      2     0    0
+  2   A                          VARCHAR2/NVARCHAR2 873,1    20      0      2      2.0      2     0    0
+  3   B                          VARCHAR2/NVARCHAR2 873,1    20      0      2      2.8      3     0    0
+  4   C                          DATE                         7      0      7      7.0      7     0    0
+  5   ALLNULL                    VARCHAR2/NVARCHAR2 873,1    10     50      -        -      0     0    0
+
+T_STC2: conventional path, 6 columns, 50 rows, table section at 0x2bd2, rows 0x2db2-0x3378 (1478 bytes)
+  #   column                     type / charset            decl  nulls    min     mean    max >decl  bad
+  1   ID                         NUMBER                      22      0      2      2.0      2     0    0
+  2   A                          VARCHAR2/NVARCHAR2 873,1    20      0      2      2.0      2     0    0
+  3   B                          VARCHAR2/NVARCHAR2 873,1    20      0      2      2.8      3     0    0
+  4   C                          DATE                         7      0      7      7.0      7     0    0
+  5   ADDED_LATER                VARCHAR2/NVARCHAR2 873,1    10     50      -        -      0     0    0
+  6   ADDED_NUM                  NUMBER                      22      0      1      1.7      2     0    0
+
+T_STC3: conventional path, 5 columns, 50 rows, table section at 0x3ce6, rows 0x3e95-0x43a3 (1294 bytes)
+  #   column                     type / charset            decl  nulls    min     mean    max >decl  bad
+  1   ID                         NUMBER                      22      0      2      2.0      2     0    0
+  2   A                          VARCHAR2/NVARCHAR2 873,1    20      0      2      2.0      2     0    0
+  3   B                          VARCHAR2/NVARCHAR2 873,1    20      0      2      2.8      3     0    0
+  4   C                          DATE                         7      0      7      7.0      7     0    0
+  5   ALLNULL                    VARCHAR2/NVARCHAR2 873,1    10     50      -        -      0     0    0
+
+T_STC4: conventional path, 5 columns, 50 rows, table section at 0x49f9, rows 0x4ba8-0x50b6 (1294 bytes)
+  #   column                     type / charset            decl  nulls    min     mean    max >decl  bad
+  1   ID                         NUMBER                      22      0      2      2.0      2     0    0
+  2   A                          VARCHAR2/NVARCHAR2 873,1    20      0      2      2.0      2     0    0
+  3   B                          VARCHAR2/NVARCHAR2 873,1    20      0      2      2.8      3     0    0
+  4   C                          DATE                         7      0      7      7.0      7     0    0
+  5   ALLNULL                    VARCHAR2/NVARCHAR2 873,1    10     50      -        -      0     0    0
+
+T_STC5: conventional path, 5 columns, 50 rows, table section at 0x58d3, rows 0x5a82-0x5f90 (1294 bytes)
+  #   column                     type / charset            decl  nulls    min     mean    max >decl  bad
+  1   ID                         NUMBER                      22      0      2      2.0      2     0    0
+  2   A                          VARCHAR2/NVARCHAR2 873,1    20      0      2      2.0      2     0    0
+  3   B                          VARCHAR2/NVARCHAR2 873,1    20      0      2      2.8      3     0    0
+  4   C                          DATE                         7      0      7      7.0      7     0    0
+  5   ALLNULL                    VARCHAR2/NVARCHAR2 873,1    10     50      -        -      0     0    0
+
+== character data, all single-byte-set text columns together
+values with bytes >= 0x80: 0; of them not valid UTF-8: 0
+reading: no non-ASCII text values (or all lost / replaced by "?"; see the "?" counts above)
+
+== statement items (counts only)
+      27  METRICET
+      27  METRICST
+      22  ANALSTATS TR
+      22  ANALSTATS TR  -> field
+      10  TABLE
+       5  ANALCOMPUTE TR
+       5  CREATE TABLE
+       5  INSERT INTO
+       2  EXIT
+       2  GRANT SELECT ON
+       1  COMMENT ON COLUMN
+       1  COMMENT ON COLUMN  -> field
+       1  COMMENT ON TABLE
+       1  COMMENT ON TABLE  -> field
+       1  ENDTABLE
+plain fields: 7, fields in pieces (fd ff): 17, longest field: 393 bytes
+rule G / rule K: 0 item(s) where they differ (a G-only item is a field that no line of the K list introduces: a candidate for a missing line), 0 G candidates rejected as text lines, 0 fields in pieces without the fd ff marker
+
+== fields by the kind of the line before them (counts and lengths only)
+  line before                     fields      bytes    min      max  pieces  with>=80 bytes>=80 "?" bytes
+  ANALSTATS TR                        22       6286     81      393      17         0         0        0
+  COMMENT ON COLUMN                    1         30     30       30       0         0         0        0
+  COMMENT ON TABLE                     1          6      6        6       0         0         0        0
+  ("with>=80" = fields holding a byte >= 0x80; "bytes>=80" = how many such bytes; "?" bytes = count of 0x3f.
+   In a comment field of a US7ASCII-client dump, bytes>=80 = 0 and many "?" mean the text was lost.)
+
+== statistics items (ANALSTATS / ANALCOMPUTE): framing, tables and columns
+  keyword      letters  field    names      items
+  ANALCOMPUTE  TR       line     2              5
+  ANALSTATS    TR       fdff     1             17
+  ANALSTATS    TR       plain    1              5
+  ("names" = quoted names on the line. T-items: plain field = the table, field in pieces = one column.
+   I- and C-items are indexes and constraint indexes; they are not counted per table below)
+
+  per table
+  table          columns  ANALCMP table item column items  columns WITHOUT a column item
+  T_STC1               5        1          1            2  C3 C4 C5
+  T_STC2               6        1          1            6  (none)
+  T_STC3               5        1          1            4  C3
+  T_STC4               5        1          1            5  (none)
+  T_STC5               5        1          1            0  C1 C2 C3 C4 C5
+  not per table: 0 index / constraint-index item(s); 0 item(s) that match no table of this dump
+
+== comparison with the export log (5 tables in the log)
+  OK   T_STC1: log 50 rows, file 50 rows
+  OK   T_STC2: log 50 rows, file 50 rows
+  OK   T_STC3: log 50 rows, file 50 rows
+  OK   T_STC4: log 50 rows, file 50 rows
+  OK   T_STC5: log 50 rows, file 50 rows
+
+== problems (0)
+
+RESULT: WHOLE FILE WALKED, NO PROBLEMS

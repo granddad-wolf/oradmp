@@ -1,0 +1,82 @@
+
+SQL*Loader: Release 11.2.0.2.0 - Production on Sun Oct 25 20:15:43 2026
+
+Copyright (c) 1982, 2009, Oracle and/or its affiliates.  All rights reserved.
+
+Control File:   /work/longraw5.ctl
+Data File:      /work/longraw5b.dat
+  Bad File:     /work/longraw5b.bad
+  Discard File:  none specified
+ 
+ (Allow all discards)
+
+Number to load: ALL
+Number to skip: 0
+Errors allowed: 50
+Bind array:     1 rows, maximum of 1048576 bytes
+Continuation:    none specified
+Path used:      Conventional
+
+Table T_LONGRAW5, loaded from every logical record.
+Insert option in effect for this table: APPEND
+
+   Column Name                  Position   Len  Term Encl Datatype
+------------------------------ ---------- ----- ---- ---- ---------------------
+ID                                  FIRST     *   |       CHARACTER            
+LR                                   NEXT *****   |       CHARACTER            
+    Maximum field length is 200000
+
+Record 1: Rejected - Error on table T_LONGRAW5.
+ORA-01461: can bind a LONG value only for insert into a LONG column
+
+Record 2: Rejected - Error on table T_LONGRAW5.
+ORA-01461: can bind a LONG value only for insert into a LONG column
+
+Record 3: Rejected - Error on table T_LONGRAW5.
+ORA-01461: can bind a LONG value only for insert into a LONG column
+
+Record 4: Rejected - Error on table T_LONGRAW5.
+ORA-01461: can bind a LONG value only for insert into a LONG column
+
+Record 5: Rejected - Error on table T_LONGRAW5.
+ORA-01461: can bind a LONG value only for insert into a LONG column
+
+Record 6: Rejected - Error on table T_LONGRAW5.
+ORA-01461: can bind a LONG value only for insert into a LONG column
+
+Record 7: Rejected - Error on table T_LONGRAW5.
+ORA-01461: can bind a LONG value only for insert into a LONG column
+
+Record 8: Rejected - Error on table T_LONGRAW5.
+ORA-01461: can bind a LONG value only for insert into a LONG column
+
+Record 9: Rejected - Error on table T_LONGRAW5.
+ORA-01461: can bind a LONG value only for insert into a LONG column
+
+Record 10: Rejected - Error on table T_LONGRAW5.
+ORA-01461: can bind a LONG value only for insert into a LONG column
+
+Record 11: Rejected - Error on table T_LONGRAW5.
+ORA-01461: can bind a LONG value only for insert into a LONG column
+
+
+Table T_LONGRAW5:
+  0 Rows successfully loaded.
+  11 Rows not loaded due to data errors.
+  0 Rows not loaded because all WHEN clauses were failed.
+  0 Rows not loaded because all fields were null.
+
+
+Space allocated for bind array:                 200261 bytes(1 rows)
+Read   buffer bytes: 1048576
+
+Total logical records skipped:          0
+Total logical records read:            11
+Total logical records rejected:        11
+Total logical records discarded:        0
+
+Run began on Sun Oct 25 20:15:43 2026
+Run ended on Sun Oct 25 20:15:43 2026
+
+Elapsed time was:     00:00:00.04
+CPU time was:         00:00:00.03

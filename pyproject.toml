@@ -1,0 +1,56 @@
+[build-system]
+requires = ["maturin==1.15.0"]
+build-backend = "maturin"
+
+[project]
+name = "oradmp"
+dynamic = ["version"]
+description = "Read Oracle legacy exp dump files without an Oracle server; Apache Arrow out"
+readme = "README.md"
+license = "MIT OR Apache-2.0"
+license-files = ["LICENSE-MIT", "LICENSE-APACHE"]
+requires-python = ">=3.11"
+dependencies = ["pyarrow>=15"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Rust",
+    "Topic :: Database",
+    "Typing :: Typed",
+]
+
+[project.scripts]
+oradmp = "oradmp._cli:main"
+
+[tool.maturin]
+manifest-path = "crates/oradmp-py/Cargo.toml"
+python-source = "python"
+module-name = "oradmp._core"
+# the wheel holds `oradmp/` only (ADR-45 item 6, ADR-48 item 4); the survey tool and the corpus stay in the repository
+exclude = ["python/exp_survey.py", "corpus/**", "tests/**", "docs/**", "crates/*/tests/**", "**/*.dmp", "**/truth_*.txt"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+filterwarnings = ["error::pytest.PytestUnraisableExceptionWarning"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+extend-exclude = ["python/exp_survey.py", "corpus", "docs", "tests/golden", "crates/oradmp-core/tests/data"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "A", "SIM", "RUF"]
+# `open` is the public entry of the package (architecture 3.4)
+ignore = ["A001", "A004"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+files = ["python/oradmp", "tests/conftest.py", "tests/test_*.py"]
+mypy_path = "python"
+exclude = ["python/exp_survey.py"]
+
+[[tool.mypy.overrides]]
+# pyarrow ships no type information
+module = ["pyarrow", "pyarrow.*"]
+ignore_missing_imports = true

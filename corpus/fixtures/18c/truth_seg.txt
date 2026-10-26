@@ -1,0 +1,3 @@
+T_SEG0|segment_created=YES|segments=1|rows=0
+T_SEG1|segment_created=YES|segments=1|rows=0
+T_SEG2|segment_created=NO|segments=0|rows=0

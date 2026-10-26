@@ -1,0 +1,43 @@
+-- 17_tsltz2.sql (v1, 2026-10-25)
+-- R-050: TIMESTAMP WITH LOCAL TIME ZONE, precisions 0, 3, 9. ALTER SESSION, INSERTs and the truth SELECTs are in this one SQL*Plus session. Run as CORPUS.
+
+SET ECHO OFF
+SET TERMOUT OFF
+SET FEEDBACK OFF
+SET HEADING OFF
+SET PAGESIZE 0
+SET LINESIZE 32767
+SET TRIMSPOOL ON
+SET VERIFY OFF
+SET DEFINE OFF
+SET SQLBLANKLINES ON
+SET LONG 100000
+SET SERVEROUTPUT ON SIZE UNLIMITED
+WHENEVER SQLERROR EXIT FAILURE ROLLBACK
+
+BEGIN
+  FOR t IN (SELECT table_name FROM user_tables WHERE table_name = 'T_TSLTZ2') LOOP
+    EXECUTE IMMEDIATE 'DROP TABLE "' || t.table_name || '" PURGE';
+  END LOOP;
+END;
+/
+ALTER SESSION SET TIME_ZONE = '+00:00';
+CREATE TABLE t_tsltz2 (id NUMBER(2), l0 TIMESTAMP(0) WITH LOCAL TIME ZONE, l3 TIMESTAMP(3) WITH LOCAL TIME ZONE,
+                       l9 TIMESTAMP(9) WITH LOCAL TIME ZONE);
+INSERT INTO t_tsltz2 VALUES (1, TIMESTAMP '2020-01-02 03:04:05', TIMESTAMP '2020-01-02 03:04:05',
+                                TIMESTAMP '2020-01-02 03:04:05');
+INSERT INTO t_tsltz2 VALUES (2, TIMESTAMP '2020-01-02 03:04:05.123456789', TIMESTAMP '2020-01-02 03:04:05.123456789',
+                                TIMESTAMP '2020-01-02 03:04:05.123456789');
+INSERT INTO t_tsltz2 VALUES (3, TIMESTAMP '2020-01-02 03:04:05.6', TIMESTAMP '2020-01-02 03:04:05.6',
+                                TIMESTAMP '2020-01-02 03:04:05.6');
+INSERT INTO t_tsltz2 VALUES (4, NULL, NULL, NULL);
+COMMIT;
+SPOOL /fixtures/truth_tsltz2.txt
+SELECT dbtimezone || '|' || sessiontimezone FROM dual;
+SELECT column_name || '|' || data_type || '|' || data_length || '|' || data_scale
+  FROM user_tab_columns WHERE table_name = 'T_TSLTZ2' ORDER BY column_id;
+SELECT id || '|' || DUMP(l0) || '|' || DUMP(l3) || '|' || DUMP(l9) FROM t_tsltz2 ORDER BY id;
+SELECT id || '|' || TO_CHAR(l0, 'YYYY-MM-DD HH24:MI:SS.FF9') || '|' || TO_CHAR(l3, 'YYYY-MM-DD HH24:MI:SS.FF9')
+       || '|' || TO_CHAR(l9, 'YYYY-MM-DD HH24:MI:SS.FF9') FROM t_tsltz2 ORDER BY id;
+SPOOL OFF
+EXIT

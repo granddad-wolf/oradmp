@@ -1,0 +1,23 @@
+;;; 
+Export: Release 11.2.0.2.0 - Production on Sun Oct 4 22:17:58 2026
+
+Copyright (c) 1982, 2009, Oracle and/or its affiliates.  All rights reserved.
+;;; 
+Connected to: Oracle Database 11g Express Edition Release 11.2.0.2.0 - 64bit Production
+Starting "CORPUS"."SYS_EXPORT_TABLE_01":  corpus/********@//localhost:1521/XE tables=t_parent,t_ddl directory=fixtures_dir dumpfile=ddl_dp_11g.dmp logfile=ddl_dp_11g.log reuse_dumpfiles=y 
+Estimate in progress using BLOCKS method...
+Processing object type TABLE_EXPORT/TABLE/TABLE_DATA
+Total estimation using BLOCKS method: 128 KB
+Processing object type TABLE_EXPORT/TABLE/TABLE
+Processing object type TABLE_EXPORT/TABLE/INDEX/INDEX
+Processing object type TABLE_EXPORT/TABLE/CONSTRAINT/CONSTRAINT
+Processing object type TABLE_EXPORT/TABLE/INDEX/STATISTICS/INDEX_STATISTICS
+Processing object type TABLE_EXPORT/TABLE/COMMENT
+Processing object type TABLE_EXPORT/TABLE/CONSTRAINT/REF_CONSTRAINT
+. . exported "CORPUS"."T_DDL"                            6.796 KB       3 rows
+. . exported "CORPUS"."T_PARENT"                         5.468 KB       2 rows
+Master table "CORPUS"."SYS_EXPORT_TABLE_01" successfully loaded/unloaded
+******************************************************************************
+Dump file set for CORPUS.SYS_EXPORT_TABLE_01 is:
+  /fixtures/ddl_dp_11g.dmp
+Job "CORPUS"."SYS_EXPORT_TABLE_01" successfully completed at 22:18:01

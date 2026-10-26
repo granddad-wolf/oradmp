@@ -1,0 +1,11 @@
+
+Connected to: Oracle Database 11g Express Edition Release 11.2.0.2.0 - 64bit Production
+Export done in AL32UTF8 character set and AL16UTF16 NCHAR character set
+
+About to export specified tables via Direct Path ...
+. . exporting table                         T_STC1         50 rows exported
+. . exporting table                         T_STC2         50 rows exported
+. . exporting table                         T_STC3         50 rows exported
+. . exporting table                         T_STC4         50 rows exported
+. . exporting table                         T_STC5         50 rows exported
+Export terminated successfully without warnings.

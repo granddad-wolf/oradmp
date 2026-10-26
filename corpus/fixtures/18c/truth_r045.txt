@@ -1,0 +1,40 @@
+=== R-045 2026-10-17T13:48:50Z ===
+
+BANNER
+--------------------------------------------------------------------------------
+Oracle Database 18c Express Edition Release 18.0.0.0.0 - Production
+
+1 row selected.
+
+=== the request ===
+CREATE TABLE t_plong (id NUMBER(3), l LONG)
+                                    *
+ERROR at line 1:
+ORA-14085: partitioned table cannot have column with LONG datatype
+
+
+CREATE TABLE t_plongraw (id NUMBER(3), lr LONG RAW)
+                                       *
+ERROR at line 1:
+ORA-14085: partitioned table cannot have column with LONG datatype
+
+
+
+Table created.
+
+ALTER TABLE t_plong2 ADD (l LONG)
+                          *
+ERROR at line 1:
+ORA-14085: partitioned table cannot have column with LONG datatype
+
+
+
+Table dropped.
+
+=== what Oracle accepted ===
+
+no rows selected
+
+
+no rows selected
+

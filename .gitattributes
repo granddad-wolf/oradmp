@@ -1,0 +1,7 @@
+# Test data is compared byte for byte (SHA256SUMS, golden files): Git never converts it (ADR-52).
+*.dmp                                  binary
+corpus/fixtures/**/*.txt               -text
+corpus/fixtures/**/*.log               -text
+corpus/fixtures/**/SHA256SUMS          -text
+tests/golden/*.tsv                     -text
+crates/oradmp-core/tests/data/*.tsv   -text

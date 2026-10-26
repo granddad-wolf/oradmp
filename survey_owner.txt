@@ -1,0 +1,52 @@
+== header
+header path marker        : none (conventional path)
+exp version line          : EXPORT:V11.02.00
+exporting user line       : UCORPUS_RU
+export mode line          : RUSERS
+RECORDLENGTH              : 2048
+three text numbers        : 0, 72, 0  (18c / 11g fixtures: 0, 72, 0)
+client charset, byte 1-2  : 171 (CL8MSWIN1251 (id assumed))
+ids after the text lines  : client 171 (CL8MSWIN1251 (id assumed)) | database? 171 (CL8MSWIN1251 (id assumed)) | national? 2000 (AL16UTF16)
+date text in record 1     : (not found)
+last non-zero byte of record 1 at offset 0x9e
+file size                 : 81920 bytes = 40 records of 2048 (mod = 0)
+export mode line: 'RUSERS' (RTABLES = table mode, RUSERS = owner mode)
+
+== second record (starts at 2048 = 0x800)
+METRICSU line at R + 0x104  (fixtures: R + 0x104; METRICST = table mode, METRICSU = owner mode)
+block 1 ids (+0x3c, +0x3e): 171 (CL8MSWIN1251 (id assumed)) | 2000 (AL16UTF16)    (fixtures: database set | national set)
+block 2 ids (+0x3c, +0x3e): 171 (CL8MSWIN1251 (id assumed)) | 171 (CL8MSWIN1251 (id assumed))    (fixtures: both = client set)
+string list (8 strings, consumed exactly): '+00:00' | '' | 'BYTE' | 'UNUSED' | '2' | 'INTERPRETED' | 'DISABLE:ALL' | ''
+
+== tables (0)
+
+== character data, all single-byte-set text columns together
+values with bytes >= 0x80: 0; of them not valid UTF-8: 0
+reading: no non-ASCII text values (or all lost / replaced by "?"; see the "?" counts above)
+
+== statement items (counts only)
+      10  METRICEU
+       8  (line)
+       1  CREATE TABLE
+       1  INSERT INTO
+       1  METRICSU
+       1  METRICSUPUBLIC
+       1  METRICSUXDB
+       1  PROCACTION
+       1  PROCACTION  -> field
+       1  TABLE
+plain fields: 0, fields in pieces (fd ff): 1, longest field: 157 bytes
+rule G / rule K: 1 item(s) where they differ (a G-only item is a field that no line of the K list introduces: a candidate for a missing line), 0 G candidates rejected as text lines, 0 fields in pieces without the fd ff marker
+    G only  after line kind 'PROCACTION'                 1 item(s), first at 0x94a
+
+== fields by the kind of the line before them (counts and lengths only)
+  line before                     fields      bytes    min      max  pieces  with>=80 bytes>=80 "?" bytes
+  PROCACTION                           1        157    157      157       1         0         0        0
+  ("with>=80" = fields holding a byte >= 0x80; "bytes>=80" = how many such bytes; "?" bytes = count of 0x3f.
+   In a comment field of a US7ASCII-client dump, bytes>=80 = 0 and many "?" mean the text was lost.)
+
+== problems (1)
+  0xda9: FATAL: unknown column type code 112 (column 2 of table R_CLOB, length field 72): descriptor size unknown, cannot continue
+  walk stopped here; offset 0xda9, 3497 of 81920 bytes covered
+
+RESULT: PROBLEMS FOUND; NOTE: 1 G/K difference(s), see above

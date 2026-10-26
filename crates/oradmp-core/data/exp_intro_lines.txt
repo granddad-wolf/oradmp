@@ -1,0 +1,18 @@
+# List K: the lines that introduce a field (rule I6 of docs/formats/exp_reader_rules.md, chapter 2).
+# One entry per line:  kind:length:forms:text
+#   kind    prefix (the line starts with the text), exact (the line is the text), suffix (the line ends with it)
+#   length  byte length of the text, trailing spaces included (makes them visible; checked when parsing)
+#   forms   allowed forms of the field, joined by |:
+#             plain     u16 LE length, bytes, LF                          [I3]
+#             marked    fd ff, pieces up to a piece of length 0, LF      [I4]
+#             unmarked  pieces up to a piece of length 0, LF, no marker  [I5]
+#   text    the text to the end of the line (not trimmed)
+# A test compares this list with the block in the rules file; a new entry from the Analyst is a one-line change.
+suffix:15:plain: MODIFY DEFAULT
+prefix:10:plain|marked:ANALSTATS 
+prefix:11:plain:COMMENT ON 
+exact:12:marked:CALTER TABLE
+exact:10:marked:PROCACTION
+prefix:26:marked:CREATE FORMAT71 PROCEDURE 
+exact:20:marked:CREATE FORMAT92TRIG 
+prefix:12:unmarked:CREATE VIEW 

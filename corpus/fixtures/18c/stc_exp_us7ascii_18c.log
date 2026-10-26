@@ -1,0 +1,18 @@
+
+Connected to: Oracle Database 18c Express Edition Release 18.0.0.0.0 - Production
+Version 18.4.0.0.0
+Export done in US7ASCII character set and AL16UTF16 NCHAR character set
+server uses AL32UTF8 character set (possible charset conversion)
+
+About to export specified tables via Conventional Path ...
+. . exporting table                         T_STC1         50 rows exported
+EXP-00091: Exporting questionable statistics.
+. . exporting table                         T_STC2         50 rows exported
+EXP-00091: Exporting questionable statistics.
+. . exporting table                         T_STC3         50 rows exported
+EXP-00091: Exporting questionable statistics.
+. . exporting table                         T_STC4         50 rows exported
+EXP-00091: Exporting questionable statistics.
+. . exporting table                         T_STC5         50 rows exported
+EXP-00091: Exporting questionable statistics.
+Export terminated successfully with warnings.

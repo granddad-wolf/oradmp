@@ -1,0 +1,10 @@
+1|0|Typ=100 Len=4: 80,0,0,0|0|Typ=101 Len=8: 80,0,0,0,0,0,0,0
+2|1.5E+000|Typ=100 Len=4: bf,c0,0,0|1.5E+000|Typ=101 Len=8: bf,f8,0,0,0,0,0,0
+3|-1.5E+000|Typ=100 Len=4: 40,3f,ff,ff|-1.5E+000|Typ=101 Len=8: 40,7,ff,ff,ff,ff,ff,ff
+4|3.14159012E+000|Typ=100 Len=4: c0,49,f,d0|3.1415926535897931E+000|Typ=101 Len=8: c0,9,21,fb,54,44,2d,18
+5|Nan|Typ=100 Len=4: ff,c0,0,0|Nan|Typ=101 Len=8: ff,f8,0,0,0,0,0,0
+6|Inf|Typ=100 Len=4: ff,80,0,0|Inf|Typ=101 Len=8: ff,f0,0,0,0,0,0,0
+7|-Inf|Typ=100 Len=4: 0,7f,ff,ff|-Inf|Typ=101 Len=8: 0,f,ff,ff,ff,ff,ff,ff
+8|3.40282347E+038|Typ=100 Len=4: ff,7f,ff,ff|1.7976931348623157E+308|Typ=101 Len=8: ff,ef,ff,ff,ff,ff,ff,ff
+9|1.17549435E-038|Typ=100 Len=4: 80,80,0,0|2.2250738585072014E-308|Typ=101 Len=8: 80,10,0,0,0,0,0,0
+10|<NULL>|NULL|<NULL>|NULL

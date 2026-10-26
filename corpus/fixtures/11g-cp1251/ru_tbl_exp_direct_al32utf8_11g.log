@@ -1,0 +1,9 @@
+
+Connected to: Oracle Database 11g Express Edition Release 11.2.0.2.0 - 64bit Production
+Export done in AL32UTF8 character set and AL16UTF16 NCHAR character set
+server uses CL8MSWIN1251 character set (possible charset conversion)
+
+About to export specified tables via Direct Path ...
+. . exporting table                         R_TEXT        309 rows exported
+EXP-00091: Exporting questionable statistics.
+Export terminated successfully with warnings.

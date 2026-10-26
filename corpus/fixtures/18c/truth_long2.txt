@@ -1,0 +1,2 @@
+2|INSERT REFUSED|ORA_22835: Buffer too small for CLOB to CHAR or BLOB to RAW conversion (actual: 100000, maximum: 4000)
+1|10|D0B4D0B620436166C3A9

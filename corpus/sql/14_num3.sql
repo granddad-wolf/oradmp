@@ -1,0 +1,38 @@
+-- 14_num3.sql (v1, 2026-10-15)
+-- R-032: NUMBER values computed by SQL (Q-1 evidence)
+-- Run as CORPUS by make_extra.sh. Same SQL on 18c and 11g unless said otherwise. Writes the truth file(s) to /fixtures.
+-- DO NOT change table names or column definitions.
+
+SET ECHO OFF
+SET TERMOUT OFF
+SET FEEDBACK OFF
+SET HEADING OFF
+SET PAGESIZE 0
+SET LINESIZE 32767
+SET TRIMSPOOL ON
+SET VERIFY OFF
+SET DEFINE OFF
+SET SQLBLANKLINES ON
+SET LONG 100000
+SET SERVEROUTPUT ON SIZE UNLIMITED
+WHENEVER SQLERROR EXIT FAILURE ROLLBACK
+
+BEGIN
+  FOR t IN (SELECT table_name FROM user_tables WHERE table_name IN ('T_NUM3')) LOOP
+    EXECUTE IMMEDIATE 'DROP TABLE "' || t.table_name || '" PURGE';
+  END LOOP;
+END;
+/
+
+CREATE TABLE t_num3 (id NUMBER(3), v NUMBER);
+INSERT INTO t_num3 VALUES (1, 1/3);
+INSERT INTO t_num3 VALUES (2, 2/3);
+INSERT INTO t_num3 VALUES (3, 1/7);
+INSERT INTO t_num3 VALUES (4, 100/3);
+INSERT INTO t_num3 VALUES (5, -1/3);
+INSERT INTO t_num3 SELECT 6, AVG(x) FROM (SELECT 1 x FROM dual UNION ALL SELECT 2 FROM dual UNION ALL SELECT 2 FROM dual);
+COMMIT;
+SPOOL /fixtures/truth_num3.txt
+SELECT id || '|' || TO_CHAR(v, 'TM9') || '|' || DUMP(v, 16) FROM t_num3 ORDER BY id;
+SPOOL OFF
+EXIT

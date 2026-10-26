@@ -1,0 +1,472 @@
+# CI of oradmp (T-16a; ADR-79, ADR-83, ADR-87). Linux only. Nothing here names the repository, the account or a host.
+#
+#   checks         every push to master and workflow_dispatch: checksums, fmt, clippy, nextest, deny, probes build,
+#                  ruff, mypy, pytest
+#   wheel          every push and dispatch: tools/release_build.sh <commit>, then the wheel in three fresh venvs
+#   extended       workflow_dispatch only: fuzz seeds, three fuzz targets, long property runs, fuzz clippy, bench report
+#   manylinux2014  workflow_dispatch only: risk checks (b) and (c) of ADR-53 item 7 (the wheel is not shipped)
+#
+# Never in this file: a publish step, an upload except the fuzz crash artifact of `extended` (ADR-92 item 1), a secret,
+# a file of corpus/work/, the memory or throughput tests (they stay #[ignore]), a benchmark gate. Every job ends with a step that writes a job summary (ADR-87 item 4).
+name: CI
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# a newer push cancels the older run of the same branch; a dispatched run is not cancelled by a push
+concurrency:
+  group: ci-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
+
+env:
+  CARGO_BUILD_JOBS: "2"
+  CARGO_TERM_COLOR: never
+  PIP_DISABLE_PIP_VERSION_CHECK: "1"
+  PYTHONDONTWRITEBYTECODE: "1"
+
+jobs:
+  checks:
+    name: checks (Linux)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      # actions/checkout v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Environment (TMPDIR on the runner's temporary folder)
+        run: |
+          mkdir -p "$RUNNER_TEMP/tmp" "$RUNNER_TEMP/logs"
+          echo "TMPDIR=$RUNNER_TEMP/tmp" >> "$GITHUB_ENV"
+          echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
+
+      - name: Fixture checksums (the three SHA256SUMS)
+        run: |
+          for d in 18c 11g 11g-cp1251; do
+            (cd "corpus/fixtures/$d" && sha256sum --check --quiet SHA256SUMS)
+            echo "checksums ok: $d"
+          done
+
+      # actions/setup-python v7.1.0
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0
+        with:
+          python-version: "3.13"
+
+      - name: Rust toolchain from rust-toolchain.toml
+        run: |
+          rustup show active-toolchain || rustup toolchain install
+          rustc --version
+          cargo --version
+
+      # taiki-e/install-action v2.87.31 (prebuilt binaries, checksums on)
+      - uses: taiki-e/install-action@1e29709c0ec63babbe8f266397a465f29a825f91
+        with:
+          tool: cargo-nextest@0.9.146,cargo-deny@0.20.2
+
+      # actions/cache v6.1.0
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: |
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            ~/.cargo/git/db
+            target
+          key: cargo-checks-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml', '**/Cargo.lock') }}
+          restore-keys: cargo-checks-${{ runner.os }}-
+
+      - name: cargo fmt
+        run: cargo fmt --all --check
+
+      - name: cargo clippy (all targets; all targets and all features)
+        run: |
+          cargo clippy --all-targets -- -D warnings
+          cargo clippy --all-targets --all-features -- -D warnings
+
+      - name: cargo nextest (skipped must be exactly the four named tests)
+        run: |
+          cargo nextest run -j 2 --status-level fail --final-status-level skip 2>&1 | tee "$RUNNER_TEMP/logs/nextest.log"
+          awk '$1 == "SKIP" { print $(NF-1), $NF }' "$RUNNER_TEMP/logs/nextest.log" | sort > "$RUNNER_TEMP/logs/skipped.txt"
+          printf '%s\n' \
+            'oradmp-core::t15_memory peak_rss_of_eight_times_the_data_stays_within_ten_percent' \
+            'oradmp-core::t15_memory t15_child_read' \
+            'oradmp-core::t15_throughput throughput_of_scan_and_read' \
+            'oradmp-core::t17_synth write_fuzz_seeds' | sort > "$RUNNER_TEMP/logs/skipped-expected.txt"
+          diff "$RUNNER_TEMP/logs/skipped-expected.txt" "$RUNNER_TEMP/logs/skipped.txt"
+
+      - name: cargo deny check (advisories, bans, licenses, sources)
+        run: cargo deny check 2>&1 | tee "$RUNNER_TEMP/logs/deny.log"
+
+      - name: Job venv and probes build (maturin develop --features test-probes)
+        run: |
+          python -m venv "$RUNNER_TEMP/venv"
+          "$RUNNER_TEMP/venv/bin/python" -m pip install --quiet maturin==1.15.0 ruff==0.17.1 mypy==2.4.0 pytest==9.1.1 \
+            pyarrow==26.0.0 pandas==3.0.6
+          export VIRTUAL_ENV="$RUNNER_TEMP/venv"
+          export PATH="$VIRTUAL_ENV/bin:$PATH"
+          maturin develop --features test-probes
+          python -c 'import oradmp, pyarrow, pandas; print("oradmp", oradmp.__version__, "from", oradmp.__file__)'
+
+      - name: ruff, mypy
+        run: |
+          export PATH="$RUNNER_TEMP/venv/bin:$PATH"
+          ruff check
+          ruff format --check
+          mypy
+
+      - name: pytest (0 failed, 0 skipped; the runner user is not root)
+        run: |
+          export PATH="$RUNNER_TEMP/venv/bin:$PATH"
+          test "$(id -u)" != 0
+          pytest -rs -q 2>&1 | tee "$RUNNER_TEMP/logs/pytest.log"
+          if grep -q '^SKIPPED' "$RUNNER_TEMP/logs/pytest.log"; then
+            echo "a test was skipped; this job expects 0 skipped" >&2
+            exit 1
+          fi
+
+      - name: Job summary
+        if: always()
+        run: |
+          L="$RUNNER_TEMP/logs"
+          {
+            echo "## checks (Linux)"
+            echo
+            echo "- commit: \`$GITHUB_SHA\`"
+            echo "- runner image: ${ImageOS:-?} ${ImageVersion:-?} (runs-on ubuntu-24.04), user $(id -un) (uid $(id -u))"
+            echo "- nproc: $(nproc)"
+            echo "- rustc: $(rustc --version); cargo: $(cargo --version)"
+            echo "- python: $("$RUNNER_TEMP/venv/bin/python" -V 2>&1); pyarrow $("$RUNNER_TEMP/venv/bin/python" -c 'import pyarrow; print(pyarrow.__version__)' 2>&1 | tail -1); pandas $("$RUNNER_TEMP/venv/bin/python" -c 'import pandas; print(pandas.__version__)' 2>&1 | tail -1)"
+            echo "- nextest: $(grep -h 'Summary' "$L/nextest.log" 2>/dev/null | sed 's/^ *//' || true)"
+            echo "- nextest skipped (name): $(tr '\n' ';' < "$L/skipped.txt" 2>/dev/null)"
+            echo "- cargo deny: $(tail -1 "$L/deny.log" 2>/dev/null)"
+            echo "- pytest: $(tail -1 "$L/pytest.log" 2>/dev/null)"
+            echo "- pytest skips: $(grep -c '^SKIPPED' "$L/pytest.log" 2>/dev/null || true) lines"
+            grep '^SKIPPED' "$L/pytest.log" 2>/dev/null | sed 's/^/  - /' || true
+            echo "- duration: $(( $(date +%s) - JOB_START )) s (to this step)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  wheel:
+    name: wheel (Linux)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      # actions/checkout v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Environment (TMPDIR on the runner's temporary folder)
+        run: |
+          mkdir -p "$RUNNER_TEMP/tmp" "$RUNNER_TEMP/logs"
+          echo "TMPDIR=$RUNNER_TEMP/tmp" >> "$GITHUB_ENV"
+          echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
+
+      - name: Fixture checksums (the three SHA256SUMS)
+        run: |
+          for d in 18c 11g 11g-cp1251; do
+            (cd "corpus/fixtures/$d" && sha256sum --check --quiet SHA256SUMS)
+            echo "checksums ok: $d"
+          done
+
+      # actions/setup-python v7.1.0; the last version listed is the default `python` (the newest CPython)
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0
+        with:
+          python-version: |
+            3.11
+            3.x
+
+      - name: Rust toolchain from rust-toolchain.toml; uv
+        run: |
+          rustup show active-toolchain || rustup toolchain install
+          rustc --version
+          python -m pip install --quiet uv==0.12.21
+          uv --version
+          echo "NEWEST_PY=$(python -c 'import sys; print("%d.%d" % sys.version_info[:2])')" >> "$GITHUB_ENV"
+
+      # actions/cache v6.1.0 (the release build keeps its own target folder below /var/tmp, so only the registry)
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: |
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            ~/.cargo/git/db
+          key: cargo-wheel-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml', '**/Cargo.lock') }}
+          restore-keys: cargo-wheel-${{ runner.os }}-
+
+      - name: Release-script build of the pushed commit (tools/release_build.sh)
+        run: |
+          bash tools/release_build.sh "$GITHUB_SHA" --release 2>&1 | tee "$RUNNER_TEMP/logs/release_build.log"
+          grep -q '^check_dist: ok' "$RUNNER_TEMP/logs/release_build.log"
+          cp /var/tmp/oradmp-release/dist/SHA256SUMS "$RUNNER_TEMP/logs/SHA256SUMS"
+          ls -l /var/tmp/oradmp-release/dist
+
+      - name: Installed wheel in three fresh venvs, pytest against the installed package
+        run: |
+          wheel="$(ls /var/tmp/oradmp-release/dist/oradmp-*.whl)"
+          raw="$(awk -F'"' '/^version *=/ { print $2; exit }' Cargo.toml)"
+          version="$(printf '%s' "$raw" | sed -e 's/-alpha\./a/' -e 's/-beta\./b/' -e 's/-rc\./rc/')"
+          echo "version at this commit: $raw -> $version"
+          # name, python, packages, the skip files that are allowed besides tests/test_internal.py (the three probe tests)
+          run_one() {
+            local name="$1" py="$2" pkgs="$3" extra="$4" venv="$RUNNER_TEMP/venv-$1" log="$RUNNER_TEMP/logs/pytest-$1.log"
+            uv venv --quiet --python "$py" "$venv"
+            # shellcheck disable=SC2086
+            uv pip install --quiet --python "$venv/bin/python" "$wheel" pytest==9.1.1 $pkgs
+            "$venv/bin/python" -c 'import importlib.util as u, sys, oradmp, pyarrow; pd = ("pandas " + __import__("pandas").__version__) if u.find_spec("pandas") else "no pandas"; print("Python %d.%d.%d, pyarrow %s, %s" % (*sys.version_info[:3], pyarrow.__version__, pd)); print("oradmp", oradmp.__version__, oradmp.__file__)' | tee "$log.info"
+            case "$("$venv/bin/python" -c 'import oradmp; print(oradmp.__file__)')" in
+              */site-packages/oradmp/*) ;;
+              *) echo "oradmp is not the installed package" >&2; exit 1 ;;
+            esac
+            # from the checkout (rootdir, tests/, corpus/fixtures/), no python/ on the path
+            "$venv/bin/pytest" -rs -q -p no:cacheprovider 2>&1 | tee "$log"
+            local skipped
+            skipped="$(grep '^SKIPPED' "$log" | grep -v 'tests/test_internal.py' | grep -v "${extra:-NO_EXTRA_FILE}" || true)"
+            if [ -n "$skipped" ]; then
+              echo "unexpected skips in $name:" >&2
+              echo "$skipped" >&2
+              exit 1
+            fi
+            local probes
+            probes="$(grep '^SKIPPED' "$log" | grep 'tests/test_internal.py' | sed -E 's/^SKIPPED \[([0-9]+)\].*/\1/' | awk '{ n += $1 } END { print n + 0 }')"
+            if [ "$probes" != 3 ]; then
+              echo "expected exactly 3 probe tests skipped in $name, got ${probes:-0}" >&2
+              exit 1
+            fi
+            out="$("$venv/bin/oradmp" --version)"
+            echo "$name: $out"
+            echo "$out" > "$log.version"
+            test "$out" = "oradmp $version"
+          }
+          run_one py311-pa15-pd223 3.11 "pyarrow==15.0.2 pandas==2.2.3" ""
+          run_one pynewest-latest "$NEWEST_PY" "pyarrow pandas" ""
+          run_one py311-pyarrow-only 3.11 "pyarrow" "tests/test_consumers.py"
+
+      - name: Job summary
+        if: always()
+        run: |
+          L="$RUNNER_TEMP/logs"
+          {
+            echo "## wheel (Linux)"
+            echo
+            echo "- commit: \`$GITHUB_SHA\`"
+            echo "- runner image: ${ImageOS:-?} ${ImageVersion:-?} (runs-on ubuntu-24.04), user $(id -un) (uid $(id -u))"
+            echo "- nproc: $(nproc)"
+            echo "- rustc: $(rustc --version); cargo: $(cargo --version); uv: $(uv --version 2>&1)"
+            echo "- release_build: $(grep -E '^(maturin|zig|epoch):' "$L/release_build.log" 2>/dev/null | tr '\n' ';')"
+            echo "- $(grep '^release root:' "$L/release_build.log" 2>/dev/null | head -1)"
+            echo "- check_dist: $(grep '^check_dist' "$L/release_build.log" 2>/dev/null | tr '\n' ';')"
+            echo "- SHA-256 of the built files:"
+            echo '```'
+            cat "$L/SHA256SUMS" 2>/dev/null || true
+            echo '```'
+            echo "- members of the wheel and of the sdist (sha256 size member):"
+            echo '```'
+            python3 - /var/tmp/oradmp-release/dist <<'PY' || true
+          import glob, hashlib, sys, tarfile, zipfile
+          d = sys.argv[1]
+          for w in sorted(glob.glob(d + "/oradmp-*.whl")):
+              with zipfile.ZipFile(w) as z:
+                  for i in z.infolist():
+                      if not i.is_dir():
+                          print(hashlib.sha256(z.read(i)).hexdigest(), i.file_size, i.filename)
+          for t in sorted(glob.glob(d + "/oradmp-*.tar.gz")):
+              with tarfile.open(t) as tf:
+                  for m in tf:
+                      if m.isfile():
+                          print(hashlib.sha256(tf.extractfile(m).read()).hexdigest(), m.size, m.name)
+          PY
+            echo '```'
+            for f in "$L"/pytest-*.log; do
+              [ -e "$f" ] || continue
+              n="$(basename "$f" .log)"
+              echo "- $n: $(head -1 "$f.info" 2>/dev/null); $(tail -1 "$f"); $(cat "$f.version" 2>/dev/null)"
+              grep '^SKIPPED' "$f" | sed 's/^/  - /' || true
+            done
+            echo "- duration: $(( $(date +%s) - JOB_START )) s (to this step)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # workflow_dispatch only (ADR-87 item 2: a schedule would bill minutes every day while the repository is private)
+  extended:
+    name: extended (Linux; fuzz, long property runs, bench report)
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      # actions/checkout v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Environment (TMPDIR on the runner's temporary folder)
+        run: |
+          mkdir -p "$RUNNER_TEMP/tmp" "$RUNNER_TEMP/logs"
+          echo "TMPDIR=$RUNNER_TEMP/tmp" >> "$GITHUB_ENV"
+          echo "ORADMP_FUZZ_TMP=$RUNNER_TEMP/fuzz-tmp" >> "$GITHUB_ENV"
+          echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
+
+      - name: Fixture checksums (the three SHA256SUMS)
+        run: |
+          for d in 18c 11g 11g-cp1251; do
+            (cd "corpus/fixtures/$d" && sha256sum --check --quiet SHA256SUMS)
+            echo "checksums ok: $d"
+          done
+
+      - name: Rust toolchains (root pin; the fuzz nightly with clippy) and cargo-fuzz
+        run: |
+          rustup show active-toolchain || rustup toolchain install
+          (cd fuzz && { rustup show active-toolchain || rustup toolchain install; } && rustup component add clippy)
+          cargo --version
+          (cd fuzz && cargo --version)
+          cargo install cargo-fuzz --locked --version 0.13.2
+          cargo fuzz --version
+
+      # taiki-e/install-action v2.87.31
+      - uses: taiki-e/install-action@1e29709c0ec63babbe8f266397a465f29a825f91
+        with:
+          tool: cargo-nextest@0.9.146
+
+      - name: Fuzz seeds (tools/fuzz_seeds.sh; fixtures and synthetic files)
+        run: tools/fuzz_seeds.sh 2>&1 | tee "$RUNNER_TEMP/logs/seeds.log"
+
+      - name: Fuzz target read (60 s)
+        run: tools/fuzz_run.sh read 60 2>&1 | tee "$RUNNER_TEMP/logs/fuzz-read.log"
+
+      - name: Fuzz target walk (60 s)
+        run: tools/fuzz_run.sh walk 60 2>&1 | tee "$RUNNER_TEMP/logs/fuzz-walk.log"
+
+      - name: Fuzz target values (60 s)
+        run: tools/fuzz_run.sh values 60 2>&1 | tee "$RUNNER_TEMP/logs/fuzz-values.log"
+
+      - name: Long property runs (t14_damage 10000 cases, t17_synth 2000 cases)
+        run: |
+          PROPTEST_CASES=10000 cargo nextest run -p oradmp-core --test t14_damage -j 2 2>&1 | tee "$RUNNER_TEMP/logs/t14.log"
+          PROPTEST_CASES=2000 cargo nextest run -p oradmp-core --test t17_synth -j 2 2>&1 | tee "$RUNNER_TEMP/logs/t17.log"
+          if find . -name '*.proptest-regressions' | grep -q .; then
+            echo "a proptest regression file was written" >&2
+            exit 1
+          fi
+
+      - name: Nightly clippy of fuzz/
+        run: |
+          cd fuzz
+          cargo clippy -- -D warnings 2>&1 | tee "$RUNNER_TEMP/logs/fuzz-clippy.log"
+
+      - name: Benchmark report (cargo bench --bench decode; a report only, never compared with benchmarks.md)
+        run: cargo bench -p oradmp-core --bench decode 2>&1 | tee "$RUNNER_TEMP/logs/bench.log"
+
+      - name: Job summary
+        if: always()
+        run: |
+          L="$RUNNER_TEMP/logs"
+          {
+            echo "## extended (Linux)"
+            echo
+            echo "- commit: \`$GITHUB_SHA\`"
+            echo "- runner image: ${ImageOS:-?} ${ImageVersion:-?} (runs-on ubuntu-24.04), user $(id -un) (uid $(id -u))"
+            echo "- nproc: $(nproc)"
+            echo "- cargo: $(cargo --version); fuzz toolchain: $(cd fuzz && cargo --version)"
+            echo "- seeds: $(tail -1 "$L/seeds.log" 2>/dev/null) files"
+            for t in read walk values; do
+              echo "- fuzz $t: $(grep -E '^Done [0-9]+ runs' "$L/fuzz-$t.log" 2>/dev/null | tail -1); findings (files in fuzz/artifacts/$t): $(find "fuzz/artifacts/$t" -type f 2>/dev/null | wc -l)"
+            done
+            echo "- t14_damage (PROPTEST_CASES=10000): $(grep -h 'Summary' "$L/t14.log" 2>/dev/null | sed 's/^ *//')"
+            echo "- t17_synth (PROPTEST_CASES=2000): $(grep -h 'Summary' "$L/t17.log" 2>/dev/null | sed 's/^ *//')"
+            echo "- fuzz clippy: $(tail -1 "$L/fuzz-clippy.log" 2>/dev/null)"
+            echo "- bench (report only):"
+            echo '```'
+            grep -E -B1 'time: ' "$L/bench.log" 2>/dev/null | head -80 || true
+            echo '```'
+            echo "- duration: $(( $(date +%s) - JOB_START )) s (to this step)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # actions/upload-artifact v7.0.2 (ADR-92 item 1): only on a failed run, only fuzz/artifacts/ (libFuzzer crash files
+      # made from the committed fixtures and the synthetic generator; never fuzz/corpus/, never a wheel)
+      - name: Fuzz crash files as an artifact (failure only)
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: fuzz-artifacts
+          path: fuzz/artifacts/
+          if-no-files-found: ignore
+          retention-days: 14
+
+  # workflow_dispatch only: risk checks (b) and (c) of ADR-53 item 7. The wheel is built, shown and dropped; never shipped.
+  manylinux2014:
+    name: manylinux2014 risk checks (Linux; not shipped)
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      # actions/checkout v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Environment (TMPDIR on the runner's temporary folder)
+        run: |
+          mkdir -p "$RUNNER_TEMP/tmp" "$RUNNER_TEMP/logs"
+          echo "TMPDIR=$RUNNER_TEMP/tmp" >> "$GITHUB_ENV"
+          echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
+
+      - name: Fixture checksums (the three SHA256SUMS)
+        run: |
+          for d in 18c 11g 11g-cp1251; do
+            (cd "corpus/fixtures/$d" && sha256sum --check --quiet SHA256SUMS)
+            echo "checksums ok: $d"
+          done
+
+      # actions/setup-python v7.1.0
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0
+        with:
+          python-version: "3.13"
+
+      - name: Rust toolchain from rust-toolchain.toml
+        run: |
+          rustup show active-toolchain || rustup toolchain install
+          rustc --version
+
+      - name: Build a manylinux2014 wheel with --zig; auditwheel show; the abi3 tag
+        run: |
+          python -m venv "$RUNNER_TEMP/venv"
+          "$RUNNER_TEMP/venv/bin/python" -m pip install --quiet maturin==1.15.0 ziglang==0.17.0 auditwheel==6.8.2
+          export PATH="$RUNNER_TEMP/venv/bin:$PATH"
+          maturin build --release --locked --zig --compatibility manylinux2014 --out "$RUNNER_TEMP/mlx"
+          wheel="$(ls "$RUNNER_TEMP"/mlx/oradmp-*.whl)"
+          basename "$wheel" | tee "$RUNNER_TEMP/logs/wheel-name.txt"
+          auditwheel --version 2>&1 | tee "$RUNNER_TEMP/logs/auditwheel-version.txt"
+          auditwheel show "$wheel" 2>&1 | tee "$RUNNER_TEMP/logs/auditwheel.log"
+          unzip -p "$wheel" 'oradmp-*.dist-info/WHEEL' | grep '^Tag:' | tee "$RUNNER_TEMP/logs/tags.txt"
+          sha256sum "$wheel" | tee "$RUNNER_TEMP/logs/sha.txt"
+          grep -q -- '-cp311-abi3-' "$RUNNER_TEMP/logs/wheel-name.txt"
+          grep -q 'cp311-abi3-' "$RUNNER_TEMP/logs/tags.txt"
+
+      - name: Job summary
+        if: always()
+        run: |
+          L="$RUNNER_TEMP/logs"
+          {
+            echo "## manylinux2014 risk checks (Linux)"
+            echo
+            echo "- commit: \`$GITHUB_SHA\`"
+            echo "- runner image: ${ImageOS:-?} ${ImageVersion:-?} (runs-on ubuntu-24.04)"
+            echo "- nproc: $(nproc)"
+            echo "- rustc: $(rustc --version); maturin 1.15.0; ziglang 0.17.0"
+            echo "- wheel: $(cat "$L/wheel-name.txt" 2>/dev/null)"
+            echo "- wheel tags: $(tr '\n' ';' < "$L/tags.txt" 2>/dev/null)"
+            echo "- sha256 (not shipped): $(cat "$L/sha.txt" 2>/dev/null)"
+            echo "- auditwheel: $(cat "$L/auditwheel-version.txt" 2>/dev/null) (pinned 6.8.2)"
+            echo "- auditwheel show:"
+            echo '```'
+            cat "$L/auditwheel.log" 2>/dev/null || true
+            echo '```'
+            echo "- duration: $(( $(date +%s) - JOB_START )) s (to this step)"
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,9 @@
+
+Connected to: Oracle Database 11g Express Edition Release 11.2.0.2.0 - 64bit Production
+Export done in AL32UTF8 character set and AL16UTF16 NCHAR character set
+
+About to export specified tables via Conventional Path ...
+. . exporting table                          T_LOB          5 rows exported
+. . exporting table                         T_LOB2          2 rows exported
+. . exporting table                        T_FRAME          7 rows exported
+Export terminated successfully without warnings.

@@ -1,0 +1,5 @@
+# cargo-fuzz needs a nightly compiler (sanitizer flags). One dated nightly, pinned here only: rustup takes the
+# nearest rust-toolchain.toml, so the root's 1.99.0 stays for everything else (ADR-62 item 5).
+[toolchain]
+channel = "nightly-2026-10-15"
+profile = "minimal"
