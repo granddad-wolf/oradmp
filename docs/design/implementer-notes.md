@@ -4,6 +4,10 @@ Questions and problems the Implementer found while building. Each entry: task, f
 what was seen, what is proposed. The Architect and the Analyst answer; the Implementer does not work around
 a point silently.
 
+## Changes in session 27 (Architect)
+
+- "T-20 note": "Answers (Architect, session 27)" added at its end (ADR-108). The next task is T-20b (plan).
+
 ## Changes in session 26 (Architect)
 
 - The repository is public since the cut (ADR-105): hashes cited in this file before session 26 name commits of the
@@ -3078,3 +3082,21 @@ workspace with the pinned nightly), so no check caught it; CI does not build it 
   "From source" is the clone line only. Rust 1.99 / `rust-version = "1.99"` / maturin via `[build-system]` agree.
 - **Release-build check**: the script builds committed trees only, so it ran in a scratch clone with the working-tree diff
   committed there (deleted after); `check_dist: ok`.
+
+### Answers (Architect, session 27)
+
+- **T-20 is DONE** (`e1ed10b`, pushed with `4aa33e6`; ADR-108 item 1). Your VM figures agree with the run: nextest
+  488 + 4, pytest 256, the five `test_t20_*` cases, `fuzz-check` 26.39 s cold on the runner against your 23.1 s.
+- **The `set -o pipefail` deviation: accepted, and you were right about the rest.** `ci.yml` has no `defaults:` block
+  and no step sets `shell:`, so every `run` step runs `bash -e {0}` (GitHub's workflow syntax, default shell table)
+  without `pipefail`. Hidden today: `checks`' `cargo deny` (completely), nextest and pytest test failures (only the
+  skip checks after them can fail the step); `wheel`'s installed-wheel `pytest`; `extended`'s seeds, the three fuzz
+  targets (a finding exits 1 in `fuzz_run.sh`, the step stays green and the crash upload never runs), the property
+  runs, fuzz clippy and bench; `manylinux2014`'s `auditwheel show`. The release build step is guarded up to
+  `check_dist`. Full table: ADR-108 item 4. No pasted run so far hid a failure (the summaries give the counts).
+- **Fix: T-20b** (plan): a workflow-level `defaults: run: shell: bash` (`bash --noprofile --norc -eo pipefail {0}`),
+  your per-step line removed, two constructs adjusted for `pipefail` (`probes=` gets `|| true`; the `find | grep -q`
+  test becomes `find -print -quit` inside `[ -n ... ]`), a VM proof and a proof run on a throwaway branch. Its commit is
+  the a4 candidate C; T-20's hashes stay as T-20's evidence only.
+- **Release-build check in a scratch clone with the diff committed there**: right way to do it; keep it for T-20b if
+  you build at all (T-20b needs no build: `ci.yml` only).

@@ -1,13 +1,23 @@
 # Legacy EXP reader: implementation plan
 
 Architect session 1, 2026-10-07; session 2, 2026-10-14; sessions 3 and 4, 2026-10-15; sessions 5 and
-6, 2026-10-16; sessions 7 to 13, 2026-10-17; sessions 14 and 15, 2026-10-18; sessions 16 and 17, 2026-10-21; session 18, 2026-10-22; sessions 19 to 23, 2026-10-24; sessions 24 and 25, 2026-10-25; session 26, 2026-10-29. Tasks for the
+6, 2026-10-16; sessions 7 to 13, 2026-10-17; sessions 14 and 15, 2026-10-18; sessions 16 and 17, 2026-10-21; session 18, 2026-10-22; sessions 19 to 23, 2026-10-24; sessions 24 and 25, 2026-10-25; sessions 26 and 27, 2026-10-29. Tasks for the
 Implementer, in order; each is meant for one session. "Rules" are those of
 `docs/formats/exp_reader_rules.md` (v3.4; v3.5 from session 8; v3.6 from session 17; v3.7 from session 24; v3.9 from session 25); "arch n" is a section of `exp-reader-architecture.md`. Every
 task ends with `cargo fmt`, `cargo clippy -- -D warnings` and `cargo nextest run` green (`CLAUDE.md`,
 definition of done; in the public repository the same checks are listed in `CONTRIBUTING.md`, "Development setup")
 and adds no `unsafe` to the core. Commit hashes cited before session 26 name commits of the private archive
 (`HISTORY.md`, ADR-105).
+
+## Changes in session 27
+
+- **T-20: DONE** (`e1ed10b`, pushed with `4aa33e6` as `9950ef2..e1ed10b`; ADR-108 item 1): the run figures and the
+  `fuzz-check` times are in its heading and its "Result" line.
+- The cut date is **2026-10-26** (ADR-108 item 2; the session 26 text "2026-10-29" for the cut was wrong).
+- New **T-20b** (ADR-108 items 4, 5): `pipefail` for every `run` step of `ci.yml`, with its proof; Sonnet; before
+  Reviewer 6c. Its commit is the candidate **C**.
+- "Release 0.1.0a4": session 27 block (C = T-20b's commit; Reviewer 6c's exact scope and where it builds). New order
+  table (session 27); the session 26 table is history.
 
 ## Changes in session 26
 
@@ -2209,7 +2219,7 @@ record with full hashes. The billed-minutes figure: O-23 (b).
   600 s for `walk`, `read`, `values`, 0 findings, run counts in the note; (d) no file outside the note changes (`git
   status`); the owner commits the note.
 
-## T-20 The a4 version commit: version, `[project.urls]`, README and CONTRIBUTING for the public tree, the fuzz compile job (session 26; ADR-105 to ADR-107) - next
+## T-20 The a4 version commit: version, `[project.urls]`, README and CONTRIBUTING for the public tree, the fuzz compile job (session 26; ADR-105 to ADR-107) - DONE (2026-10-29, `e1ed10b`, pushed with `4aa33e6`; nextest 488 passed + 4 skipped, pytest 256; `fuzz-check` 35 s, `cargo check` 26.39 s cold; ADR-108 item 1; to be reviewed in Reviewer 6c)
 
 - Goal: the exact a4 candidate C: version `0.1.0a4`, the source link on PyPI, documents a stranger can follow, and a push
   job that compiles `fuzz/`.
@@ -2267,6 +2277,68 @@ record with full hashes. The billed-minutes figure: O-23 (b).
   Reviewed in **Reviewer 6c**.
 - The owner, after the green run: dispatches `extended` and `manylinux2014` on C once and pastes both; starts Reviewer 6c.
   No tag until the release step.
+- **Result (session 27, ADR-108 item 1)**: commits `4aa33e6` (documents) and
+  `e1ed10bff1587c28861bcf0b1c6e9f950c788cce` (T-20), one push `9950ef2..e1ed10b`. Push run: `checks` nextest 488 passed +
+  4 skipped, `cargo deny` four checks ok, pytest 256 passed; `wheel` `release root: canonical`, `check_dist: ok` (with
+  the `Project-URL` rule), venvs 253 + 3 / 246 + 4 / 253 + 3 skipped, `SOURCE_DATE_EPOCH` 1793310726, wheel
+  `a3fb19c3cf43c830c1628806b44a86f09238dc211c74b2e012c82dc464903807`, sdist
+  `7a2ff91c6b96ffe864463b4605a60b718f00e28acdc7fef3f088d6573cffd83f`; `fuzz-check` green, 35 s to the end of its step,
+  `Finished ... in 26.39s` (pinned nightly, cold runner; VM 23.1 s cold, 0.05 s warm). Dispatches on `e1ed10b`:
+  `extended` 435 s (fuzz 60 s each, `read` 68,805 / `walk` 221,819 / `values` 14,799,481 runs, 0 findings; 463 seeds;
+  `t14_damage` 5 passed; `t17_synth` 30 + 1 skipped; fuzz clippy ok; bench report only); `manylinux2014` 119 s (wheel
+  `...-cp311-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl`, `be6c78e5...`, not shipped; `auditwheel` 6.8.2
+  consistent with `manylinux_2_17_x86_64`, up to `GLIBC_2.14`). **These hashes are T-20's evidence, not the candidate's**:
+  T-20b's commit becomes C (ADR-108 item 5). The note's `set -o pipefail` deviation: accepted, superseded by T-20b.
+
+## T-20b `pipefail` for every CI step (session 27; ADR-108 items 4, 5) - next
+
+- Goal: a failure of any piped command in `.github/workflows/ci.yml` fails its step and its job; the commit is the a4
+  candidate C.
+- Inputs: ADR-108 item 4 (the step table) and item 5; `ci.yml` at `e1ed10b`; `tools/fuzz_run.sh` (its exit paths);
+  GitHub's "Workflow syntax for GitHub Actions" (`defaults.run.shell`, the default shell table, `continue-on-error`,
+  the `steps.<id>.outcome` context); GNU Bash manual ("Pipelines", `set -o pipefail`).
+- Needs from the owner: (1) the commit C on `master`, one push, the pasted run; (2) a throwaway branch `t20b-proof` = C
+  plus the Implementer's proof commit, pushed (`git push origin t20b-proof`), one `workflow_dispatch` of CI on that
+  branch, the pasted summaries and the per-step results, then the branch deleted locally and on `origin` (`git push
+  origin --delete t20b-proof`); (3) one `extended` and one `manylinux2014` dispatch on C (`master`), pasted. No tag. No
+  new action (allow-list unchanged), `permissions` unchanged.
+- **Done when:**
+  (a) **Fix**: one workflow-level block after `concurrency:`, `defaults:` / `run:` / `shell: bash`, with a one-line
+  comment (every `run` step runs `bash --noprofile --norc -eo pipefail {0}`), and the same line in the header comment.
+  No step has its own `shell:`. `fuzz-check`'s `set -o pipefail` line removed (one mechanism).
+  (b) **The constructs `pipefail` changes**: (1) `run_one`'s `probes="$(grep ... | awk ...)"` ends in `|| true` inside
+  the substitution, so a log without probe skips still reaches the "expected exactly 3" message instead of a silent
+  stop; (2) the property step's `if find . -name '*.proptest-regressions' | grep -q .; then` becomes `if [ -n "$(find .
+  -name '*.proptest-regressions' -print -quit)" ]; then` (under `pipefail` a SIGPIPE of `find` after `grep -q` exits
+  would make the test false and miss a regression file); (3) every other pipeline of the file read under `pipefail` and
+  listed in the note, one word each (`ok` or the change); the summary steps stay as they are (every pipe is inside `$(
+  )` or ends in `|| true`).
+  (c) **VM proof, before the commit**: YAML parse with PyYAML in a scratch script (as T-16a did; `uv run --no-project
+  --with pyyaml`, rule 9) and `bash -n` of every `run` block; the shell fact: `bash --noprofile --norc -eo pipefail -c '{
+  true; exit 7; } | tee /dev/null; echo reached'` exits 7 without `reached`, and the same with `bash -e -c` prints
+  `reached` and exits 0 (the hole, shown); the two rewritten constructs extracted and run under `bash -eo pipefail`
+  against a temporary folder: (1) a log with three probe skips gives 3, a log with none prints the message and exits 1;
+  (2) a tree with and one without a `x.proptest-regressions` file take the right branches. Outputs in the note.
+  (d) **Nothing else**: `git diff --stat e1ed10b C -- . ':!docs'` lists `.github/workflows/ci.yml` only; plus the note.
+  No build or test run is needed on the VM (no Rust, Python or test file changes); `sha256sum -c` in the three fixture
+  folders.
+  (e) **Push run on C green** with `e1ed10b`'s counts (nextest 488 + 4, `cargo deny` four ok, pytest 256; `release
+  root: canonical`, `check_dist: ok`, venvs 253 + 3 / 246 + 4 / 253 + 3; `fuzz-check` green); C's wheel and sdist
+  hashes recorded. A red step here is a failure `pipefail` now shows: stop, paste, the Architect rules.
+  (f) **Proof run on `t20b-proof`** (never merged): in each affected step of ADR-108 item 4 the piped command `X` becomes
+  `{ X; exit 7; }` (the real command runs, then its pipeline fails): `checks` nextest, deny, pytest; `wheel` release
+  build, the venvs' `pytest` line; `extended` seeds, `read`, `walk`, `values`, the property step's second pipeline
+  (`t17_synth`), fuzz clippy, bench; `manylinux2014` `auditwheel show`. Each such step gets an `id`; in each job all
+  but the last affected step get `continue-on-error: true` and the last stays plain, so the job turns red; one step
+  `if: always()` before each job's summary prints `T-20b proof:` and `<id>=${{ steps.<id>.outcome }}` for the job's
+  ids. Expected in the paste: every outcome `failure`; `checks`, `wheel`, `extended`, `manylinux2014` red;
+  `fuzz-check` green; `extended`'s crash-file upload step ran (now reachable; it finds no file). `git diff --stat C
+  t20b-proof` lists `ci.yml` only (shown before the push). Restored: the branch is deleted (`git ls-remote origin
+  t20b-proof` prints nothing); `master` never holds the proof commit.
+  (g) **Dispatches on C**: `extended` and `manylinux2014` green, pasted; figures in line with `e1ed10b`'s (input of
+  Reviewer 6c, and the release's `extended` run on the candidate, ADR-106 item 1).
+- Touches: `.github/workflows/ci.yml`; the note in `docs/design/implementer-notes.md`. Not `CONTRIBUTING.md` (it names
+  no shell), not `tools/`, `crates/`, `python/`, `tests/`. **Model: Sonnet.** Reviewed in **Reviewer 6c**.
 
 ## T-18 The command-line tool `oradmp` (session 18; ADR-72) - DONE (2026-10-24, `2ba62eb`; ran before T-16, ADR-73 swap; 412 Rust tests, 196 pytest; findings ruled by ADR-75; (l)'s CI part moved to T-16; reviewed: review-06a, SF-1 and SF-2 go to T-18c)
 - Goal: `oradmp` as a thin console tool on the public Python API: list tables, show columns, print the first rows,
@@ -3146,6 +3218,37 @@ or more.
 - **After 6c**: an Architect session records it and writes the a4 checklist (with the names: the `mv` of the old
   canonical root, the `extended` run on C, the tag to `origin`).
 
+**Session 27 (ADR-108; this block wins where the text above differs):**
+- **Done**: T-20 (`e1ed10b`, with `4aa33e6`; its push run and the `extended` and `manylinux2014` dispatches on it).
+  **C = the commit of T-20b** on the public `master` (version `0.1.0a4` from T-20, `pipefail` from T-20b). The 6c prompt
+  names C by its full hash, taken after the owner's commit, once C's push run and its two dispatches are green and
+  pasted (T-20b (e), (g)). `e1ed10b`'s hashes and runs are T-20's evidence, not C's.
+- **Reviewer 6c, the exact scope** (Opus; writes `docs/review/review-06c-...md` only): items 1 to 11 of the session 26
+  block, on C, with these changes:
+  - Item 1 adds `git diff --stat e1ed10b C -- . ':!docs'` = `.github/workflows/ci.yml` only, and `git diff --stat
+    9950ef2 C -- . ':!docs'` = T-20's files of T-20 (g) only (T-20b adds no file).
+  - Item 9 covers **T-20 and T-20b**: T-20 (a) to (i) as written; T-20b (a) to (g): the diff read line by line, (c)'s
+    shell facts and the two rewritten constructs repeated in the scratch clone, the proof run's paste checked against
+    the proof commit (the owner keeps its diff or the paste shows it; every listed outcome `failure`), and `ci.yml` at C
+    read once more for any step whose failure is still hidden (a piped command, `|| true`, a command substitution that
+    an `if`, `case` or assignment swallows) outside the summary steps; a hidden failure left is a blocking finding.
+  - Item 10 (d): the public CI pastes are those of S, `e1ed10b` (push and both dispatches), the `t20b-proof` run, and
+    C (push, `extended`, `manylinux2014`); the clean-clone counts and the sdist hash are compared with **C's** push run.
+  - Item 10 (a) unchanged: `IDENTIFIED BY` expected for the two throwaway users only (ADR-108 item 3, decided).
+- **Where 6c reads and builds**: its own scratch clone of the public repository, e.g. `git clone
+  https://github.com/granddad-wolf/oradmp /var/tmp/oradmp-review-6c/src`, checked out at C; the archive is fetched into
+  that clone from `~/p/oradmp-archive` as in the session 26 block (read-only, the archive and the owner's clone
+  `~/p/oradmp` are not changed). All builds below `/var/tmp/oradmp-review-6c/`, one at a time: `cargo` with
+  `CARGO_TARGET_DIR` there; its own venv there (`maturin develop --features test-probes` into that venv only); the
+  candidate built twice with `ORADMP_BUILD_ROOT=/var/tmp/oradmp-review-6c/release tools/release_build.sh C --twice`
+  **without** `--release` (the script refuses any other root with `--release`). **Never** at the canonical root
+  `/var/tmp/oradmp-release` (the release's), never in `~/p/oradmp` (rule 9: no `uv run`, no `maturin develop` there).
+  Expected: 6c's sdist equals C's CI sdist byte for byte; its wheel differs from the CI wheel by the build root in the
+  SBOM only (ADR-90; a member-by-member comparison shows it). Step 3b alone on the machine, Oracle containers stopped,
+  `ORADMP_WORK` = the parent folder of `18c/t_big_exp_18c.dmp`; the same-sitting `460aef5` scan run (ADR-106 item 2)
+  builds from the archive commit in a second scratch worktree of the same clone.
+- **After 6c**: unchanged (Architect session: record 6c, the a4 checklist; then the release from C).
+
 ## CI minutes budget (session 23; ADR-92 item 4)
 
 **Session 26**: the repository is public; standard hosted runners are free there and this budget lapses (O-23 (b)
@@ -3164,7 +3267,31 @@ Rules while private: a push runs only `checks` and `wheel`; a dispatch only when
 needed; T-16b: at most three; T-16c: as its note asks, Linux only); the note records the minutes of each dispatched run.
 After the cut the budget lapses for standard runners; the dispatch rule for `extended` stays (it is long, not costly).
 
-## Order of the next tasks (session 26)
+## Order of the next tasks (session 27)
+
+Machine rule unchanged (session 16 below). CI runs on the public GitHub repository and is not a build on the VM.
+**OWNER** marks an owner action.
+
+| order | task | can start | runs in parallel with | touches | model | waits for a human? |
+|---|---|---|---|---|---|---|
+| done | T-20 (`e1ed10b`, with `4aa33e6`; push run green); row 1' of session 26 (`extended` and `manylinux2014` on `e1ed10b`, green); this session | - | - | - | - | - |
+| 1 | **T-20b** `pipefail` in `ci.yml` (ADR-108; plan T-20b) | now | nothing that builds on the VM | `.github/workflows/ci.yml`, the note | Sonnet | **OWNER** commits C, one push, pastes; pushes `t20b-proof`, dispatches, pastes, deletes the branch |
+| 1' | **OWNER**: one `extended` and one `manylinux2014` dispatch on C, pasted | after row 1's push run is green | - | GitHub | - | yes |
+| 1'' | **OWNER**: O-24 (the private `CLAUDE.md` text) | any time | everything | private repository | - | yes |
+| 2 | **Reviewer 6c** on C (session 27 block of "Release 0.1.0a4"; step 3b) | after rows 1 and 1' | **nothing** (it builds; step 3b alone) | `docs/review/` | Opus | **OWNER** starts it with C's full hash, containers stopped |
+| 3 | **Architect**: record 6c; the a4 checklist; a closure task if needed | after row 2 | - | `docs/design/` | - | no |
+| 3' | (closure task and its review, only if row 3 names one; then C moves to the closure commit) | after row 3 | - | as named | Sonnet / Opus | as named |
+| 4 | **OWNER**: `mv /var/tmp/oradmp-release /var/tmp/oradmp-release-<what it holds>` | before row 5 | everything | the VM | - | yes |
+| 5 | **OWNER: release 0.1.0a4** from C: Linux x86_64 `manylinux_2_28` wheel + sdist, `tools/release_build.sh C --twice --release` at the canonical root; sdist hash cross-check with C's CI run; Rocky Linux 8 test; TestPyPI, then PyPI; the tag pushed last to `origin` | after row 3 (and 3') without a blocking finding | nothing that builds | a tag | - | **OWNER** all steps (upload and tag) |
+| 6 | **T-16b** macOS / Windows; **T-16c** `manylinux2014` acceptance (ADR-106 item 3) | after the a4 tag | Data Pump planning | `.github/workflows/`, `tools/`, `check_dist.py`, gates, README | Sonnet | **OWNER** for T-16c's Rocky 8 run |
+| 6' | **Data Pump** (phase 2): an Architect session plans it | after a4 | row 6 | `docs/design/` | - | scope with the owner |
+| 7 | **Analyst 21** (documents only; "Inputs for Analyst session 21"), if not done | any time | everything | `docs/formats/` | - | **OWNER** starts it |
+
+Standing owner items unchanged (session 26 list below; none blocks a4): Q-4, R-052 on Q-4's condition, R-046, the RHEL 8
+host test, scratch folders, `oradmp-private` and the snapshot folder, Q-13, O-20; the Gogs mirror of the new commits
+stays "moved" (no answer yet, no step needs it).
+
+## Order of the next tasks (session 26, history)
 
 Machine rule unchanged (session 16 below). CI runs on the public GitHub repository and is not a build on the VM.
 **OWNER** marks an owner action.

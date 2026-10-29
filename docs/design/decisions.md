@@ -4,7 +4,7 @@
 `oradmp` (crates `oradmp-core`, `oradmp-py`, import `oradmp`, classes `OradmpError` / `OradmpWarning`).
 
 Architect session 1, 2026-10-07; session 2, 2026-10-14; sessions 3 and 4, 2026-10-15; sessions 5 and
-6, 2026-10-16; sessions 7 to 13, 2026-10-17; sessions 14 and 15, 2026-10-18; sessions 16 and 17, 2026-10-21; session 18, 2026-10-22; sessions 19 to 23, 2026-10-24; sessions 24 and 25, 2026-10-25; session 26, 2026-10-29. Each record:
+6, 2026-10-16; sessions 7 to 13, 2026-10-17; sessions 14 and 15, 2026-10-18; sessions 16 and 17, 2026-10-21; session 18, 2026-10-22; sessions 19 to 23, 2026-10-24; sessions 24 and 25, 2026-10-25; sessions 26 and 27, 2026-10-29. Each record:
 context, decision, consequences, rejected. Status is **decided** (the Implementer follows it; reopening
 needs a new record) or **needs the project owner** (question in `open-questions.md`). Rule numbers are
 those of `docs/formats/exp_reader_rules.md` (v3.4 from session 4 on, v3.5 from session 8 on, v3.7 from session 24 on, **v3.9 from session 25 on**); section
@@ -14,6 +14,19 @@ numbers without a file name are those of `exp-reader-architecture.md`.
 names a commit of the owner's private archive, not of this repository (`HISTORY.md`); the hashes are not rewritten.
 Cites of `docs/prompts/...`, `.claude/` and `CLAUDE.md` name files the owner keeps privately; nothing a contributor must
 do depends on them (the checks a contributor runs are in `CONTRIBUTING.md`).
+
+## Changes in session 27
+
+- Basis: the owner's facts of session 27 (T-20 pushed: `4aa33e6`, `e1ed10b`; its push run and the two dispatches on
+  `e1ed10b`; the cut date; the throwaway users; the T-20 note's `pipefail` finding). Checked in this session (reading
+  only): `git log -1 --format=%ci` of S `9950ef2` (2026-10-26 15:50:21 -0500) and, in `~/p/oradmp-archive`, of P
+  `b55eb10` (2026-10-26 15:25:06 -0500); `%ct` of `e1ed10b` and `4aa33e6` = 1793310726 (= the pasted
+  `SOURCE_DATE_EPOCH`); `git show --stat e1ed10b` (the files of T-20 (g) plus the note); `.github/workflows/ci.yml` at
+  HEAD read step by step; `tools/release_build.sh` and `tools/fuzz_run.sh` (exit paths); GitHub's "Workflow syntax for
+  GitHub Actions" (the default shell table and `defaults.run.shell`). Nothing built.
+- New: **ADR-108** (T-20 recorded; the cut date; the throwaway users; `pipefail` in CI and task T-20b; the candidate and
+  Reviewer 6c's commit).
+- Amended in place (an "Amendment (session 27)" line): ADR-105 item 1 (the cut date), ADR-107 item 3 (the order).
 
 ## Changes in session 26
 
@@ -4738,9 +4751,12 @@ Session 3 text (history):
   1. **P and S.** P = `b55eb10376a9402aee36a1ee61779cf087c7bfb3`, the last commit of the private archive (2026-10-26). S =
      `9950ef204fb20b4d7f5d9da31467ffbe9aeeff60`, the first commit of the public repository
      `https://github.com/granddad-wolf/oradmp`, 925 files, no tags, author and committer GitHub's no-reply address
-     (checked). S's tree is P's tree plus `HISTORY.md` (checked: `git ls-tree -r` differs in that one line). S is dated
-     2026-10-26; the owner reports the cut complete on 2026-10-29 (first public runs included). `HISTORY.md` is the
-     owner's file; nothing in it is changed by an agent.
+     (checked). S's tree is P's tree plus `HISTORY.md` (checked: `git ls-tree -r` differs in that one line). **The cut
+     is 2026-10-26** (P 15:25:06 -0500, S 15:50:21 -0500, both checked in session 27), as `HISTORY.md` says. The
+     public settings, the first public runs and the two manual dispatches on S followed over the next days; they carry
+     no recorded date and no "cut complete" date is stated. `HISTORY.md` is the owner's file; nothing in it is changed by
+     an agent.
+     Amendment (session 27): the date "2026-10-29" given here for the cut in session 26 was wrong (ADR-108 item 2).
   2. **Scrub** (Q-14 step 1, option (i): in place, four archive commits before P): `0cbd165` (home path -> `<home>`, owner
      e-mail -> `<owner e-mail>` in `docs/design/{decisions,implementer-notes,open-questions}.md` and reviews 02, 03; one
      check line in `open-questions.md` reworded); `6a5869c` (`CONTRIBUTING.md` no longer points to `CLAUDE.md`);
@@ -4853,6 +4869,82 @@ Session 3 text (history):
   3. **Order**: T-20 and its run -> [OWNER] one `extended` and one `manylinux2014` dispatch on C, pasted -> Reviewer 6c ->
      Architect (record 6c, the a4 checklist) -> a closure task if 6c needs one -> [OWNER] the release (old canonical root
      moved aside first; Linux `manylinux_2_28` wheel + sdist; upload and tag the owner's) -> T-16b, T-16c.
+     Amendment (session 27): T-20b (ADR-108 item 5) comes between the `e1ed10b` dispatches and Reviewer 6c; C is T-20b's
+     commit, and the two dispatches are repeated on it.
 - Consequences: the plan's order table (session 26); the a4 checklist is written after 6c.
 - Rejected: splitting the fuzz job into its own task before T-20 (one more push and review for one small workflow job);
   a README section on the cut (the README says nothing about provenance; `HISTORY.md` does).
+
+## ADR-108 T-20 recorded; the cut date; the throwaway users; `pipefail` in CI (task T-20b); the candidate and Reviewer 6c's commit - decided (session 27)
+- Context: the owner's session 27 facts; the T-20 note's deviation (`set -o pipefail` in the `fuzz-check` step) and its
+  remark that other steps pipe into `tee` without it. Read in this session: `.github/workflows/ci.yml` at `e1ed10b` has
+  **no `defaults:` block and no step sets `shell:`** (`grep -n 'defaults\|shell:'` finds nothing). GitHub's "Workflow
+  syntax for GitHub Actions" (default shell table): an unspecified shell on Linux runs `bash -e {0}`; `shell: bash` runs
+  `bash --noprofile --norc -eo pipefail {0}`; `defaults.run.shell` sets the shell of every `run` step of the workflow.
+  Bash (GNU Bash manual, "Pipelines", "The Set Builtin"): without `pipefail` a pipeline's status is that of its last
+  command, so `X | tee f` is 0 whenever `tee` succeeds; `-e` stops a script only on a non-zero status it sees.
+- Decision:
+  1. **T-20 DONE**: `4aa33e6` (Architect session 26 documents) and `e1ed10bff1587c28861bcf0b1c6e9f950c788cce` (T-20), one
+     push `9950ef2..e1ed10b`. Push run on `e1ed10b`: `checks` nextest 488 passed + 4 skipped, `cargo deny` advisories /
+     bans / licenses / sources ok, pytest 256 passed (251 + T-20's five cases); `wheel` `release root: canonical`,
+     `check_dist: ok` (with the `Project-URL` rule), the three venvs 253 + 3 skipped, 246 + 4 skipped (pyarrow only:
+     `tests/test_consumers.py`'s seven tests are one module skip, `importorskip("pandas")`), 253 + 3 skipped (the three
+     probes), `SOURCE_DATE_EPOCH` 1793310726 (= `%ct` of `e1ed10b`, checked), wheel
+     `a3fb19c3cf43c830c1628806b44a86f09238dc211c74b2e012c82dc464903807`, sdist
+     `7a2ff91c6b96ffe864463b4605a60b718f00e28acdc7fef3f088d6573cffd83f`; `fuzz-check` green, 35 s to the end of its step,
+     `cargo check` 26.39 s (pinned nightly, cold runner; the VM: 23.1 s cold). Dispatched on `e1ed10b`: `extended` (fuzz
+     60 s each: `read` 68,805 runs, `walk` 221,819, `values` 14,799,481, 0 findings; 463 seed files; `t14_damage` 5
+     passed; `t17_synth` 30 passed + 1 skipped; fuzz clippy ok; bench report only; 435 s) and `manylinux2014` (wheel
+     `oradmp-0.1.0a4-cp311-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl`, sha256
+     `be6c78e5763cd3313f4e4ab5f2d4cb2f5e8487748486f56ae7b1fd213cc5160a`, not shipped; `auditwheel` 6.8.2 "consistent
+     with manylinux_2_17_x86_64", symbols up to `GLIBC_2.14`; 119 s; the abi3 tag in the file name, so ADR-106 item 3's
+     risk check (c) is shown by the name; 6c reads the `Tag:` line). The note's `set -o pipefail` deviation is accepted
+     (item 4 makes it redundant).
+  2. **The cut date is 2026-10-26** (P and S, checked); the session 26 text "2026-10-29" for the cut was wrong (ADR-105
+     item 1 amended). The settings, first public runs and manual dispatches followed on later days and carry no date in
+     the documents. The session dates in the file headers ("session 26, 2026-10-29") are the Architect sessions' dates
+     and stay.
+  3. **Throwaway users**: the literal passwords of the Docker corpus container's users `corpus_own` and `corpus_ru` stay
+     in the public tree (owner's decision: a local, throwaway container); decided.
+  4. **`pipefail`: a real hole, in four of the five jobs.** Every `run` step except `fuzz-check`'s check step runs
+     without `pipefail`. Each step that pipes into `tee` (or another command), and whether a failure of the piped
+     command is hidden (the step and the job stay green):
+
+     | job | step (line at `e1ed10b`) | pipeline | failure hidden? |
+     |---|---|---|---|
+     | checks | nextest (95) | `cargo nextest run ... \| tee` | **yes** for failing tests: the step's status is the skip-list `diff` that follows; a build failure shows (no `SKIP` lines, the `diff` fails). Whether nextest's fail-fast still prints the four `SKIP` lines is unverified; the check must not depend on it |
+     | checks | cargo deny (105) | `cargo deny check \| tee` | **yes**, completely: the pipeline is the step's only command |
+     | checks | pytest (128) | `pytest -rs -q \| tee` | **yes**: only a `SKIPPED` line after it can fail the step; failed or errored tests do not |
+     | wheel | release build (206) | `bash tools/release_build.sh ... \| tee` | partly: the `grep '^check_dist: ok'` and the `cp` of `SHA256SUMS` after it catch a failure up to and including `check_dist`; a failure after it (the script's report lines) is hidden |
+     | wheel | venvs (223, 229) | `python -c ... \| tee`; `pytest ... \| tee` | the first is guarded (the `case` on `oradmp.__file__` fails on an import error); the second **yes**: the skip, probe and `--version` checks after it do not see failed tests |
+     | fuzz-check | check (322) | `cargo check --locked \| tee` | no (`set -o pipefail`) |
+     | extended | seeds (380) | `tools/fuzz_seeds.sh \| tee` | **yes**, completely |
+     | extended | fuzz `read`, `walk`, `values` (383, 386, 389) | `tools/fuzz_run.sh <t> 60 \| tee` | **yes**, completely: `fuzz_run.sh` exits 1 on a finding (its last lines), the step stays green, so the crash-file upload (`if: failure()`) never runs; only the summary's findings count shows it. The worst of the list |
+     | extended | long property runs (393, 394) | two `cargo nextest ... \| tee` | **yes**: only the `.proptest-regressions` check after them can fail the step |
+     | extended | fuzz clippy (403) | `cargo clippy -- -D warnings \| tee` | **yes**, completely |
+     | extended | bench (406) | `cargo bench ... \| tee` | **yes** (a report, but a bench that fails to build or panics shows green) |
+     | manylinux2014 | build (487 to 491) | `basename`, `auditwheel --version`, `auditwheel show`, `unzip \| grep`, `sha256sum`, each `\| tee` | `auditwheel show` **yes** (the two tag `grep`s after it do not read its output); `unzip \| grep` is guarded by the `grep -q` of `tags.txt`; the other three cannot fail in a way that matters |
+     | all | Job summary (`if: always()`) | pipes inside `$( )` or ending in `\|\| true` | by design (a report) |
+
+     No past run is in doubt as far as the pastes show: every pasted summary of S and `e1ed10b` gives passed counts,
+     `ok` for the four `cargo deny` checks and 0 fuzz findings, read from the logs, not from the step status.
+  5. **Task T-20b** (plan; Implementer; Sonnet; one small commit, `ci.yml` only): a workflow-level `defaults: run: shell:
+     bash`, so every `run` step runs `bash --noprofile --norc -eo pipefail {0}`; the `set -o pipefail` line of
+     `fuzz-check` removed (one mechanism); the two constructs that `pipefail` would turn wrong rewritten (the `probes=`
+     count in `run_one`, and the `find | grep -q` test of the property step, which under `pipefail` can take the wrong
+     branch when `find` gets SIGPIPE); the proof on the VM and on a throwaway branch (plan T-20b). **Before Reviewer
+     6c**: the release is then built from the commit 6c reviews, and that commit's CI can be trusted to go red. T-20b's
+     commit is **C**, the a4 candidate (the version stays `0.1.0a4`, set by T-20). T-20's hashes (wheel `a3fb19c3...`,
+     sdist `7a2ff91c...`, the `manylinux2014` `be6c78e5...`) and the `e1ed10b` dispatches stay in the documents as
+     T-20's evidence only; they name no candidate and no release (C has another commit time, so another
+     `SOURCE_DATE_EPOCH`, sdist and wheel). The release cross-check uses C's CI sdist hash.
+  6. **Reviewer 6c reviews C = T-20b's commit** on the public `master` (its full hash goes into the 6c prompt after the
+     owner's commit and green push run); scope and builds in the plan ("Release 0.1.0a4", session 27 block).
+- Consequences: one more push, one throwaway-branch dispatch and two dispatches on C before 6c (free on the public
+  repository). CONTRIBUTING's CI paragraph stays true (it names no shell). Every new `run` step gets `pipefail` without
+  anyone remembering it.
+- Rejected: `set -o pipefail` in each affected step (thirteen steps to edit, and the next new step can forget it, as
+  these did); `shell: bash` on each step (same); `PIPESTATUS` checks (more code for the same effect); T-20b after a4 (a4 would
+  ship from a commit whose CI shows green on a failed `cargo deny` or a fuzz finding, and 6c would review a commit that
+  is not the release's); leaving `extended` and `manylinux2014` alone because they are dispatch-only (the `extended` run
+  on C is a release step, ADR-106 item 1).
