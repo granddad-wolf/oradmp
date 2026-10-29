@@ -3100,3 +3100,23 @@ workspace with the pinned nightly), so no check caught it; CI does not build it 
   the a4 candidate C; T-20's hashes stay as T-20's evidence only.
 - **Release-build check in a scratch clone with the diff committed there**: right way to do it; keep it for T-20b if
   you build at all (T-20b needs no build: `ci.yml` only).
+
+## T-20b `pipefail` for every CI step (Implementer, session 27)
+
+- **Fix**: `defaults: run: shell: bash` after `concurrency:`; header comment line; no step has `shell:`; `fuzz-check`'s
+  `set -o pipefail` line removed. `ci.yml` matched ADR-108 item 4 (every step and pipe listed was there, none else).
+- **Rewritten**: (1) `run_one`'s `probes=` ends `... | awk ... || true)`: without it a log with no probe skip makes the
+  first `grep` fail the pipeline and `set -e` stops the function silently; now `awk` prints 0 and the "expected exactly 3"
+  message appears. (2) property step: `if [ -n "$(find . -name '*.proptest-regressions' -print -quit)" ]; then`.
+- **Every other pipeline under `pipefail`**: `tee` pipes of nextest, deny, pytest, release build, venv `python -c`, venv
+  pytest, seeds, fuzz targets, both property runs, fuzz clippy, bench, `basename`, `auditwheel`, `sha256sum`: ok (now fail
+  the step when the left side fails, intended). `awk ... | sort > file`: ok. `unzip -p | grep '^Tag:' | tee`: ok (no
+  `-q`, grep reads to the end). `skipped="$(grep | grep -v | grep -v || true)"`: ok. Summary steps: ok (inside `$( )` or
+  `|| true`).
+- **VM proof**: PyYAML parse (scratch script, system python3 has PyYAML 6.0.2; `.venv` has none), `bash -n` of the 37
+  `run` blocks: ok. `bash --noprofile --norc -eo pipefail -c '{ true; exit 7; } | tee /dev/null; echo reached'`: exit 7, no
+  `reached`; with `bash -e -c`: `reached`, exit 0. Construct (1): three probe skips gives `3`; none prints the message,
+  exit 1 (the old line under pipefail exits 1 silently). Construct (2): tree without file takes the clean branch, with
+  `x.proptest-regressions` the regression branch. Fixture checksums ok; fmt ok; nextest 488 passed + 4 skipped; pytest 256.
+- **Proof patch** (one run, plan (f)): prepared outside the tree for the owner; ids `nextest deny pytest` / `build venvs` /
+  `seeds fread fwalk fvalues props fclippy bench` / `audit`.

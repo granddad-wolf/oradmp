@@ -7,6 +7,9 @@
 #   extended       workflow_dispatch only: fuzz seeds, three fuzz targets, long property runs, fuzz clippy, bench report
 #   manylinux2014  workflow_dispatch only: risk checks (b) and (c) of ADR-53 item 7 (the wheel is not shipped)
 #
+# Every `run` step runs `bash --noprofile --norc -eo pipefail {0}` (defaults.run.shell below; T-20b, ADR-108): a failing
+# command in front of `| tee` fails its step. A new step needs nothing; never set `shell:` on a step.
+#
 # Never in this file: a publish step, an upload except the fuzz crash artifact of `extended` (ADR-92 item 1), a secret,
 # a file of corpus/work/, the memory or throughput tests (they stay #[ignore]), a benchmark gate. Every job ends with a step that writes a job summary (ADR-87 item 4).
 name: CI
@@ -23,6 +26,11 @@ permissions:
 concurrency:
   group: ci-${{ github.ref }}-${{ github.event_name }}
   cancel-in-progress: true
+
+# one mechanism for the whole file: `shell: bash` is `bash --noprofile --norc -eo pipefail {0}` (the default is `bash -e {0}`)
+defaults:
+  run:
+    shell: bash
 
 env:
   CARGO_BUILD_JOBS: "2"
@@ -235,7 +243,7 @@ jobs:
               exit 1
             fi
             local probes
-            probes="$(grep '^SKIPPED' "$log" | grep 'tests/test_internal.py' | sed -E 's/^SKIPPED \[([0-9]+)\].*/\1/' | awk '{ n += $1 } END { print n + 0 }')"
+            probes="$(grep '^SKIPPED' "$log" | grep 'tests/test_internal.py' | sed -E 's/^SKIPPED \[([0-9]+)\].*/\1/' | awk '{ n += $1 } END { print n + 0 }' || true)"
             if [ "$probes" != 3 ]; then
               echo "expected exactly 3 probe tests skipped in $name, got ${probes:-0}" >&2
               exit 1
@@ -317,7 +325,6 @@ jobs:
 
       - name: cargo check --locked in fuzz/
         run: |
-          set -o pipefail   # the default shell of a step has no pipefail; a failed check must fail the step
           cd fuzz
           cargo check --locked 2>&1 | tee "$RUNNER_TEMP/logs/fuzz-check.log"
 
@@ -392,7 +399,7 @@ jobs:
         run: |
           PROPTEST_CASES=10000 cargo nextest run -p oradmp-core --test t14_damage -j 2 2>&1 | tee "$RUNNER_TEMP/logs/t14.log"
           PROPTEST_CASES=2000 cargo nextest run -p oradmp-core --test t17_synth -j 2 2>&1 | tee "$RUNNER_TEMP/logs/t17.log"
-          if find . -name '*.proptest-regressions' | grep -q .; then
+          if [ -n "$(find . -name '*.proptest-regressions' -print -quit)" ]; then
             echo "a proptest regression file was written" >&2
             exit 1
           fi
