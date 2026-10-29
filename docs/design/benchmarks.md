@@ -6,6 +6,15 @@ ADR-78). Sources: the T-15 note and Reviewer session 4 (baseline 1, now section 
 them (baseline 2, section 4). Nothing here is a promise to users (arch 4.3: "reported, not promised"); the README
 carries no performance figure.
 
+## Changes in session 26
+
+- T-19 (m) (archive `0520cd5`, code of `1bb7785`) measured under section 5: no regression; one rule-3 "watch", the
+  `T_BIG` scan 4.8 to 6.8 % slower than baseline 2 in three runs (the `T_BIG` read within 1.2 %; memory ratios 1.01 to
+  1.05). Baseline 2 stays; Reviewer 6c repeats step 3b on the a4 candidate (ADR-106 item 2). Figures in the T-19 (m)
+  note of `implementer-notes.md`.
+- Section 7: the public repository's runner has 4 CPUs (the private one had 2); the `extended` report of S was not
+  pasted and is not listed. Even less comparable than before.
+
 ## Changes in session 23
 
 - New section 7: the first CI benchmark report (`extended` job, `d081109`), for orientation only; never a baseline and
@@ -252,7 +261,7 @@ peaks of rule 4; a `T_BIG` peak limit of its own is set only with the new baseli
 
 ## 7. CI reports (not baselines; ADR-92 item 2)
 
-GitHub's shared `ubuntu-24.04` runner (2 vCPU in the private repository, owner's report), `cargo bench -p
+GitHub's shared `ubuntu-24.04` runner (2 vCPU in the private repository, 4 CPUs in the public one since session 26, owner's reports), `cargo bench -p
 oradmp-core --bench decode`, one run per dispatch, criterion's estimate as the summary prints it. Not measured under
 section 2's conditions; section 5's rules do not apply; a difference from section 4 means nothing by itself.
 

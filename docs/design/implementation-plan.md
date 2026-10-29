@@ -1,11 +1,23 @@
 # Legacy EXP reader: implementation plan
 
 Architect session 1, 2026-10-07; session 2, 2026-10-14; sessions 3 and 4, 2026-10-15; sessions 5 and
-6, 2026-10-16; sessions 7 to 13, 2026-10-17; sessions 14 and 15, 2026-10-18; sessions 16 and 17, 2026-10-21; session 18, 2026-10-22; sessions 19 to 23, 2026-10-24; sessions 24 and 25, 2026-10-25. Tasks for the
+6, 2026-10-16; sessions 7 to 13, 2026-10-17; sessions 14 and 15, 2026-10-18; sessions 16 and 17, 2026-10-21; session 18, 2026-10-22; sessions 19 to 23, 2026-10-24; sessions 24 and 25, 2026-10-25; session 26, 2026-10-29. Tasks for the
 Implementer, in order; each is meant for one session. "Rules" are those of
 `docs/formats/exp_reader_rules.md` (v3.4; v3.5 from session 8; v3.6 from session 17; v3.7 from session 24; v3.9 from session 25); "arch n" is a section of `exp-reader-architecture.md`. Every
 task ends with `cargo fmt`, `cargo clippy -- -D warnings` and `cargo nextest run` green (`CLAUDE.md`,
-definition of done) and adds no `unsafe` to the core.
+definition of done; in the public repository the same checks are listed in `CONTRIBUTING.md`, "Development setup")
+and adds no `unsafe` to the core. Commit hashes cited before session 26 name commits of the private archive
+(`HISTORY.md`, ADR-105).
+
+## Changes in session 26
+
+- **The cut is done** (ADR-105): P = archive `b55eb10`, S = `9950ef2` (public `https://github.com/granddad-wolf/oradmp`).
+  **T-19b: DONE** (`1bb7785`); **T-19 (m): DONE** (`0520cd5`); both archive commits, in S's tree.
+- New **T-20** (ADR-107): the a4 version commit with `[project.urls]`, the README / CONTRIBUTING edits for the public
+  tree and the `fuzz-check` push job (ADR-106 item 1). Sonnet.
+- "Release 0.1.0a4": session 26 block (Reviewer 6c's scope and where it reads the archive; the release rule from a4 on;
+  the tag to `origin` only). "CI minutes budget": lapses for the public repository. New order table (session 26); the
+  session 25 table is history.
 
 ## Changes in session 25
 
@@ -2050,7 +2062,7 @@ record with full hashes. The billed-minutes figure: O-23 (b).
 - Touches: as (l). **Model: Sonnet.** Reviewed in **Reviewer 6c** with T-17b, T-16a, T-16a2 and the version commit
   (ADR-98 item 3).
 
-## T-19b The three conventional LONG / LONG RAW forms; the session 19 and 20 fixtures in the tests; the TSLTZ warning (session 25; ADR-99 to ADR-103) - next
+## T-19b The three conventional LONG / LONG RAW forms; the session 19 and 20 fixtures in the tests; the TSLTZ warning (session 25; ADR-99 to ADR-103) - DONE (2026-10-25, archive `1bb7785`; nextest 488 passed + 4 skipped, pytest 251; equal on the first public CI run of S, ADR-105 item 9; to be reviewed in Reviewer 6c)
 
 - Goal: the reader follows rules v3.9 [R2], [R8], [Y8], [Y9]: every conventional LONG and LONG RAW size the fixtures show
   reads, on both types; 65,522 to 65,524 bytes read with a warning; a field starting `fb ff` / `fc ff` stops by name; the
@@ -2186,7 +2198,7 @@ record with full hashes. The billed-minutes figure: O-23 (b).
   the summaries.
 - Touches: as (o). **Model: Sonnet.** Reviewed in **Reviewer 6c** (ADR-104 item 2).
 
-## T-19 (m) Step 3b on T-19b's commit; the fuzz runs (session 25; ADR-104 item 1) - after T-19b
+## T-19 (m) Step 3b on T-19b's commit; the fuzz runs (session 25; ADR-104 item 1) - DONE (2026-10-26, archive `0520cd5`; no regression, one watch: `T_BIG` scan -4.8 to -6.8 %, ADR-106 item 2; fuzz 600 s each, 0 findings, after the one-line `values.rs` fix)
 
 - Goal: the benchmark and memory figures and the 600-second fuzz runs for the core of T-19 and T-19b, measured once.
 - Needs from the owner: `ora11` and `ora18` stopped, no other build or session; `ORADMP_WORK` set to the folder that holds
@@ -2196,6 +2208,65 @@ record with full hashes. The billed-minutes figure: O-23 (b).
   note, each with its rule-3 verdict; a regression beyond rule 3 stops the task for the Architect; (c) `tools/fuzz_run.sh`
   600 s for `walk`, `read`, `values`, 0 findings, run counts in the note; (d) no file outside the note changes (`git
   status`); the owner commits the note.
+
+## T-20 The a4 version commit: version, `[project.urls]`, README and CONTRIBUTING for the public tree, the fuzz compile job (session 26; ADR-105 to ADR-107) - next
+
+- Goal: the exact a4 candidate C: version `0.1.0a4`, the source link on PyPI, documents a stranger can follow, and a push
+  job that compiles `fuzz/`.
+- Inputs: ADR-90, ADR-93, ADR-104 item 4, ADR-105 to ADR-107; `tests/test_version.py`, `tests/check_dist.py`,
+  `tests/test_check_dist.py`, `tests/test_project_name.py` (no relative link in the README); `.github/workflows/ci.yml`
+  (the `extended` job's toolchain step); `README.md`, `CONTRIBUTING.md`, `HISTORY.md` (read only); PyPA's core metadata
+  specification (`Project-URL`) and "Well-known Project URLs in Metadata" (PEP 753); maturin's documentation of
+  `[project.urls]` for the pinned 1.15.0.
+- Needs from the owner: one commit and one push to `origin`, then the pasted summaries (ADR-92 item 3); afterwards one
+  `extended` and one `manylinux2014` dispatch on C, pasted (input of Reviewer 6c). No tag. The new job uses only
+  `actions/checkout` at the existing pin, so the Actions allow-list needs no change (ADR-105 item 8); if the Implementer
+  needs any other action, it stops and asks.
+- **Done when:**
+  (a) **Version**: root `Cargo.toml` `version = "0.1.0-alpha.4"`; `Cargo.lock` (`oradmp-core`, `oradmp-py`) and
+  `fuzz/Cargo.lock` (`oradmp-core`) entries the same (no other line of either lock changes: `git diff` shows the three
+  version lines only); every version in the README `0.1.0a4` (the
+  pip pins, the wheel and sdist file names); `git grep -n '0\.1\.0a3\|0\.1\.0-alpha\.3' -- . ':!docs' ':!corpus'
+  ':!HISTORY.md'` empty; `tests/test_version.py` green.
+  (b) **`[project.urls]`** in `pyproject.toml`: `Source = "https://github.com/granddad-wolf/oradmp"`, `Issues =
+  "https://github.com/granddad-wolf/oradmp/issues"`. `check_dist.py` (in `check_metadata`, so for the wheel's `METADATA`
+  and the sdist's `PKG-INFO` alike): exactly the `Project-URL:` lines `pyproject.toml` declares (label and URL, in any
+  order), else one FAIL line each;
+  cases in `tests/test_check_dist.py`: right lines pass; a missing line, a changed URL and an extra line each fail.
+  Mutation: the rule compares labels only: the changed-URL case fails.
+  (c) **README**: the LONG sentence of ADR-104 item 4 stands verbatim in "What it reads" (it does since T-19b; checked,
+  not rewritten); "From source": the clone line names the repository with its absolute address (`pip install .   # in a
+  clone of https://github.com/granddad-wolf/oradmp`); Rust 1.99 and "pip fetches maturin" checked against
+  `rust-toolchain.toml` / `rust-version` and `pyproject.toml`; "Limits" checked line by line against the current reader
+  (the T-19b lines present; nothing removed or added unless a line is false, then the note says which). No word on the
+  cut or the archive (that is `HISTORY.md`'s). `tests/test_project_name.py` green (no relative link).
+  (d) **CONTRIBUTING**: "Release wheel": "`d081109` gave the same wheel ..." names it as a commit of the private archive
+  (see `HISTORY.md`) and adds one sentence: from 0.1.0a4 on a release is built from a commit of this repository with
+  `--release`; "CI": a push runs **three** jobs (`fuzz-check` described in one sentence); the definition-of-done list
+  says `cargo deny check` (as CI runs it); one sentence "Report a security problem privately with GitHub's 'Report a
+  vulnerability' (Security tab), not in an issue." Nothing else; no mention of private files.
+  (e) **`HISTORY.md`** unchanged (`git diff --stat` does not list it).
+  (f) **`fuzz-check` job** (ADR-106 item 1) on `push` and `workflow_dispatch`: `actions/checkout` at the existing pin with
+  `persist-credentials: false`; the nightly of `fuzz/rust-toolchain.toml` installed as in `extended`; `cd fuzz && cargo
+  check --locked`; a Summary block (commit, runner image, fuzz toolchain, result, job duration). Workflow `permissions`
+  unchanged; no secret; no cache that the other jobs do not already use. Shown first on the VM: `cd fuzz && cargo check
+  --locked` passes (the cold and warm times in the note); with `fuzz/fuzz_targets/values.rs` line 51 reverted to the
+  pre-`0520cd5` pattern it fails (mutation, restored after). YAML parse and `bash -n` of the new block.
+  (g) **Nothing else**: `git diff --stat S C -- . ':!docs'` lists only `Cargo.toml`, `Cargo.lock`, `fuzz/Cargo.lock`,
+  `pyproject.toml`, `README.md`, `CONTRIBUTING.md`, `tests/check_dist.py`, `tests/test_check_dist.py`,
+  `.github/workflows/ci.yml`; and the note in `docs/design/implementer-notes.md`.
+  (h) **Checks** (definition of done): `sha256sum -c` in `11g/`, `11g-cp1251/`, `18c/`; `cargo fmt --check`; `cargo clippy
+  -- -D warnings` and `cargo clippy --all-targets -- -D warnings`; `cargo nextest run -j 2` (488 passed, 4 skipped:
+  unchanged); `cargo deny check`; `maturin develop --features test-probes`; `ruff check`, `ruff format --check`, `mypy`;
+  `pytest -rs` (251 + the new `check_dist` cases, 0 skipped); counts in the note.
+  (i) **CI**: the owner's one push of C; the run green: `checks` counts equal (h)'s, `wheel` `release root: canonical`,
+  `check_dist: ok` (now with the URL rule), the three venvs' counts as on S plus the new cases, the METADATA of the CI
+  wheel shows both `Project-URL` lines (the summary or `check_dist`'s output), `fuzz-check` green with its duration; the
+  CI sdist hash recorded (it differs from S's: another commit time).
+- Touches: as (g). Not `crates/*/src`, `python/`, `corpus/`, `HISTORY.md`. **Model: Sonnet.** One build at a time.
+  Reviewed in **Reviewer 6c**.
+- The owner, after the green run: dispatches `extended` and `manylinux2014` on C once and pastes both; starts Reviewer 6c.
+  No tag until the release step.
 
 ## T-18 The command-line tool `oradmp` (session 18; ADR-72) - DONE (2026-10-24, `2ba62eb`; ran before T-16, ADR-73 swap; 412 Rust tests, 196 pytest; findings ruled by ADR-75; (l)'s CI part moved to T-16; reviewed: review-06a, SF-1 and SF-2 go to T-18c)
 - Goal: `oradmp` as a thin console tool on the public Python API: list tables, show columns, print the first rows,
@@ -3035,7 +3106,50 @@ or more.
   chunks from 65,534 bytes; confirmed on 11g and 18c up to 100,000 bytes), and a value of 65,522 to 65,524 bytes, a size
   no test file has, is read with a `W-UNTESTED-LAYOUT` warning."
 
+**Session 26 (ADR-105 to ADR-107; this block wins where the text above differs):**
+- **Done**: T-19b (`1bb7785`), T-19 (m) (`0520cd5`), the cut (P `b55eb10`, S `9950ef2`). C (the candidate) will be T-20's
+  commit in the public repository. **Release rule**: from a4 on, every release is built from a commit of the public
+  repository with `tools/release_build.sh C --twice --release` at `/var/tmp/oradmp-release`; the tag goes to `origin`
+  only; the Gogs archive gets nothing new.
+- **Content**: unchanged (T-17b, T-16a, T-16a2, T-18d, T-19, T-19b) plus T-20 (version, `[project.urls]`, README and
+  CONTRIBUTING lines, `fuzz-check`). Linux x86_64 `manylinux_2_28` wheel and the sdist.
+- **Reviewer 6c** (Opus; writes `docs/review/review-06c-...md` only). **Where it reads**: its own scratch clone of the
+  public repository below `/var/tmp` (e.g. `/var/tmp/oradmp-review-6c/`); into that clone it fetches the archive
+  (`git fetch ~/p/oradmp-archive +refs/heads/master:refs/remotes/archive/master` and the three `v0.1.0a*` tags), which
+  reads `~/p/oradmp-archive` without changing it; the owner's clone is not touched. Tree diffs across the cut then work
+  (`git diff <archive commit> C`). **What it builds where**: everything in its scratch folder, one build at a time; S's
+  tree is P's tree plus `HISTORY.md`, so a build of C stands for the archive's code with T-20 on top; step 3b alone on the
+  machine, Oracle containers stopped, `ORADMP_WORK` = the parent folder of `18c/t_big_exp_18c.dmp` (as T-19 (m) found). Items (replacing item 1's bases; items 2 to 8 as
+  before):
+  1. **Diff**: `git diff --stat edc62a5 C -- . ':!docs'` lists only the files of T-17b, T-16a, T-16a2, T-19, T-19b, the
+     T-19 (m) fix (`fuzz/fuzz_targets/values.rs`), the scrub commits (`CONTRIBUTING.md`, `corpus/scripts/`,
+     `corpus/sql/00_setup.sql`, `.gitignore`, the removed private paths), `HISTORY.md` and T-20; `git diff --stat 460aef5 C
+     -- crates/oradmp-core/src` lists T-19's and T-19b's files only; `git diff --stat 1bb7785 C -- crates python tests`
+     lists T-20's test files only.
+  2. to 8. as the session 22 to 25 blocks (T-17b, T-16a / T-16a2 and the CI checks of ADR-93 item 3 now on `ci.yml` at
+     C, with the new `fuzz-check` job; the candidate built twice and installed; T-19 and T-19b mutations and checks;
+     golden files regenerated and compared; ADR-99's table against `rows.rs`; **step 3b** on C against baseline 2 and
+     T-19 (m)'s figures, with ADR-106 item 2's same-sitting `460aef5` run of the `T_BIG` scan if the watch shows again).
+  9. **T-20**: (a) to (i) read and repeated (version grep, the `Project-URL` cases and mutation, the `fuzz-check`
+     mutation, the README and CONTRIBUTING lines read as a stranger would: every command runnable from the public tree,
+     no step that needs a private file).
+  10. **The cut**: (a) scrub residue on C, counts only, never a value printed: `git grep -c` for the Reviewer's `$HOME`,
+     `$(hostname)`, the archive's author e-mail (`git -C ~/p/oradmp-archive log -1 --format=%ae 0520cd5`), the token forms
+     of Q-14 check 2, and `IDENTIFIED BY` (expected: the two throwaway users only, ADR-105 item 2); `git log -p` of the
+     public history for the same; (b) `HISTORY.md` against the archive: P, the a1 / a2 / a3 hashes and tags, the scrub
+     list, the three private paths absent from C; (c) the settings of ADR-105 item 8 as far as the tree shows them (every
+     `uses:` is GitHub's or the `taiki-e` pin of the allow-list; no workflow asks for write permission); the GitHub
+     settings themselves are the owner's statement, recorded, not checked; (d) the public CI: the pasted summaries of S
+     and C (push, `extended`, `manylinux2014`) against the Reviewer's clean-clone counts and sdist hash; (e) no public
+     document sends a contributor to a private file as a step.
+  11. **Verdict** for the a4 upload of C.
+- **After 6c**: an Architect session records it and writes the a4 checklist (with the names: the `mv` of the old
+  canonical root, the `extended` run on C, the tag to `origin`).
+
 ## CI minutes budget (session 23; ADR-92 item 4)
+
+**Session 26**: the repository is public; standard hosted runners are free there and this budget lapses (O-23 (b)
+closed, ADR-105 item 10). The public runner reports 4 CPUs (benchmarks never compare CI figures, ADR-92 item 2).
 
 | item | figure | source |
 |---|---|---|
@@ -3050,7 +3164,31 @@ Rules while private: a push runs only `checks` and `wheel`; a dispatch only when
 needed; T-16b: at most three; T-16c: as its note asks, Linux only); the note records the minutes of each dispatched run.
 After the cut the budget lapses for standard runners; the dispatch rule for `extended` stays (it is long, not costly).
 
-## Order of the next tasks (session 25)
+## Order of the next tasks (session 26)
+
+Machine rule unchanged (session 16 below). CI runs on the public GitHub repository and is not a build on the VM.
+**OWNER** marks an owner action.
+
+| order | task | can start | runs in parallel with | touches | model | waits for a human? |
+|---|---|---|---|---|---|---|
+| done | T-19b (`1bb7785`); T-19 (m) (`0520cd5`); the cut (P `b55eb10`, S `9950ef2`; first public runs green); this session | - | - | - | - | - |
+| 1 | **T-20** a4 version commit (ADR-107; plan T-20) | now | nothing that builds on the VM | version files, `pyproject.toml`, README, CONTRIBUTING, `check_dist.py` + cases, `ci.yml` (`fuzz-check`), the note | Sonnet | **OWNER** commits, one push to `origin`, pastes the run; no tag |
+| 1' | **OWNER**: one `extended` and one `manylinux2014` dispatch on C, pasted | after row 1's run is green | - | GitHub | - | yes |
+| 1'' | **OWNER**: O-24 (the private `CLAUDE.md` text) | any time | everything | private repository | - | yes |
+| 2 | **Reviewer 6c** (items 1 to 11 of the session 26 block; step 3b) | after row 1' | **nothing** (it builds; step 3b alone) | `docs/review/` | Opus | **OWNER** starts it, containers stopped |
+| 3 | **Architect**: record 6c; the a4 checklist; a closure task if needed | after row 2 | - | `docs/design/` | - | no |
+| 3' | (closure task and its review, only if row 3 names one) | after row 3 | - | as named | Sonnet / Opus | as named |
+| 4 | **OWNER**: `mv /var/tmp/oradmp-release /var/tmp/oradmp-release-<what it holds>` | before row 5 | everything | the VM | - | yes |
+| 5 | **OWNER: release 0.1.0a4**: Linux x86_64 `manylinux_2_28` wheel + sdist, `tools/release_build.sh C --twice --release` at the canonical root; hash cross-check with C's CI; Rocky Linux 8 test; TestPyPI, then PyPI; the tag pushed last to `origin` | after row 3 (and 3') without a blocking finding | nothing that builds | a tag | - | **OWNER** all steps (upload and tag) |
+| 6 | **T-16b** macOS / Windows; **T-16c** `manylinux2014` acceptance (ADR-106 item 3) | after the a4 tag | Data Pump planning | `.github/workflows/`, `tools/`, `check_dist.py`, gates, README | Sonnet | **OWNER** for T-16c's Rocky 8 run |
+| 6' | **Data Pump** (phase 2): an Architect session plans it | after a4 | row 6 | `docs/design/` | - | scope with the owner |
+| 7 | **Analyst 21** (documents only; "Inputs for Analyst session 21"), if not done | any time | everything | `docs/formats/` | - | **OWNER** starts it |
+
+Standing owner items, none blocks a4 (ADR-106 item 4): Q-4 with `oradmp survey` from the a4 wheel; R-052 only on Q-4's
+condition; R-046 (low); the RHEL 8 host test with the a4 wheel; scratch folders; `oradmp-private` and the snapshot folder
+(keep until the a4 tag, then the owner's choice); Q-13; O-20 (optional).
+
+## Order of the next tasks (session 25, history)
 
 Machine rule unchanged (session 16 below). CI runs on GitHub and is not a build on the VM. **OWNER** marks an owner
 action.

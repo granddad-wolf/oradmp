@@ -1,9 +1,21 @@
 # Legacy EXP reader: open questions, requests, risks
 
 Architect session 1, 2026-10-07; session 2, 2026-10-14; sessions 3 and 4, 2026-10-15; sessions 5 and
-6, 2026-10-16; sessions 7 to 13, 2026-10-17; sessions 14 and 15, 2026-10-18; sessions 16 and 17, 2026-10-21; session 18, 2026-10-22; sessions 19 to 23, 2026-10-24; sessions 24 and 25, 2026-10-25. "arch n" is a
+6, 2026-10-16; sessions 7 to 13, 2026-10-17; sessions 14 and 15, 2026-10-18; sessions 16 and 17, 2026-10-21; session 18, 2026-10-22; sessions 19 to 23, 2026-10-24; sessions 24 and 25, 2026-10-25; session 26, 2026-10-29. "arch n" is a
 section of `exp-reader-architecture.md`; rule numbers are those of `docs/formats/exp_reader_rules.md`
 (v3.4; v3.5 from session 8; v3.6 from session 17; v3.7 from session 24; v3.9 from session 25).
+
+## Changes in session 26
+
+- (a) **Q-14 closed** (the cut is done; ADR-105): its section and "Q-14 steps (session 23)" carry a session 26 status
+  (every step done or moved). Closed with it: **O-19** ((a) by the cut; the Project-URL goes into T-20), **O-23** ((a)
+  done in T-16a2; (b) lapses on a public repository). Q-11's row names the renamed private repository. New **O-24** (the
+  private `CLAUDE.md` text for the public layout; not a gate). Pending owner actions: T-20's commit, push and paste; the
+  `extended` and `manylinux2014` dispatches on C; the `mv` of the old canonical root before the release; the release;
+  O-24; Q-4 (with the a4 wheel), R-052 (on Q-4's condition), R-046 (low), the RHEL 8 host test, scratch folders,
+  `oradmp-private` and the snapshot folder; Q-13; O-20 (optional). None blocks a4 (ADR-106 item 4).
+- (b) No new request for the Analyst (T-20 and the cut need no format fact). Next free number stays **R-053**.
+- (c) **Risk 27 closed**; risk 28: session 26 line.
 
 ## Changes in session 25
 
@@ -318,10 +330,10 @@ section of `exp-reader-architecture.md`; rule numbers are those of `docs/formats
 | Q-9 (**closed**, owner: RHEL 8+ / x86_64 only; ADR-48, ADR-53) | What is the **oldest Linux of the ETL hosts** that will install the wheel (distribution and version, or `ldd --version`)? The VM's build was tagged `manylinux_2_34` (glibc 2.34: RHEL 9, Ubuntu 22.04, Debian 12 and later), which RHEL / Oracle Linux 8 refuses (ADR-48). | Build the first release for **`manylinux_2_28`** (glibc 2.28: RHEL / Oracle Linux 8, Debian 10, Ubuntu 20.04 and later) with `maturin --zig`, no Docker; if a host is older (RHEL 7, glibc 2.17), say so and T-13 builds `manylinux2014` instead. Please also confirm x86_64 Linux is the only platform needed for the alpha. | the wheel tag of T-13 only (default 2.28) |
 | Q-8 (**closed**, owner: `Copyright (c) 2026 Maksim Tkachenko`; in `LICENSE-MIT` since T-13) | Which **copyright line** goes into `LICENSE-MIT` (the MIT text needs one; the Apache text does not)? The Implementer writes both files in T-13 (ADR-45 item 2). | `Copyright (c) 2026 Maksim Tkachenko` (the name of the repository's git author); if the project should name its contributors instead, `Copyright (c) 2026 The oradump contributors`. | `LICENSE-MIT` in T-13 only |
 | Q-10 (**closed**, session 18: answered "upload"; 0.1.0a2 uploaded to TestPyPI and PyPI on 2026-10-22, ADR-70. History: session 12; **name part closed**, owner, session 13: the name is **`oradmp`**, free on PyPI, checked 2026-10-18; ADR-54. **Upload part open**) | ~~Is the name `oradump` free on PyPI and crates.io?~~ (taken on PyPI by another project; the project is now `oradmp`; crates.io names not needed, ADR-50 item 3). Still open: is 0.1.0a1 **uploaded to PyPI**, or handed out as the wheel and sdist files only? **Session 15** (Q-12 answered, ADR-63): 0.1.0a1 is handed out only; the open part is now: **is 0.1.0a2, the build of the commit Reviewer 4 approved, uploaded to PyPI?** **Session 16**: the answer is needed before T-13i's version commit, because the a2 README's install text depends on it (ADR-67 item 2). | Session 16: **yes**, after Reviewer session 5 (closure) and the a2 RHEL 8 install; **TestPyPI first**, then PyPI, by the owner with `uv publish`, token typed in his own shell and never stored in a file or shown to an agent; first upload with an account-wide token, then a project-scoped one (ADR-67, run B step 10). Session 15: **yes, upload 0.1.0a2** after Reviewer 4 and its RHEL 8 install (checklist run B); the upload secures the name. (Session 12 text:) Upload 0.1.0a1 to PyPI only after Reviewer session 3 and the owner's RHEL 8 install (checklist steps 1, 7): a pre-release version is installed only when asked for (`oradmp==0.1.0a1`), the upload is what **secures the name** (until then anyone can take it, risk 18), and the README then shows that line. If the package should stay internal for now, hand out the files with their SHA-256; the README already says so. | T-13i (l) (README text), run B step 10 |
-| Q-11 (session 12; **closed**, session 20: GitHub Actions on the owner's private repository `granddad-wolf/oradmp`, ADR-79; what T-16 still needs is O-21 / O-22, the visibility is O-19 (a)) | Which **CI service** may build and test the project on Windows, macOS and Linux for T-16 (ADR-53)? The repository has no CI configuration and its remote is a self-hosted Git server; the VM cannot run Windows or macOS tests. | A hosted service with Windows, macOS (arm64 and x86_64) and Linux runners, through a mirror of the repository; the corpus is synthetic (ADR-45 item 6) and real dumps never enter the repository, so a mirror carries no real data. Self-hosted runners work too if the owner has the machines. Whether the repository may be mirrored publicly is the owner's call. **Session 16 (ADR-68)**: recommendation unchanged. T-16 needs from the owner: the service; public or private mirror (private costs runner minutes for macOS / Windows); the mirror and the runner registration under the owner's accounts; nothing else: no secret (CI never uploads in phase 1), no real data, no `corpus/work/` (CI benchmarks use the committed fixtures only). | T-16 only (after run B) |
+| Q-11 (session 12; **closed**, session 20: GitHub Actions on the owner's private repository `granddad-wolf/oradmp`, ADR-79; what T-16 still needs is O-21 / O-22, the visibility is O-19 (a); session 26: that private repository is now `granddad-wolf/oradmp-private`, and `granddad-wolf/oradmp` is the public repository of the cut, ADR-105) | Which **CI service** may build and test the project on Windows, macOS and Linux for T-16 (ADR-53)? The repository has no CI configuration and its remote is a self-hosted Git server; the VM cannot run Windows or macOS tests. | A hosted service with Windows, macOS (arm64 and x86_64) and Linux runners, through a mirror of the repository; the corpus is synthetic (ADR-45 item 6) and real dumps never enter the repository, so a mirror carries no real data. Self-hosted runners work too if the owner has the machines. Whether the repository may be mirrored publicly is the owner's call. **Session 16 (ADR-68)**: recommendation unchanged. T-16 needs from the owner: the service; public or private mirror (private costs runner minutes for macOS / Windows); the mirror and the runner registration under the owner's accounts; nothing else: no secret (CI never uploads in phase 1), no real data, no `corpus/work/` (CI benchmarks use the committed fixtures only). | T-16 only (after run B) |
 | Q-12 (session 14; **closed**, owner, session 15: internal hand-out of 0.1.0a1 now for the RHEL 8 install test; PyPI only after Reviewer session 4; ADR-63) | Review rule 7 makes T-13h, T-14 and T-15 one group, so Reviewer session 4 reads T-13h **after** 0.1.0a1 is out (ADR-60). T-13h changes the binding (shared stream state, panic guard) and the release build. **Is 0.1.0a1 released before a Reviewer has read T-13h?** | **Internal hand-out: yes**; T-13h's "Done when" carries its own mutations and the checklist re-runs every test on the installed wheel. **PyPI upload: no**, first a short Reviewer session on T-13h only (items 1 and 5 of Reviewer 4's list, "Order of the next tasks (session 14)"), because an uploaded version cannot be replaced, only yanked. | checklist steps 1 and 10 |
 | Q-13 (session 18) | The owner wants, after the main project, a **DuckDB extension** that reads Oracle dump files (`read_dmp(...)`) with `oradmp-core` directly (Rust, no Python). Not planned now; what must be true before a plan? (Full text: section "Q-13 the DuckDB side project".) | Plan nothing until the main project (Data Pump included) is done; keep the core's conditions of the Q-13 section from now on; first try the no-extension route (DuckDB's Python package over a pyarrow table) once an Implementer task has tested it. | nothing now |
-| Q-14 (session 22; **session 23**: steps in order in "Q-14 steps (session 23)"; ADR-93) | The **one-time cut**: a new public GitHub repository from a scrubbed snapshot (one commit, no-reply e-mail); the Gogs repository keeps the old history as an archive and mirrors the new commits. Does the owner do it, and when? (Steps, scrub list, checks: section "Q-14".) It replaces the visibility question of O-19 (a). | **Yes**, after T-16a2's green push run (T-16a's first green run is met) and before the a4 version commit (a4 then carries the Project-URL); otherwise after the a4 tag; never between the a4 version commit and the a4 tag. Keep `docs/prompts/`, `docs/review/`, `.claude/` (the clean-room record). | the Project-URL of a4; T-16b's minutes (free when public) |
+| Q-14 (session 22; **session 23**: steps in order in "Q-14 steps (session 23)"; ADR-93; **closed**, session 26: the cut is done, P `b55eb10`, S `9950ef2`, public `https://github.com/granddad-wolf/oradmp`; ADR-105) | The **one-time cut**: a new public GitHub repository from a scrubbed snapshot (one commit, no-reply e-mail); the Gogs repository keeps the old history as an archive and mirrors the new commits. Does the owner do it, and when? (Steps, scrub list, checks: section "Q-14".) It replaces the visibility question of O-19 (a). | **Yes**, after T-16a2's green push run (T-16a's first green run is met) and before the a4 version commit (a4 then carries the Project-URL); otherwise after the a4 tag; never between the a4 version commit and the a4 tag. Keep `docs/prompts/`, `docs/review/`, `.claude/` (the clean-room record). | the Project-URL of a4; T-16b's minutes (free when public) |
 
 ### Q-11 and Q-4 restated (session 18)
 
@@ -416,6 +428,14 @@ one fixture per Arrow type of arch 5.1, on Python 3.11 and the newest; the note 
 recommendation: a small task after T-18, not a gate of a3.
 
 ### Q-14 the one-time cut to a public repository (session 22; needs the project owner; nothing decided)
+
+**Session 26: closed (ADR-105).** The cut is done: P = `b55eb10376a9402aee36a1ee61779cf087c7bfb3` (archive), S =
+`9950ef204fb20b4d7f5d9da31467ffbe9aeeff60` (public, S's tree = P's tree + `HISTORY.md`), the public repository
+`https://github.com/granddad-wolf/oradmp`. The nine checks: 1 to 5 by the owner on S (ADR-105 item 3); 6 green twice,
+counts equal T-19b's (488 + 4, 251); 7 `tests/test_project_name.py` passed in the owner's fresh clone (pytest 251); 8
+`tools/release_build.sh S` at a scratch root: sdist equal to CI's, wheel different as ADR-90 says (its `check_dist` line
+was not in the facts; CI's is `ok`); 9 no archive hash rewritten. Reviewer 6c repeats the residue checks (plan, "Release
+0.1.0a4", session 26 block, item 10). The text below is history.
 
 **The owner's preference** (session 22): no change of visibility of the existing repository. Instead, once: a **new
 public GitHub repository** is created from a **scrubbed snapshot** (one initial commit, author e-mail GitHub's
@@ -557,6 +577,34 @@ private history is repointed at the renamed address and checked with `git remote
 created (after that, the old address names the public repository). The detailed checklist is written by the owner's
 assistant, not by an Architect session; this section stays the design's summary.
 
+**Session 26: status of every step** (owner's report, ADR-105; "checked" = read in session 26):
+| step | status |
+|---|---|
+| 0 before | **done**: T-16a2 (`af6a54a`), O-23 (a) (ADR-98 item 1), and per session 25 T-19b (`1bb7785`) and T-19 (m) (`0520cd5`) |
+| 1 where to scrub | **done**, option (i) in place: `0cbd165`, `6a5869c`, `ac58e08` before P |
+| 2 scrub list | **done**: home path and e-mail replaced (`0cbd165`); the `corpus` password read from `CORPUS_PW` (`ac58e08`); the two throwaway users' passwords stay (owner); Gogs host and token checks clean |
+| 3 keep or drop | **decided otherwise than recommended** (owner, session 25): `docs/prompts/`, `.claude/`, `CLAUDE.md` private (two Gogs repositories), ignored; `docs/review/` public |
+| 4 HISTORY note | **done**: `HISTORY.md` in S only (not in P; checked); its row in `CLAUDE.md` **moved** to O-24 |
+| 5 freeze | **done**: P = `b55eb10376a9402aee36a1ee61779cf087c7bfb3` |
+| 6 snapshot | **done**; three `SHA256SUMS` OK |
+| 7 one commit | **done**: S = `9950ef204fb20b4d7f5d9da31467ffbe9aeeff60`, no-reply author and committer (checked); checks 1 to 5 clean; check 4: only `HISTORY.md` (checked) |
+| 8 public repository | **done**: the private one renamed `oradmp-private` first (archive remote checked); `granddad-wolf/oradmp` public; settings as ADR-105 item 8 (allow-list GitHub's actions + the `taiki-e` pin; `upload-artifact` is GitHub's, so covered) |
+| 9 push `master` only | **done**: no tags; run green twice; `extended` and `manylinux2014` dispatched and reported |
+| 10 Gogs and clones | **done** for the archive (`master` and `archive/master` at P, old tags) and the owner's clone (fresh clone, one remote `origin`, dev build redone); **moved**: a Gogs mirror of the new commits is not reported and no step needs it (the owner's choice) |
+| 11 checks 6 to 9 | **done** (see "Session 26: closed" at the top of section "Q-14"); this session closes Q-14 |
+
+### O-24 owner action (session 26, ADR-105 item 10): the private `CLAUDE.md` after the cut
+
+Not a gate; the file is private, so the public tree does not change. In `.claude/CLAUDE.md`, so that agents read a true
+layout:
+1. "## Repository layout": after `CLAUDE.md` add `HISTORY.md    what the old hashes mean; a1 to a3 provenance (Human)`;
+   mark `docs/prompts/`, `.claude/` and `CLAUDE.md` "(private; ignored in the public repository)"; one line "Old history:
+   `~/p/oradmp-archive` (read-only; every hash cited in `docs/` before session 26 names a commit there)".
+2. "## Ownership", the Human row: add "`HISTORY.md`" after "`docs/scope.md`".
+3. Rule 8: "A release is built only from a committed tree with `tools/release_build.sh <commit>`" becomes "... only from
+   a commit of the public repository with `tools/release_build.sh <commit> --twice --release` at the canonical root".
+4. Optional: one line that the remote is `origin` (the public repository) and that no agent pushes.
+
 ### O-14 owner action (session 14, ADR-56 item 5): `tools/` and `fuzz/` for the Implementer (applied; `CLAUDE.md` names both, session 15)
 
 Before T-13h. In `CLAUDE.md`:
@@ -620,7 +668,7 @@ too is now project-scoped (the record says so for one token).
 (c) Whether checklist step 3 (the full checks) ran on `4e8f212`; if not, say so (T-13j's green run on `master`
 covers the same code).
 
-### O-19 owner action (session 18, ADR-71 items 5, 11): Project-URL and `uv.lock`
+### O-19 owner action (session 18, ADR-71 items 5, 11): Project-URL and `uv.lock` (**closed**, session 26: (a) by the cut, the Project-URL goes into T-20; (b) closed in session 20)
 
 #### O-19 (a) restated (session 21): public or private `granddad-wolf/oradmp`
 
@@ -714,7 +762,7 @@ instead of "..., `.gitattributes`, and the CI configuration (T-16) |"; and in "#
 Repository settings on GitHub (Actions permissions, branch protection, visibility) stay the owner's; they are not
 files.
 
-### O-23 owner action (session 23, ADR-89, ADR-90): the confirming rebuild and the billing figure
+### O-23 owner action (session 23, ADR-89, ADR-90): the confirming rebuild and the billing figure (**closed**, session 26: (a) done in T-16a2, ADR-98 item 1; (b) lapses, the repository is public, ADR-105 item 10)
 
 (a) The full SHA-256 lines and the SBOM member line of the `wheel` summary of the `d081109` run; then, on the VM (or
 T-16a2 (a) does it): with `ORADMP_BUILD_ROOT` unset, `tools/release_build.sh d081109b708b08f08cc6c965994b6c094b649b65`
@@ -1771,8 +1819,8 @@ AL32UTF8 (confirmed).
 | 24 | (session 18) The command-line tool (T-18) is a new public surface: command names, options, exit codes, CSV text of each type. | ETL scripts will depend on exit codes and the CSV form; a later change breaks them silently. | ADR-72 fixes them in one record; exit codes by error class with a test over every code; types the CSV writer refuses stop with `E-CONFIG` instead of an unchosen text. Session 19: T-18 done with that walk and a mutation table; the one change before a3 (a missing table in a stopped scan, ADR-75 item 6) lands before the first release of the tool, so no user sees the old rule; `head` shows no counted warning (documented). Session 20: review 06a found no blocking finding; SF-2's survivors get tests and the I/O error line gains reason and path in T-18c, before the tool's first upload. Session 21: shipped in a3 as specified; the next changes of the surface (non-UTF-8 names accepted and written `\xHH`, ADR-82) only add cases that crashed before; no line that worked in a3 changes. |
 | 25 | (session 21; **session 22**: fixed in T-18d, reviewed in 6b; output paths in T-17b; ships in a4) A dump whose file name is not valid UTF-8 (plausible for CP1251 names copied from Windows) ends with a Python traceback in `oradmp.open`, the tool and `survey`, in a2 and a3 (review 06a-closure N-5). | The owner's hosts may hold such names; the ETL job stops with an unexplained error. | T-18d (ADR-82): the binding takes a path; messages write the bytes as `\xHH`; tests with a CP1251 name on Linux; in a4. Workaround until then: rename the file. |
 | 26 | (session 22) The synthetic generator (T-17) and the reader share one reading of the rules; a construct no fixture shows can pass in both and look confirmed (review 06b SF-1: E3, client pairs, TIMESTAMP(1-5, 7, 8), 18c with database 171). | A wrong common assumption would be tested "green" on thousands of files and be believed. | ADR-80 as amended: fixture-shown combinations only, plus two labelled `Unconfirmed` cases under a named rule; a test compares the generator's header choices with the 201 fixture headers; TIMESTAMP and 18c / 171 removed; R-047, R-017 as routes to evidence (ADR-86). Session 24: R-047 and R-017 answered; TIMESTAMP f 0 to 9 back, the 18c E1 label narrowed to owner mode, new label `LongChunkedBelow65535` (ADR-94, T-19). |
-| 27 | (session 22; **session 23**: steps in order with the [OWNER] items, "Q-14 steps (session 23)"; the public name collides with the private repository's) The one-time cut (Q-14): a scrub mistake publishes a password, a home path or an e-mail; or a release is built from a commit that the review did not read; or the archive's hashes cited in the documents become unresolvable. | Irreversible once pushed; the a4 candidate could fall on either side of the cut. | Q-14's steps and nine checks (snapshot by `git archive`, fixture checksums, `diff -r` against the archive commit, greps); the rule "never between the a4 version commit and the tag"; the HISTORY note; Reviewer 6c checks the cut if it came first (ADR-88 item 3). |
-| 28 | (session 23) The wheel hash depends on the build root through the SBOM (ADR-90); a release built at another root, or a claim of reproducibility wider than the evidence, makes a later rebuild disagree with PyPI although nothing is wrong. | The first release after CI exists (a4) is the first whose hash can be cross-checked; a false claim in the README is public. | The canonical root and `--release` (T-16a2); `check_dist.py --build-root`; O-23 (a) decides the claim; the sdist cross-check stays a gate; the README says nothing until the confirmation. |
+| 27 | (**closed**, session 26: the cut is done, checks 1 to 9 clean, ADR-105; Reviewer 6c repeats the residue checks) (session 22; **session 23**: steps in order with the [OWNER] items, "Q-14 steps (session 23)"; the public name collides with the private repository's) The one-time cut (Q-14): a scrub mistake publishes a password, a home path or an e-mail; or a release is built from a commit that the review did not read; or the archive's hashes cited in the documents become unresolvable. | Irreversible once pushed; the a4 candidate could fall on either side of the cut. | Q-14's steps and nine checks (snapshot by `git archive`, fixture checksums, `diff -r` against the archive commit, greps); the rule "never between the a4 version commit and the tag"; the HISTORY note; Reviewer 6c checks the cut if it came first (ADR-88 item 3). |
+| 28 | (session 23; **session 26**: at S two CI runs gave one wheel and one sdist at the canonical root, the owner's scratch-root build the same sdist and another wheel, as predicted; claim unchanged, ADR-105 item 6) The wheel hash depends on the build root through the SBOM (ADR-90); a release built at another root, or a claim of reproducibility wider than the evidence, makes a later rebuild disagree with PyPI although nothing is wrong. | The first release after CI exists (a4) is the first whose hash can be cross-checked; a false claim in the README is public. | The canonical root and `--release` (T-16a2); `check_dist.py --build-root`; O-23 (a) decides the claim; the sdist cross-check stays a gate; the README says nothing until the confirmation. |
 | 29 | (**closed**, session 25: 65,533 is `fa ff` + n, 65,534 chunked, `long4_exp_<v>`@0x42295, 0x522a6; ADR-99 item 7) (session 24) A conventional LONG of exactly 65,533 or 65,534 bytes, if `exp` writes it as one field, has the u16 `fd ff` (the chunk marker) or `fe ff` (NULL): the reader then reads it as a chunked value or a NULL and misframes the rest (R-048's prediction is that the switch lies below 65,533). | A silent misread is possible until a later `Framing`; most likely a `Framing` or a missing `00 00` row end within the row. | ADR-95: a chunked total below 65,535 warns (`W-UNTESTED-LAYOUT`); the row-end check of [R4]; R-048 asks for exactly these sizes. |
 
 ### Session 3 ranking (history)

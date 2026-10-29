@@ -4,11 +4,33 @@
 `oradmp` (crates `oradmp-core`, `oradmp-py`, import `oradmp`, classes `OradmpError` / `OradmpWarning`).
 
 Architect session 1, 2026-10-07; session 2, 2026-10-14; sessions 3 and 4, 2026-10-15; sessions 5 and
-6, 2026-10-16; sessions 7 to 13, 2026-10-17; sessions 14 and 15, 2026-10-18; sessions 16 and 17, 2026-10-21; session 18, 2026-10-22; sessions 19 to 23, 2026-10-24; sessions 24 and 25, 2026-10-25. Each record:
+6, 2026-10-16; sessions 7 to 13, 2026-10-17; sessions 14 and 15, 2026-10-18; sessions 16 and 17, 2026-10-21; session 18, 2026-10-22; sessions 19 to 23, 2026-10-24; sessions 24 and 25, 2026-10-25; session 26, 2026-10-29. Each record:
 context, decision, consequences, rejected. Status is **decided** (the Implementer follows it; reopening
 needs a new record) or **needs the project owner** (question in `open-questions.md`). Rule numbers are
 those of `docs/formats/exp_reader_rules.md` (v3.4 from session 4 on, v3.5 from session 8 on, v3.7 from session 24 on, **v3.9 from session 25 on**); section
 numbers without a file name are those of `exp-reader-architecture.md`.
+
+**Reading these records in the public repository** (session 26, ADR-105): every commit hash cited before session 26
+names a commit of the owner's private archive, not of this repository (`HISTORY.md`); the hashes are not rewritten.
+Cites of `docs/prompts/...`, `.claude/` and `CLAUDE.md` name files the owner keeps privately; nothing a contributor must
+do depends on them (the checks a contributor runs are in `CONTRIBUTING.md`).
+
+## Changes in session 26
+
+- Basis: the owner's facts of session 26 (the cut done: P = `b55eb10376a9402aee36a1ee61779cf087c7bfb3`, S =
+  `9950ef204fb20b4d7f5d9da31467ffbe9aeeff60`; the scrub commits; the public settings; the first public CI runs; T-19 (m)
+  `0520cd5`). Checked in this session (reading only): `git log` of S (one commit, 925 files, author and committer the
+  GitHub no-reply address, dated 2026-10-26 15:50 -0500); `git ls-tree -r` of P (archive) against S: the only difference
+  is `HISTORY.md` (blob `197cfcf`); the archive tags `v0.1.0a1` to `v0.1.0a3` resolve to `b7304d56...`, `ff7d5255...`,
+  `ff3d6b25...` as `HISTORY.md` says; the archive clone's GitHub remote names `oradmp-private`; the public clone has one
+  remote, `origin`; `.github/workflows/ci.yml` uses only `actions/*` and the pinned `taiki-e/install-action@1e29709c...`;
+  `CLAUDE.md`, `.claude/`, `docs/prompts/` are ignored by `.gitignore` and absent from S; no file outside `docs/`,
+  `.gitignore` and `HISTORY.md` cites them; the T-19b note's counts (nextest 488 passed + 4 skipped, pytest 251) equal the
+  first public run's. Nothing built.
+- New: **ADR-105** (the cut recorded; Q-14 closed), **ADR-106** (four rulings: the fuzz compile step, the `T_BIG` scan
+  watch, `manylinux2014`, the owner's open items), **ADR-107** (task T-20, the a4 version commit; Reviewer 6c's scope; the
+  order to a4).
+- Amended in place (an "Amendment (session 26)" line): ADR-90, ADR-93, ADR-104.
 
 ## Changes in session 25
 
@@ -4208,6 +4230,8 @@ Session 3 text (history):
   a2 and a3 (built at other roots) are not rebuilt.
 - Rejected: option (a) in each of its forms above; making the CI wheel the release file (CI never uploads, ADR-87 item
   6; the runner is not the owner's machine); asserting the hypothesis from the byte count alone.
+- Amendment (session 26, ADR-105 item 6): the evidence at S adds two CI runs with the same wheel and sdist at the canonical
+  root and the owner's scratch-root build with the same sdist and another wheel; the claim of item 6 is unchanged.
 
 ## ADR-91 a4 ships `manylinux_2_28` only; `manylinux2014` becomes T-16c - decided (session 23)
 - Context: ADR-53 item 5: an **accepted** `manylinux2014` wheel replaces `manylinux_2_28`; item 4: accepted means the
@@ -4306,6 +4330,9 @@ Session 3 text (history):
   public repository, or the cut would fall inside the release); waiting for T-16b's minutes as a reason to cut (the cut
   is the owner's decision for its own reasons).
 - Amendment (session 24, ADR-98 item 2): T-19 comes after T-16a2 and before the cut; the rest of item 1 stands.
+- Amendment (session 26, ADR-105, ADR-107): the cut is done; item 1 continues at the a4 version commit (task T-20). Item
+  2's "the tag pushed last (to the public repository if cut, and to the Gogs remote)" reads "the tag pushed last to
+  `origin` (the public repository)"; the Gogs archive is frozen at P and gets no new tag.
 
 ## ADR-94 Analyst 17 recorded: R-017, R-040, R-047; rules v3.7; the ten new fixtures and the red corpus tests - decided (session 24)
 - Context: the owner ran R-017 (18c), R-040 and R-047 (18c and 11g) on 2026-10-25 (`cca4c65`); Analyst 17 (`8162eb0`)
@@ -4700,3 +4727,132 @@ Session 3 text (history):
 - Consequences: the order table of session 25; a4 waits for T-19b, step 3b, the cut (if first), 6c.
 - Rejected: step 3b before T-19b (it would be repeated, the core changes again); T-19b after the cut (the public snapshot
   would carry a stop the corpus refutes).
+- Amendment (session 26, ADR-105, ADR-107): item 1's order is done up to "close Q-14" (T-19b `1bb7785`, T-19 (m)
+  `0520cd5`, the cut); the rest continues in ADR-107 item 3. Item 3 is done (archive remote `github` names
+  `oradmp-private`). Item 4's sentence is in the README since T-19b.
+
+## ADR-105 The cut recorded; Q-14 closed; what is public and what is private - decided (session 26)
+- Context: Q-14 (session 22), its steps (session 23), ADR-93, ADR-104 item 3. The owner reports the cut done (session 26
+  facts); this record states what exists, so that later records and a stranger reading the public tree agree.
+- Decision (a record of facts; the checked ones are marked "checked", the rest are the owner's report):
+  1. **P and S.** P = `b55eb10376a9402aee36a1ee61779cf087c7bfb3`, the last commit of the private archive (2026-10-26). S =
+     `9950ef204fb20b4d7f5d9da31467ffbe9aeeff60`, the first commit of the public repository
+     `https://github.com/granddad-wolf/oradmp`, 925 files, no tags, author and committer GitHub's no-reply address
+     (checked). S's tree is P's tree plus `HISTORY.md` (checked: `git ls-tree -r` differs in that one line). S is dated
+     2026-10-26; the owner reports the cut complete on 2026-10-29 (first public runs included). `HISTORY.md` is the
+     owner's file; nothing in it is changed by an agent.
+  2. **Scrub** (Q-14 step 1, option (i): in place, four archive commits before P): `0cbd165` (home path -> `<home>`, owner
+     e-mail -> `<owner e-mail>` in `docs/design/{decisions,implementer-notes,open-questions}.md` and reviews 02, 03; one
+     check line in `open-questions.md` reworded); `6a5869c` (`CONTRIBUTING.md` no longer points to `CLAUDE.md`);
+     `ac58e08` (the `corpus` user's password leaves the repository: `corpus/scripts/config.sh` reads `CORPUS_PW` from the
+     environment or `~/.config/oradmp/corpus.env`, `run_sql` passes it to `corpus/sql/00_setup.sql` as `&1`; the
+     passwords of the two throwaway users `corpus_own`, `corpus_ru` stay literal, owner's decision: local test
+     containers only); `b55eb10` = P (`docs/prompts/`, `.claude/`, `CLAUDE.md` removed and ignored). The handle
+     `elessarelfstone` stays in the clean-room ADR (owner's decision: keep). The owner states nothing in `corpus/` came
+     from real data (the Russian files are generated with `UNISTR`).
+  3. **Q-14's checks on S** (owner): no hit for the home path, the e-mail, the machine name, the Gogs host, the password
+     (text or binary); token patterns hit only the Architect's description lines in `open-questions.md` (accepted); the
+     three `SHA256SUMS` OK; `diff -r` of P and S: only `HISTORY.md`; the three private paths absent.
+  4. **Private, kept by the owner**: `docs/prompts/`, `.claude/` (two small private Gogs repositories, `oradmp-prompts`,
+     `oradmp-claude`), `CLAUDE.md` (lives as `.claude/CLAUDE.md`, the root `CLAUDE.md` a symlink); ignored by the public
+     `.gitignore`. **Public**: everything else, including `docs/design/`, `docs/formats/`, `docs/review/`,
+     `docs/research/`, `docs/briefs/`, `corpus/`. Cites of the private paths in public documents stay (`HISTORY.md`
+     explains them); no public document sends a contributor to them as a step (checked: no file outside `docs/`,
+     `.gitignore` and `HISTORY.md` names them; `CONTRIBUTING.md` holds the checks of the definition of done).
+  5. **Old history.** The archive is the owner's `~/p/oradmp-archive` (read-only for agents: `git -C ... log / show /
+     diff`); every hash cited in `docs/` before session 26 names a commit there. Gogs `oradump.git`: `master` and
+     `archive/master` at P, tags `v0.1.0a1` to `v0.1.0a3`; the old GitHub repository is `granddad-wolf/oradmp-private`
+     (kept until after the a4 release; the archive clone's `github` remote names it, checked). The public repository has
+     no tags. The owner's working clone has one remote, `origin` = the public repository; commits carry the no-reply
+     address; GitHub's "block pushes that expose my e-mail" is on.
+  6. **Reproducibility at S** (amends nothing in ADR-90 item 6, adds evidence): two CI runs on S gave the same wheel
+     `4dca095c5aa951dae8c104d8eb69bb924d1c7527e9b60c93916222002b479262` and sdist
+     `582ee53a3b42ca81a9e033c392474aca1178f86e72810699f6824bfbb89e900e` (canonical root, `release root: canonical`,
+     `check_dist: ok`); the owner's test build of S at a scratch root gave the same sdist and another wheel
+     (`a204e54f...`), as ADR-90 predicts (the SBOM holds the root). VM-against-CI wheel equality at the canonical root was
+     shown at archive commits `d081109` and `af6a54a` (ADR-98 item 1) and is not repeated for S. The claim stays: the
+     sdist is byte-identical across the machines tried; the wheel only when built at the canonical root. S's sdist
+     differs from P's (another commit time, so another `SOURCE_DATE_EPOCH`), as Q-14 step 9 expected.
+  7. **The release rule from a4 on**: every release is built from a commit of the public repository, with
+     `tools/release_build.sh <commit> --twice --release` at the canonical root `/var/tmp/oradmp-release` (ADR-90), and its
+     tag is pushed to `origin` only. a1 to a3 are rebuilt only from the archive (`HISTORY.md`).
+  8. **Public repository settings** (owner, before the first push): Actions allow-list = actions by GitHub plus
+     `taiki-e/install-action@1e29709c0ec63babbe8f266397a465f29a825f91`, full-SHA pinning required; approval for all
+     outside collaborators; read-only workflow permissions; ruleset `master-protection` (no deletion, no force push);
+     Issues on; Discussions, Wikis, Projects off; private vulnerability reporting on. Consequence: a task that changes the
+     `taiki-e` pin, or adds any non-GitHub action, needs the owner to change the allow-list before its push (the task's
+     "Needs from the owner" says so).
+  9. **First public CI** (owner's paste): push run on S twice: `checks` nextest 488 passed + 4 skipped, pytest 251,
+     `cargo deny` ok; `wheel` `release root: canonical`, `check_dist: ok`, the three venvs 248 / 241 / 248; hashes as item
+     6. These equal the T-19b note's VM counts (488 + 4, 251). Dispatched on S: `extended` (fuzz 60 s each: `read`
+     58,555 runs, `walk` 123,318, `values` 9,033,953, 0 findings; `t14_damage` 10,000 cases 5 passed; `t17_synth` 2,000
+     cases 30 passed + 1 skipped; fuzz clippy ok; bench report only, a 4-CPU runner, not comparable) and `manylinux2014`
+     (ADR-106 item 3). The whole `extended` job took 535 s.
+  10. **Closed by this record**: Q-14; O-19 (a) (superseded in session 22, now done: the Project-URL comes with T-20);
+     O-23 (b) (the billing figure: standard runners are free on a public repository; ADR-92 item 4's budget lapses for
+     them); risk 27. O-16 stays closed (the root `.gitignore` is still the owner's; it now also ignores the three private
+     paths). New owner item **O-24** (the private `CLAUDE.md` text for the public layout; `open-questions.md`).
+- Consequences: the plan's order continues at T-20 (ADR-107); T-16b runs on the public repository with every job free.
+- Rejected: rewriting the archive hashes in the documents (they are history; `HISTORY.md` explains them); a
+  `docs/design/` copy of the private files' contents (they are private by the owner's decision).
+
+## ADR-106 Four rulings after the cut: the fuzz compile step, the `T_BIG` scan watch, `manylinux2014`, the owner's open items - decided (session 26)
+- Context: T-19 (m) addendum (the T-19b break of `fuzz/fuzz_targets/values.rs` was found only by a manual run, because the
+  push jobs never compile `fuzz/`); the `T_BIG` scan "watch" of T-19 (m) (-4.8 to -6.8 % against baseline 2 in three
+  runs, not bisected); the `manylinux2014` dispatch on S; the owner's open items. ADR-92 item 4's minutes budget does not
+  bind a public repository; its runner has 4 CPUs.
+- Decision:
+  1. **Fuzz: a compile step on every push, and the `extended` run on each release candidate.** A new push job
+     `fuzz-check` (parallel to `checks`, so their wall times do not add): checkout, the nightly of
+     `fuzz/rust-toolchain.toml` installed as the `extended` job does, `cd fuzz && cargo check --locked`, a summary line
+     with the toolchain and the job's duration. Reason: a core API change then breaks the push run of the commit that
+     made it, not a later manual run; `cargo check` needs no `cargo-fuzz` install (its compile errors are the ones the
+     T-19b break produced, a type mismatch). Unverified: that `cargo check --locked` in `fuzz/` passes without the flags
+     `cargo fuzz build` adds, and its cold wall time; T-20 shows both on the VM first and records them. The `extended`
+     dispatch on the candidate stays a release step (it is the only CI run of the targets). Done in T-20.
+  2. **The `T_BIG` scan watch: nothing now; Reviewer 6c repeats it in step 3b on C; a bisect only if it shows again.**
+     I agree, with one addition: if 6c's three runs again fall 5 to 10 % below baseline 2, 6c runs the `T_BIG` scan of
+     the a3 core (`460aef5`, from the archive) in the same sitting, alone, before anyone bisects; equal figures mean the
+     machine, a gap means the code. Above 10 % is a regression under rule 3 and stops the release. Reason: the read of
+     the same file is within 1.2 %, the scan is the noisiest figure (`benchmarks.md` 4.2), and the scan's code changed
+     only by one branch per LONG field.
+  3. **`manylinux2014`: risk checks (b) of ADR-53 item 7 pass at S; acceptance (T-16c) remains.** Proven at S: the wheel
+     builds with `maturin --zig --compatibility manylinux2014` and is tagged `manylinux_2_17` / `manylinux2014`;
+     `auditwheel` 6.8.2 (pinned) reports it consistent with `manylinux_2_17`, highest symbol `GLIBC_2.14`. Not proven:
+     the abi3 tag of that wheel (risk check (c): read from the summary in 6c); a build through `tools/release_build.sh`
+     with the remaps and `check_dist.py` (T-16c (a)); any **install** on a glibc 2.17 system: a CPython 3.11+ there, a
+     `pyarrow` 15 or later with a cp311 `manylinux2014` wheel and its numpy, full `pytest` against the installed wheel
+     (T-16c (b)); the three venvs and Rocky Linux 8 (T-16c (c)); acceptance (d). a4 ships `manylinux_2_28` only (ADR-91
+     unchanged); T-16c stays after the a4 tag.
+  4. **The owner's open items block nothing of a4.** Q-4 (the real-dump counts) is run with `oradmp survey` from the a4
+     wheel, so it follows a4 by design; R-052 runs only on Q-4's condition (ADR-101 item 5); R-046 is low; the RHEL 8 host
+     test is done with the a4 wheel and is no gate (as for a1 to a3); deleting scratch folders matters only for the
+     canonical root, which the release step moves aside anyway; `oradmp-private` and the snapshot folder: keep until the
+     a4 tag is pushed, then the owner's choice (recommendation: archive `oradmp-private` read-only rather than delete it,
+     because the a3 record cites its runs).
+- Consequences: T-20 gains item (f); CONTRIBUTING's CI section names three push jobs; Reviewer 6c's step 3b may add one
+  run of `460aef5`.
+- Rejected: `cargo fuzz build` on every push (installs `cargo-fuzz` from source on each run for no extra check of the
+  kind that failed); only an `extended` run before each release (a break would again surface late, at the release);
+  bisecting the `T_BIG` scan now (one watch figure, within limits, on a shared-load machine).
+
+## ADR-107 Task T-20 (the a4 version commit); Reviewer 6c's scope after the cut; the order to a4 - decided (session 26)
+- Context: ADR-93 item 1, ADR-104, ADR-105, ADR-106. The cut is done, so the version commit adds `[project.urls]`.
+- Decision:
+  1. **Task T-20** (plan; Implementer; Sonnet; small): version `0.1.0a4` everywhere a test checks it; `[project.urls]`
+     `Source` and `Issues` = the public repository (labels from PyPA's "Well-known Project URLs in Metadata", PEP 753;
+     Issues are on) with a
+     `check_dist.py` rule and its cases; README and CONTRIBUTING made true for the public tree; ADR-106 item 1's
+     `fuzz-check` job. `HISTORY.md` is not touched. The owner commits, pushes once, pastes; no tag.
+  2. **Reviewer 6c** (Opus) covers T-17b, T-16a, T-16a2, T-19, T-19b, T-19 (m)'s figures, T-20 (= C), and the cut
+     (scrub residue, `HISTORY.md`, the settings as far as the tree shows them, the public CI). It reads archive-only
+     commits from `~/p/oradmp-archive` (read-only) by fetching that clone's `master` into **its own scratch clone** of the
+     public repository below `/var/tmp`, so tree diffs across the cut work (`git diff` needs trees, not shared history);
+     the owner's clone and the archive are not changed. It builds only in its scratch folder; step 3b on C alone on the
+     machine. Items in the plan ("Release 0.1.0a4", session 26 block).
+  3. **Order**: T-20 and its run -> [OWNER] one `extended` and one `manylinux2014` dispatch on C, pasted -> Reviewer 6c ->
+     Architect (record 6c, the a4 checklist) -> a closure task if 6c needs one -> [OWNER] the release (old canonical root
+     moved aside first; Linux `manylinux_2_28` wheel + sdist; upload and tag the owner's) -> T-16b, T-16c.
+- Consequences: the plan's order table (session 26); the a4 checklist is written after 6c.
+- Rejected: splitting the fuzz job into its own task before T-20 (one more push and review for one small workflow job);
+  a README section on the cut (the README says nothing about provenance; `HISTORY.md` does).

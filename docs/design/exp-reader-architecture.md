@@ -1,10 +1,17 @@
 # Legacy EXP reader: architecture (phase 1)
 
 Architect session 1, 2026-10-07; revised in session 2, 2026-10-14, sessions 3 and 4, 2026-10-15,
-sessions 5 and 6, 2026-10-16, sessions 7 to 13, 2026-10-17, sessions 14 and 15, 2026-10-18, session 16, 2026-10-21, session 18, 2026-10-22, and sessions 19 to 22, 2026-10-24, and sessions 24 and 25, 2026-10-25. Status: sessions 1 to 6 accepted; the
+sessions 5 and 6, 2026-10-16, sessions 7 to 13, 2026-10-17, sessions 14 and 15, 2026-10-18, session 16, 2026-10-21, session 18, 2026-10-22, and sessions 19 to 22, 2026-10-24, and sessions 24 and 25, 2026-10-25, and session 26, 2026-10-29. Status: sessions 1 to 6 accepted; the
 session 7 and 8 changes below are a proposal for review. Rules: `exp_reader_rules.md` v3.5 from session 8, v3.7 from session 24, v3.9 from session 25. Companion
 files: `decisions.md` (ADR-n), `implementation-plan.md` (T-n), `open-questions.md` (Q-n, R-024 and
 later, risks), `implementer-notes.md` (N-n with the Architect's answers).
+
+## Changes in session 26
+
+Basis: the cut (ADR-105). No change to the reading design.
+
+- 9: the public repository's layout: `HISTORY.md` (owner's), the private paths, the archive, the remote, the release
+  rule (paragraph "Session 26" at the end of section 9); the `tools/` line no longer sends the reader to `CLAUDE.md`.
 
 ## Changes in session 25
 
@@ -1456,8 +1463,8 @@ ADR-66.
     deny.toml                        cargo-deny licence allow-list (ADR-45 item 5)
     README.md, CONTRIBUTING.md       licence section, trademark line, contribution sentence (ADR-45)
     tools/release_build.sh           session 14 (ADR-56): the release build from a clean clone at a neutral
-                                     path; Implementer's (O-14 adds `tools/` and `fuzz/` to its CLAUDE.md row);
-                                     in neither archive (ADR-57)
+                                     path; Implementer's; in neither archive (ADR-57)
+    HISTORY.md                       session 26 (ADR-105): the owner's note on the old hashes and a1 to a3
 
 Session 11 (ADR-3, ADR-48): arrow-array / -buffer / -schema **59** (lock 59.3.1), pyo3 **0.30** (`abi3-py311`),
 pyo3-arrow **0.20**; they move together only in a task of their own (bump rule, ADR-3). Wheel:
@@ -1484,3 +1491,10 @@ Ownership of these directories is that of `CLAUDE.md` (Q-5 settled by the owner:
 `CLAUDE.md` text in `open-questions.md` (a)). Session 11: the Implementer also owns `python/oradmp/` and the pytest
 files; the `CLAUDE.md` text is still to be applied by the owner (`open-questions.md`, Q-5). Neither the wheel nor the sdist contains `corpus/`, `tests/`,
 `docs/` or any `.dmp` / `truth_*.txt` (ADR-45 item 6).
+
+Session 26 (ADR-105): the repository is public, `https://github.com/granddad-wolf/oradmp` (remote `origin`), from
+commit S `9950ef2`, whose tree is the private archive's last commit P `b55eb10` plus `HISTORY.md`. Commit hashes in
+`docs/` before session 26 name archive commits; `HISTORY.md` says so. `docs/prompts/`, `.claude/` and `CLAUDE.md` (the
+agents' prompts, definitions and rules, including the ownership table cited above) are private and ignored by
+`.gitignore`; a contributor follows `CONTRIBUTING.md`. From 0.1.0a4 on every release is built from a commit of this
+repository with `tools/release_build.sh <commit> --twice --release` at the canonical root (ADR-90) and tagged here only.
