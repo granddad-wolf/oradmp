@@ -3,7 +3,7 @@ resolver = "2"
 members = ["crates/oradmp-core", "crates/oradmp-py"]
 
 [workspace.package]
-version = "0.1.0-alpha.3"
+version = "0.1.0-alpha.4"
 edition = "2021"
 rust-version = "1.99"
 license = "MIT OR Apache-2.0"

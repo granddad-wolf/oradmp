@@ -30,7 +30,7 @@ The checks of the definition of done:
 cargo fmt --check
 cargo clippy --all-targets -- -D warnings
 cargo nextest run
-cargo deny check licenses
+cargo deny check
 .venv/bin/ruff check
 .venv/bin/ruff format --check
 .venv/bin/mypy
@@ -83,9 +83,10 @@ by hand in the working copy is for tests only.
 
 A release build uses `--release` (ADR-90): the script then refuses any build root but `/var/tmp/oradmp-release` (the
 canonical root, which must not exist yet) and prints `release root: canonical`; `check_dist.py --build-root` checks on
-every build that the build paths in the wheel's SBOM lie below the root. At the canonical root, `d081109` gave the same
+every build that the build paths in the wheel's SBOM lie below the root. At the canonical root, `d081109` (a commit of the project's private archive, see `HISTORY.md`) gave the same
 wheel and the same sdist on the build VM and on GitHub's `ubuntu-24.04` runner; a wheel built at another root differs
-in the SBOM member and `RECORD` only. Nothing is claimed for any other machine.
+in the SBOM member and `RECORD` only. Nothing is claimed for any other machine. From 0.1.0a4 on, a release is built
+from a commit of this repository with `--release`.
 
 The version comes from the root `Cargo.toml` only. Publishing follows the release checklist
 (`docs/design/implementation-plan.md`, "First release"); only the project owner tags and uploads.
@@ -93,10 +94,11 @@ The version comes from the root `Cargo.toml` only. Publishing follows the releas
 ## CI
 
 `.github/workflows/ci.yml` (GitHub Actions, Linux `ubuntu-24.04`) runs on every push to `master` and on
-`workflow_dispatch`. A push runs two jobs. `checks`: the three `SHA256SUMS`, `cargo fmt --all --check`, `cargo clippy`
+`workflow_dispatch`. A push runs three jobs. `checks`: the three `SHA256SUMS`, `cargo fmt --all --check`, `cargo clippy`
 (all targets, and all targets with all features), `cargo nextest run -j 2` (exactly the four ignored tests are
 skipped: the three `t15_*` tests and `write_fuzz_seeds`), `cargo deny check`, a probes build, `ruff`, `mypy` and
-`pytest` (0 skipped). `wheel`: `tools/release_build.sh` on the pushed commit (`check_dist: ok`), then the wheel in
+`pytest` (0 skipped). `fuzz-check`: `cargo check --locked` in `fuzz/` with its pinned nightly, so that a change of
+the core API that breaks a fuzz target fails the push that made it. `wheel`: `tools/release_build.sh` on the pushed commit (`check_dist: ok`), then the wheel in
 three fresh venvs (Python 3.11 with pyarrow 15.0.2 and pandas 2.2.3; the newest CPython with the newest pyarrow and
 pandas; Python 3.11 with pyarrow only), `pytest` from the checkout against the installed package, and `oradmp
 --version`. Two more jobs run only on `workflow_dispatch`: `extended` (fuzz seeds, the three fuzz targets for 60 s
@@ -111,3 +113,7 @@ To read a run, open its page, then the page of each job and its **Summary**: it 
 the toolchain, Python and pyarrow versions, the nextest and pytest counts with every skipped name and reason, the
 `check_dist` line, the SHA-256 of every built file and the job's duration. Paste the summaries (and, for a failed job,
 the log of the failed step) to whoever asked for the run.
+
+## Security
+
+Report a security problem privately with GitHub's "Report a vulnerability" (Security tab), not in an issue.

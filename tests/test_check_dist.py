@@ -13,7 +13,7 @@ from collections.abc import Callable
 from pathlib import Path
 
 import pytest
-from check_dist import cargo_version, check_sdist, check_wheel, main, pep440
+from check_dist import cargo_version, check_sdist, check_wheel, declared_project_urls, main, pep440
 
 LICENSES = ("LICENSE-MIT", "LICENSE-APACHE")
 SDIST_NEEDED = (
@@ -29,6 +29,9 @@ SDIST_NEEDED = (
     "python/oradmp/__init__.py",
     "python/oradmp/_cli.py",
 )
+# T-20 (b): the literal addresses (not read from pyproject.toml, so that a test can tell the file from the rule)
+SOURCE_URL = "https://github.com/granddad-wolf/oradmp"
+ISSUES_URL = "https://github.com/granddad-wolf/oradmp/issues"
 ENTRY_POINTS = "[console_scripts]\noradmp = oradmp._cli:main\n"
 
 
@@ -49,6 +52,8 @@ def metadata(v: str, description: str = "", edit: Callable[[str], str] | None = 
         "License-Expression: MIT OR Apache-2.0\n"
         "License-File: LICENSE-MIT\n"
         "License-File: LICENSE-APACHE\n"
+        f"Project-URL: Source, {SOURCE_URL}\n"
+        f"Project-URL: Issues, {ISSUES_URL}\n"
         "\n"
         "# oradmp\n"
         f"{description}"
@@ -463,3 +468,46 @@ def test_t16a2_a_missing_value_of_the_option_is_a_usage_error(tmp_path: Path) ->
 def test_t16a2_the_build_script_passes_the_root_to_check_dist() -> None:
     text = (Path(__file__).resolve().parent.parent / "tools" / "release_build.sh").read_text()
     assert 'check_dist.py" --build-root "$ROOT"' in text
+
+
+# --- T-20 (b), ADR-107 item 1: the Project-URL lines of the metadata are exactly those of pyproject.toml, in the
+# wheel's METADATA and the sdist's PKG-INFO alike. Mutation (done by hand, T-20 note): a rule that compares labels
+# only lets the changed-URL case pass, so that case fails.
+
+
+def test_t20_pyproject_declares_the_two_urls() -> None:
+    assert declared_project_urls() == {("Source", SOURCE_URL), ("Issues", ISSUES_URL)}
+
+
+def test_t20_the_right_project_url_lines_pass_in_any_order(tmp_path: Path) -> None:
+    def swap(t: str) -> str:
+        a, b = f"Project-URL: Source, {SOURCE_URL}\n", f"Project-URL: Issues, {ISSUES_URL}\n"
+        return t.replace(a + b, b + a)
+
+    assert wheel_errors(make_wheel(tmp_path, meta_edit=swap)) == []
+
+
+def test_t20_a_missing_project_url_fails_in_wheel_and_sdist(tmp_path: Path) -> None:
+    line = f"Project-URL: Issues, {ISSUES_URL}\n"
+    w = make_wheel(tmp_path, meta_edit=lambda t: t.replace(line, ""))
+    assert wheel_errors(w) == [f"wheel METADATA: Project-URL 'Issues' '{ISSUES_URL}' is missing"]
+    # the sdist's PKG-INFO is made by metadata() alone: strip the lines there
+    s = make_sdist(tmp_path, {"PKG-INFO": metadata(version(), edit=lambda t: t.replace(line, ""))})
+    assert sdist_errors(s) == [f"sdist PKG-INFO: Project-URL 'Issues' '{ISSUES_URL}' is missing"]
+
+
+def test_t20_a_changed_project_url_fails_with_two_lines(tmp_path: Path) -> None:
+    w = make_wheel(tmp_path, meta_edit=lambda t: t.replace(f"Source, {SOURCE_URL}", f"Source, {SOURCE_URL}-x"))
+    assert wheel_errors(w) == [
+        f"wheel METADATA: Project-URL 'Source' '{SOURCE_URL}' is missing",
+        f"wheel METADATA: Project-URL 'Source' '{SOURCE_URL}-x' is not declared in pyproject.toml",
+    ]
+
+
+def test_t20_an_extra_project_url_fails(tmp_path: Path) -> None:
+    w = make_wheel(
+        tmp_path, meta_edit=lambda t: t.replace("\n\n", "\nProject-URL: Homepage, https://example.org\n\n", 1)
+    )
+    assert wheel_errors(w) == [
+        "wheel METADATA: Project-URL 'Homepage' 'https://example.org' is not declared in pyproject.toml"
+    ]

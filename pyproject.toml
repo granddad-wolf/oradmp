@@ -18,6 +18,10 @@ classifiers = [
     "Typing :: Typed",
 ]
 
+[project.urls]
+Source = "https://github.com/granddad-wolf/oradmp"
+Issues = "https://github.com/granddad-wolf/oradmp/issues"
+
 [project.scripts]
 oradmp = "oradmp._cli:main"
 

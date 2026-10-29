@@ -12,7 +12,9 @@ import configparser
 import re
 import sys
 import tarfile
+import tomllib
 import zipfile
+from email.message import Message
 from email.parser import Parser
 from pathlib import Path, PurePosixPath
 
@@ -128,6 +130,25 @@ def cargo_version() -> str:
     return m.group(1)
 
 
+def declared_project_urls() -> set[tuple[str, str]]:
+    """``[project.urls]`` of the root pyproject.toml as (label, URL) pairs (T-20 (b), ADR-107 item 1)."""
+    data = tomllib.loads((Path(__file__).resolve().parent.parent / "pyproject.toml").read_text())
+    return set(data.get("project", {}).get("urls", {}).items())
+
+
+def check_project_urls(msg: Message, label: str, errors: list[str]) -> None:
+    """Exactly the ``Project-URL`` lines that pyproject.toml declares (label and URL, any order): one FAIL line each."""
+    found: set[tuple[str, str]] = set()
+    for line in msg.get_all("Project-URL") or []:
+        name, _, url = line.partition(",")
+        found.add((name.strip(), url.strip()))
+    declared = declared_project_urls()
+    for name, url in sorted(declared - found):
+        errors.append(f"{label}: Project-URL {name!r} {url!r} is missing")
+    for name, url in sorted(found - declared):
+        errors.append(f"{label}: Project-URL {name!r} {url!r} is not declared in pyproject.toml")
+
+
 def check_metadata(text: str, label: str, errors: list[str], version: str) -> None:
     msg = Parser().parsestr(text)
     if msg["Version"] != version:
@@ -143,6 +164,7 @@ def check_metadata(text: str, label: str, errors: list[str], version: str) -> No
         errors.append(f"{label}: Requires-Python is {msg['Requires-Python']!r}")
     if "pyarrow>=15" not in (msg.get_all("Requires-Dist") or []):
         errors.append(f"{label}: Requires-Dist {msg.get_all('Requires-Dist')!r} lacks pyarrow>=15")
+    check_project_urls(msg, label, errors)
     if not str(msg.get_payload()).lstrip().startswith("# oradmp"):
         errors.append(f"{label}: the description is not the README")
     if any(c.startswith("License ::") for c in msg.get_all("Classifier") or []):

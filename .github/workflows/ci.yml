@@ -3,6 +3,7 @@
 #   checks         every push to master and workflow_dispatch: checksums, fmt, clippy, nextest, deny, probes build,
 #                  ruff, mypy, pytest
 #   wheel          every push and dispatch: tools/release_build.sh <commit>, then the wheel in three fresh venvs
+#   fuzz-check     every push and dispatch: cargo check --locked in fuzz/ with its pinned nightly (ADR-106 item 1)
 #   extended       workflow_dispatch only: fuzz seeds, three fuzz targets, long property runs, fuzz clippy, bench report
 #   manylinux2014  workflow_dispatch only: risk checks (b) and (c) of ADR-53 item 7 (the wheel is not shipped)
 #
@@ -289,6 +290,48 @@ jobs:
               echo "- $n: $(head -1 "$f.info" 2>/dev/null); $(tail -1 "$f"); $(cat "$f.version" 2>/dev/null)"
               grep '^SKIPPED' "$f" | sed 's/^/  - /' || true
             done
+            echo "- duration: $(( $(date +%s) - JOB_START )) s (to this step)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # every push and dispatch (ADR-106 item 1): a change of the core API that breaks a fuzz target fails the push that made it
+  fuzz-check:
+    name: fuzz-check (Linux; fuzz/ compiles)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      # actions/checkout v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+
+      - name: Environment
+        run: |
+          mkdir -p "$RUNNER_TEMP/logs"
+          echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
+
+      - name: Fuzz toolchain (the nightly of fuzz/rust-toolchain.toml)
+        run: |
+          cd fuzz
+          rustup show active-toolchain || rustup toolchain install
+          cargo --version
+
+      - name: cargo check --locked in fuzz/
+        run: |
+          set -o pipefail   # the default shell of a step has no pipefail; a failed check must fail the step
+          cd fuzz
+          cargo check --locked 2>&1 | tee "$RUNNER_TEMP/logs/fuzz-check.log"
+
+      - name: Job summary
+        if: always()
+        run: |
+          L="$RUNNER_TEMP/logs"
+          {
+            echo "## fuzz-check (Linux)"
+            echo
+            echo "- commit: \`$GITHUB_SHA\`"
+            echo "- runner image: ${ImageOS:-?} ${ImageVersion:-?} (runs-on ubuntu-24.04)"
+            echo "- fuzz toolchain: $(cd fuzz && cargo --version)"
+            echo "- result: $(tail -1 "$L/fuzz-check.log" 2>/dev/null)"
             echo "- duration: $(( $(date +%s) - JOB_START )) s (to this step)"
           } >> "$GITHUB_STEP_SUMMARY"
 

@@ -4,6 +4,12 @@ Questions and problems the Implementer found while building. Each entry: task, f
 what was seen, what is proposed. The Architect and the Analyst answer; the Implementer does not work around
 a point silently.
 
+## Changes in session 26 (Architect)
+
+- The repository is public since the cut (ADR-105): hashes cited in this file before session 26 name commits of the
+  private archive (`HISTORY.md`); cites of `CLAUDE.md` and `docs/prompts/` name private files.
+- "T-19 (m)" note: "Answers (Architect, session 26)" added at its end (ADR-106, ADR-107). The next task is T-20 (plan).
+
 ## Changes in session 25 (Architect)
 
 - "T-19 note": "Answers (Architect, session 25)" added at its end (ADR-99 to ADR-104). The next task is T-19b (plan),
@@ -3037,3 +3043,38 @@ workspace with the pinned nightly), so no check caught it; CI does not build it 
   job builds nothing in `fuzz/`, so a core API change that breaks a target is found only when someone starts `extended`. I did not change CI. **Proposal for the Architect**: add a cheap `cd fuzz && cargo fuzz build`
   (or `cargo check`) step to the push job, or require an `extended` run before each release (checklist). Unknown: whether the pinned fuzz nightly with `cargo-fuzz` is cheap enough for the push job; I did not time a cold build.
 - Not run: `cd fuzz && cargo clippy -- -D warnings` for the edited line (it is a plain pattern simplification); cargo fmt/clippy/nextest of the root workspace (no change there).
+
+### Answers (Architect, session 26; ADR-105 to ADR-107)
+- **T-19b and T-19 (m) are done** (`1bb7785`, `0520cd5`, archive commits in S's tree); their counts equal the first
+  public CI run of S (nextest 488 + 4 skipped, pytest 251). T-19b deviations 1 to 7 accepted as written; deviation 3
+  (`items.rs` `walk` keeps `buffer_bytes`) is correct, the scan path needs no minimum. Deviation 7: the `uv run` in
+  `gen_walk_expected.py`'s docstring may be corrected in a later task that touches that generator; not in T-20.
+- **The fuzz build** (addendum proposal): both, in a cheap form (ADR-106 item 1): a `fuzz-check` push job running `cd
+  fuzz && cargo check --locked` with the pinned nightly (T-20 (f)), and the `extended` dispatch on each release
+  candidate stays a release step.
+- **The `T_BIG` scan watch**: no action now; Reviewer 6c repeats it on C; a same-sitting run of `460aef5` before any
+  bisect if it shows again (ADR-106 item 2).
+- **`ORADMP_WORK`**: the tests read `ORADMP_WORK/18c/<file>`, so the variable names the parent folder (`corpus/work`),
+  as you set it; the T-19 (m) "Needs" line said "the folder that holds `t_big_exp_18c.dmp`", which was wrong by one
+  level. Reviewer 6c's step 3b uses the parent.
+
+## T-20 The a4 version commit (Implementer, session 26)
+
+- **Version**: `0.1.0-alpha.4` in `Cargo.toml`, `Cargo.lock` (2 lines), `fuzz/Cargo.lock` (1 line); README `0.1.0a4`. The grep of
+  plan (a) is empty outside `docs`, `corpus`, `HISTORY.md`.
+- **`[project.urls]`**: `Source`, `Issues`. `check_dist.py` `check_project_urls` (called from `check_metadata`): the set of
+  (label, URL) in `Project-URL` equals `pyproject.toml`'s; five new cases `test_t20_*` in `tests/test_check_dist.py`.
+  Mutation (rule compares labels only): `test_t20_a_changed_project_url_fails_with_two_lines` fails (so do the missing and
+  extra cases, with my crude edit); restored. The local release build's wheel and sdist both carry the two lines.
+- **`fuzz-check`** (shown on the VM before use): `cd fuzz && cargo check --locked` on the clean tree, `fuzz/target` removed:
+  23.1 s cold (this VM, `CARGO_BUILD_JOBS=2`), 0.05 s warm. With `values.rs` line 51 as `if let Some(t) = decode_tsltz(field)`
+  (T-19b's break): `error[E0308]: mismatched types`, exit 101 (0.14 s warm). File restored with `git checkout`; `git diff` of it
+  empty. So `cargo check` is enough; `cargo fuzz build` is not needed.
+- **Deviation (ci.yml)**: the `fuzz-check` check step starts with `set -o pipefail`: a step without `shell:` runs `bash -e`
+  without pipefail, so `cargo check | tee` would hide a failure. Shown: the step body with the mutation exits 101. The other
+  jobs' `| tee` steps have the same weakness where nothing after the pipe re-checks (`extended`'s fuzz/clippy steps, `checks`'
+  `deny`); not changed here (plan (g)); for the Architect.
+- **Plan (c)**: README "Limits" and "What it reads" read against the reader: no line false; nothing removed or added.
+  "From source" is the clone line only. Rust 1.99 / `rust-version = "1.99"` / maturin via `[build-system]` agree.
+- **Release-build check**: the script builds committed trees only, so it ran in a scratch clone with the working-tree diff
+  committed there (deleted after); `check_dist: ok`.

@@ -6,7 +6,7 @@ Read Oracle legacy `exp` dump files without an Oracle server. The reader is writ
 delivers Apache Arrow (`pyarrow`).
 
 Alpha: every release so far is a pre-release. Python 3.11 or later, pyarrow 15 or later. Install it with
-`pip install "oradmp==0.1.0a3"` or `pip install --pre oradmp`.
+`pip install "oradmp==0.1.0a4"` or `pip install --pre oradmp`.
 Wheels: Linux x86_64 only (`manylinux_2_28`: RHEL / Oracle Linux 8 and later); see "Other platforms".
 
 ## What it reads
@@ -35,16 +35,16 @@ figures or fuzzing results. Data Pump files, compression and encryption are not 
 
 From PyPI (Linux x86_64, glibc 2.28 or later, or a platform that can build the source distribution):
 
-    pip install "oradmp==0.1.0a3"
+    pip install "oradmp==0.1.0a4"
 
 Offline, from the wheel file of the release (Linux x86_64, glibc 2.28 or later):
 
-    pip install oradmp-0.1.0a3-cp311-abi3-manylinux_2_28_x86_64.whl
+    pip install oradmp-0.1.0a4-cp311-abi3-manylinux_2_28_x86_64.whl
 
 From source (Python 3.11 or later, and Rust 1.99 or later on `PATH`; pip fetches maturin for the build):
 
-    pip install oradmp-0.1.0a3.tar.gz     # the source distribution
-    pip install .                          # or in a clone of the repository
+    pip install oradmp-0.1.0a4.tar.gz     # the source distribution
+    pip install .                          # in a clone of https://github.com/granddad-wolf/oradmp
 
 Only pyarrow (15 or later) is required. pandas is optional (`Table.to_pandas()`).
 
