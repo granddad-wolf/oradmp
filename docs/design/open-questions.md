@@ -1,9 +1,21 @@
 # Legacy EXP reader: open questions, requests, risks
 
 Architect session 1, 2026-10-07; session 2, 2026-10-14; sessions 3 and 4, 2026-10-15; sessions 5 and
-6, 2026-10-16; sessions 7 to 13, 2026-10-17; sessions 14 and 15, 2026-10-18; sessions 16 and 17, 2026-10-21; session 18, 2026-10-22; sessions 19 to 23, 2026-10-24; sessions 24 and 25, 2026-10-25; sessions 26 and 27, 2026-10-29. "arch n" is a
+6, 2026-10-16; sessions 7 to 13, 2026-10-17; sessions 14 and 15, 2026-10-18; sessions 16 and 17, 2026-10-21; session 18, 2026-10-22; sessions 19 to 23, 2026-10-24; sessions 24 and 25, 2026-10-25; sessions 26 and 27, 2026-10-29; session 28, 2026-10-30. "arch n" is a
 section of `exp-reader-architecture.md`; rule numbers are those of `docs/formats/exp_reader_rules.md`
 (v3.4; v3.5 from session 8; v3.6 from session 17; v3.7 from session 24; v3.9 from session 25).
+
+## Changes in session 28
+
+- (a) Reviewer 6c done at C = `4b9883c` (no blocking finding), T-20b done (ADR-109). The a4 release is the owner's, by
+  the plan's "Release 0.1.0a4 checklist (session 28)"; the tag goes on C (ADR-110). Pending owner actions, in order: the
+  docs push; the checklist (old root aside, the five action pins with `git ls-remote`, build, hashes, `cargo deny`, VM
+  and `rockylinux:8` installs, `stream_memory.py`, tag, TestPyPI, PyPI, tag to `origin`, release page, tokens deleted,
+  folders); the record paste. After the tag: Q-4 (with the a4 wheel), R-052 on Q-4's condition, R-046 (low), the RHEL 8
+  host test, `oradmp-private` (recommendation: archive read-only), O-24, Q-13, O-20. None of the after-tag items blocks
+  a4.
+- (b) No new request for the Analyst (6c raised no format question). Next free number stays **R-053**.
+- (c) **Risk 30 closed** (ADR-109 item 2). **Risk 31** (new): the owner's release build differs from C's CI files.
 
 ## Changes in session 27
 
@@ -1834,7 +1846,8 @@ AL32UTF8 (confirmed).
 | 27 | (**closed**, session 26: the cut is done, checks 1 to 9 clean, ADR-105; Reviewer 6c repeats the residue checks) (session 22; **session 23**: steps in order with the [OWNER] items, "Q-14 steps (session 23)"; the public name collides with the private repository's) The one-time cut (Q-14): a scrub mistake publishes a password, a home path or an e-mail; or a release is built from a commit that the review did not read; or the archive's hashes cited in the documents become unresolvable. | Irreversible once pushed; the a4 candidate could fall on either side of the cut. | Q-14's steps and nine checks (snapshot by `git archive`, fixture checksums, `diff -r` against the archive commit, greps); the rule "never between the a4 version commit and the tag"; the HISTORY note; Reviewer 6c checks the cut if it came first (ADR-88 item 3). |
 | 28 | (session 23; **session 26**: at S two CI runs gave one wheel and one sdist at the canonical root, the owner's scratch-root build the same sdist and another wheel, as predicted; claim unchanged, ADR-105 item 6) The wheel hash depends on the build root through the SBOM (ADR-90); a release built at another root, or a claim of reproducibility wider than the evidence, makes a later rebuild disagree with PyPI although nothing is wrong. | The first release after CI exists (a4) is the first whose hash can be cross-checked; a false claim in the README is public. | The canonical root and `--release` (T-16a2); `check_dist.py --build-root`; O-23 (a) decides the claim; the sdist cross-check stays a gate; the README says nothing until the confirmation. |
 | 29 | (**closed**, session 25: 65,533 is `fa ff` + n, 65,534 chunked, `long4_exp_<v>`@0x42295, 0x522a6; ADR-99 item 7) (session 24) A conventional LONG of exactly 65,533 or 65,534 bytes, if `exp` writes it as one field, has the u16 `fd ff` (the chunk marker) or `fe ff` (NULL): the reader then reads it as a chunked value or a NULL and misframes the rest (R-048's prediction is that the switch lies below 65,533). | A silent misread is possible until a later `Framing`; most likely a `Framing` or a missing `00 00` row end within the row. | ADR-95: a chunked total below 65,535 warns (`W-UNTESTED-LAYOUT`); the row-end check of [R4]; R-048 asks for exactly these sizes. |
-| 30 | (session 27) A CI step that pipes a command into `tee` without `pipefail` shows green when the command fails (`ci.yml` has no `defaults.run.shell`; GitHub runs `bash -e {0}`): `cargo deny`, test failures of nextest and pytest, the installed-wheel pytest, fuzz findings, fuzz clippy, `auditwheel show` (ADR-108 item 4). | A release built from a commit whose CI is green although a check failed; a fuzz finding never uploaded. | T-20b: `defaults: run: shell: bash` for the whole workflow, two constructs adjusted, a proof run with a deliberate failure in each affected step (ADR-108 item 5). Closed when T-20b's proof run is pasted and Reviewer 6c finds no hidden failure left. |
+| 30 | (**closed**, session 28: T-20b's proof run turned every affected step red and Reviewer 6c found no failure left that turns a red check green; the five `echo "...$(...)"` lines (6c SF-1) go to T-21, ADR-109) (session 27) A CI step that pipes a command into `tee` without `pipefail` shows green when the command fails (`ci.yml` has no `defaults.run.shell`; GitHub runs `bash -e {0}`): `cargo deny`, test failures of nextest and pytest, the installed-wheel pytest, fuzz findings, fuzz clippy, `auditwheel show` (ADR-108 item 4). | A release built from a commit whose CI is green although a check failed; a fuzz finding never uploaded. | T-20b: `defaults: run: shell: bash` for the whole workflow, two constructs adjusted, a proof run with a deliberate failure in each affected step (ADR-108 item 5). Closed when T-20b's proof run is pasted and Reviewer 6c finds no hidden failure left. |
+| 31 | (session 28) The owner's build of C at the canonical root gives a wheel or sdist other than C's CI files (`2e4c69a5...`, `510f2e39...`), e.g. after a toolchain, `uv` or registry change on the VM since 2026-10-29; or the owner uploads files from another folder. | The uploaded files would be ones no review or CI run produced; PyPI file names cannot be reused. | Both hashes are gates before any upload (checklist step 6, ADR-110 item 2); the build pins rustc 1.99.0, maturin 1.15.0 and zig 0.17.0 and remaps the paths; the upload names the two files of `R/dist` and is compared against the index; TestPyPI first. |
 
 ### Session 3 ranking (history)
 

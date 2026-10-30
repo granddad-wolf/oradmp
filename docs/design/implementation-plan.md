@@ -1,13 +1,22 @@
 # Legacy EXP reader: implementation plan
 
 Architect session 1, 2026-10-07; session 2, 2026-10-14; sessions 3 and 4, 2026-10-15; sessions 5 and
-6, 2026-10-16; sessions 7 to 13, 2026-10-17; sessions 14 and 15, 2026-10-18; sessions 16 and 17, 2026-10-21; session 18, 2026-10-22; sessions 19 to 23, 2026-10-24; sessions 24 and 25, 2026-10-25; sessions 26 and 27, 2026-10-29. Tasks for the
+6, 2026-10-16; sessions 7 to 13, 2026-10-17; sessions 14 and 15, 2026-10-18; sessions 16 and 17, 2026-10-21; session 18, 2026-10-22; sessions 19 to 23, 2026-10-24; sessions 24 and 25, 2026-10-25; sessions 26 and 27, 2026-10-29; session 28, 2026-10-30. Tasks for the
 Implementer, in order; each is meant for one session. "Rules" are those of
 `docs/formats/exp_reader_rules.md` (v3.4; v3.5 from session 8; v3.6 from session 17; v3.7 from session 24; v3.9 from session 25); "arch n" is a section of `exp-reader-architecture.md`. Every
 task ends with `cargo fmt`, `cargo clippy -- -D warnings` and `cargo nextest run` green (`CLAUDE.md`,
 definition of done; in the public repository the same checks are listed in `CONTRIBUTING.md`, "Development setup")
 and adds no `unsafe` to the core. Commit hashes cited before session 26 name commits of the private archive
 (`HISTORY.md`, ADR-105).
+
+## Changes in session 28
+
+- **Reviewer 6c: DONE** (`docs/review/review-06c.md`, C = `4b9883c`: 0 blocking, SF-1, N-1 to N-7; ADR-109).
+  **T-20b: DONE** (`4b9883c`; its push run, the proof run 40974068275 and the two dispatches on C; ADR-109 item 2).
+- SF-1, N-1, N-2, N-3, N-5 go to the new **T-21** (after the a4 tag); N-4, N-7 no action; N-6 is checklist step 2
+  (ADR-109 items 3, 4).
+- "Release 0.1.0a4": session 28 block with the **a4 checklist** for the owner (tag on C; both hashes known; ADR-110).
+  New order table (session 28); the session 27 table is history.
 
 ## Changes in session 27
 
@@ -2290,7 +2299,7 @@ record with full hashes. The billed-minutes figure: O-23 (b).
   consistent with `manylinux_2_17_x86_64`, up to `GLIBC_2.14`). **These hashes are T-20's evidence, not the candidate's**:
   T-20b's commit becomes C (ADR-108 item 5). The note's `set -o pipefail` deviation: accepted, superseded by T-20b.
 
-## T-20b `pipefail` for every CI step (session 27; ADR-108 items 4, 5) - next
+## T-20b `pipefail` for every CI step (session 27; ADR-108 items 4, 5) - DONE (2026-10-29, `4b9883c52ebf709ccf0161883505844fdcc45345` = C; push run green, proof run 40974068275 red as planned, `extended` and `manylinux2014` on C green; reviewed: review-06c, no blocking finding; ADR-109)
 
 - Goal: a failure of any piped command in `.github/workflows/ci.yml` fails its step and its job; the commit is the a4
   candidate C.
@@ -2339,6 +2348,58 @@ record with full hashes. The billed-minutes figure: O-23 (b).
   Reviewer 6c, and the release's `extended` run on the candidate, ADR-106 item 1).
 - Touches: `.github/workflows/ci.yml`; the note in `docs/design/implementer-notes.md`. Not `CONTRIBUTING.md` (it names
   no shell), not `tools/`, `crates/`, `python/`, `tests/`. **Model: Sonnet.** Reviewed in **Reviewer 6c**.
+- **Result (session 28, ADR-109 item 2)**: C = `4b9883c52ebf709ccf0161883505844fdcc45345`. Push run green with
+  `e1ed10b`'s counts; `SOURCE_DATE_EPOCH` 1793315613 (= `%ct` of C, checked); wheel
+  `2e4c69a57baafe84e6c5ec0b4b9bef1248c93ea2eabdb57adb17d49d58949dbd`, sdist
+  `510f2e39f8ae7eb9660fa4f2313062d2245c3c6d16ebd10740fa0e529c40c0fd` (canonical root). Proof run 40974068275 on
+  `t20b-proof` (`75ad263`): `checks` / `wheel` / `extended` / `manylinux2014` red with 3 / 2 / 7 / 1 exit-code-7
+  annotations, `fuzz-check` green, the crash-artifact step ran; branch deleted locally and on `origin`. `extended` on C:
+  0 findings, 463 seeds; `manylinux2014` on C: wheel `1df8ed44bcae37444de00c72b54866d8bfe0c3fbd7794a2668e9632cbe87a1e9`
+  (not shipped), `auditwheel` consistent with `manylinux_2_17`, both `Tag:` lines. Reviewer 6c: no hidden failure that
+  turns a red check green; SF-1 (five `echo "...$(...)"` lines) and N-1 go to T-21.
+
+## T-21 The first commit after a4: substitutions in `ci.yml`, stale counts, generator docstrings, CONTRIBUTING pins (session 28; ADR-109 items 3, 4) - after the a4 tag
+
+- Goal: review 6c's SF-1, N-1, N-2, N-3 and N-5 fixed in one small commit; nothing shipped changes behaviour.
+- Inputs: `docs/review/review-06c.md` (SF-1, N-1, N-2, N-3, N-5); ADR-108 item 4 (as amended), ADR-109; `ci.yml` at the
+  a4 tag; GNU Bash manual ("Command Substitution", "The Set Builtin": `-e` and the status of a simple command with
+  only assignments); `crates/oradmp-core/tests/common/mod.rs` (`TOTALS`).
+- Needs from the owner: one commit and one push to `origin`, the pasted summaries; no dispatch needed unless (a) changes
+  a line of `extended` (it does: line 363 and the `find` test), then one `extended` dispatch, pasted. No tag.
+- **Done when:**
+  (a) **SF-1 and N-1** (rule of ADR-109 item 3): in `.github/workflows/ci.yml` every command substitution whose status
+  matters stands alone as an assignment, then its value is used: `newest="$(python -c '...')"` then `echo
+  "NEWEST_PY=$newest" >> "$GITHUB_ENV"`; the same for the four `JOB_START` lines (57, 178, 318, 363 at C); the property
+  step's test becomes `regs="$(find . -name '*.proptest-regressions' -print -quit)"` then `if [ -n "$regs" ]; then`.
+  `grep -nE '(echo|printf)[^#]*\$\(' .github/workflows/ci.yml` outside the summary steps (`if: always()`) prints nothing,
+  or each remaining line is listed in the note with why its status does not matter. Shown on the VM: under `bash
+  --noprofile --norc -eo pipefail`, `x="$(false)"; echo reached` exits 1 without `reached`; the new `find` lines take the
+  right branch with and without a `x.proptest-regressions` file; with a `find` over an unreadable folder (`chmod 000`
+  in a temp folder) the step stops (exit non-zero). YAML parse and `bash -n` of every `run` block (as T-20b (c)).
+  (b) **N-2**: `t11_options.rs` `the_counting_core_agrees_with_the_totals_of_the_201_files` and `t11_strict.rs`
+  `strict_over_the_201_files_fails_exactly_on_the_documented_list` renamed without a count (e.g.
+  `..._totals_of_all_fixture_files`, `strict_over_all_fixture_files_...`); the comments `t11_options.rs:11`, `:401`,
+  `:492` and `common/synth.rs:145` name no file count, or cite `TOTALS`; no assertion changes. `git grep -nE
+  '\b(201|211) files\b' -- crates tests` prints nothing. No other file names these tests (`ci.yml`'s skip list names
+  only the four ignored tests).
+  (c) **N-3**: the docstrings of `crates/oradmp-core/tests/data/gen_walk_expected.py` and `gen_number_parts.py` say
+  `cd docs/formats/tools && python3 -I ../../../crates/oradmp-core/tests/data/<name>.py`; both run that way and the
+  regenerated files are byte-identical (`git diff` empty). `git grep -n 'uv run' -- crates tests tools` prints only
+  lines that say `uv run --no-project` (rule 9), each listed in the note.
+  (d) **N-5**: `CONTRIBUTING.md` "Development setup": the install line pins `maturin==1.15.0 pytest==9.1.1
+  ruff==0.17.1 mypy==2.4.0` (pandas and pyarrow stay unpinned, as CI's newest venv); one line `cargo install --locked
+  cargo-nextest@0.9.146 cargo-deny@0.20.2` before the checks list. A new pytest `tests/test_contributing_pins.py` reads
+  `ci.yml` (the `pip install` line of the `checks` job and the `tool:` line of `taiki-e/install-action`) and
+  `CONTRIBUTING.md` and asserts the five versions are equal; mutation: a changed ruff version in either file fails it.
+  (e) **Nothing else**: `git diff --stat <a4 tag> HEAD -- . ':!docs'` lists only `ci.yml`, the two `t11_*.rs`,
+  `common/synth.rs`, the two generators, `CONTRIBUTING.md` and the new test; no file of `crates/*/src/`, `python/`,
+  `tools/`, `fuzz/` (so step 3b is not due).
+  (f) **Checks** (definition of done): fixture checksums; fmt; clippy (two forms); `cargo nextest run -j 2` 488 passed +
+  4 skipped (same count, two names changed); `cargo deny check`; `maturin develop --features test-probes`; ruff, ruff
+  format, mypy; pytest 256 + the new test's cases, 0 skipped. Counts in the note.
+  (g) **CI**: the push run green with (f)'s counts; each venv's passed count grows by the new test's cases, skips
+  unchanged; the `extended` dispatch green, 0 findings.
+- Touches: as (e); the note. **Model: Sonnet.** Reviewed with T-16b and T-16c (Reviewer 7, rule 7).
 
 ## T-18 The command-line tool `oradmp` (session 18; ADR-72) - DONE (2026-10-24, `2ba62eb`; ran before T-16, ADR-73 swap; 412 Rust tests, 196 pytest; findings ruled by ADR-75; (l)'s CI part moved to T-16; reviewed: review-06a, SF-1 and SF-2 go to T-18c)
 - Goal: `oradmp` as a thin console tool on the public Python API: list tables, show columns, print the first rows,
@@ -3249,6 +3310,135 @@ or more.
   builds from the archive commit in a second scratch worktree of the same clone.
 - **After 6c**: unchanged (Architect session: record 6c, the a4 checklist; then the release from C).
 
+**Session 28 (ADR-109, ADR-110; this block wins where the text above differs):**
+- **Done**: Reviewer 6c (`docs/review/review-06c.md`): no blocking finding at C; "0.1.0a4 can be built from C as it
+  stands". No closure task (SF-1 and the notes go to T-21 after the tag, or need no action; ADR-109).
+- **The release commit is C**, the tag `v0.1.0a4` goes on it, not on a later docs commit (ADR-110 item 1).
+- **Content**: unchanged (T-17b, T-16a, T-16a2, T-18d, T-19, T-19b, T-20, T-20b). Linux x86_64 `manylinux_2_28` wheel
+  and the sdist. Release notes: ADR-110 item 7.
+
+#### Release 0.1.0a4 checklist (session 28; for the owner, in order)
+
+Names: **C** = `4b9883c52ebf709ccf0161883505844fdcc45345`; **R** = `/var/tmp/oradmp-release` (the canonical root);
+**W** = `oradmp-0.1.0a4-cp311-abi3-manylinux_2_28_x86_64.whl`; **S** = `oradmp-0.1.0a4.tar.gz`; **X** =
+`/var/tmp/a4-check` (scratch, outside the repository); **L** = `/var/tmp/oradmp-a4-build.log`. Expected: **epoch
+1793315613**, **W = `2e4c69a57baafe84e6c5ec0b4b9bef1248c93ea2eabdb57adb17d49d58949dbd`**, **S =
+`510f2e39f8ae7eb9660fa4f2313062d2245c3c6d16ebd10740fa0e529c40c0fd`** (C's CI push run; never a later run's).
+**[O]** = the owner. Every step is the owner's; no agent session runs from step 11 to step 16. Oracle containers
+stopped for steps 6 to 9; one build at a time; `TMPDIR=/var/tmp/oradmp-tmp`, `CARGO_BUILD_JOBS=2`. Any "stop" means:
+nothing is uploaded or tagged; paste the output to the Architect.
+
+1. **[O] Gate.** Push the two docs commits first if not yet (`075a6bf` and session 28's; their CI runs are not the
+   release's). Then in `~/p/oradmp`: `git fetch origin`; `git rev-parse 'C^{commit}'` prints C;
+   `git merge-base --is-ancestor C origin/master && echo on-master` prints `on-master`; `git diff --stat C origin/master
+   -- . ':!docs'` prints nothing. In C's pasted `wheel` summary, the `pytest-pynewest-latest` line starts with the
+   newest Python setup-python installed (3.14.x), not 3.11 (SF-1's only scenario, ADR-109 item 3). Else stop.
+2. **[O] Old root aside** (6c N-6). `ls -ld /var/tmp/oradmp-release` (it exists, made 2026-10-27);
+   `mv /var/tmp/oradmp-release /var/tmp/oradmp-release-old-2026-10-27`; now `ls -d /var/tmp/oradmp-release` must fail.
+3. **[O] Version.** `git show C:Cargo.toml | grep -m1 '^version'` prints `version = "0.1.0-alpha.4"`;
+   `git show C:README.md | grep -oE '0\.1\.0a[0-9]+' | sort -u` prints only `0.1.0a4`.
+4. **[O] Action pins** (6c did not check them; network, no token). For each of the five pins of `ci.yml` at C run
+   `git ls-remote --tags <url> | grep -F 'refs/tags/<tag>'`:
+   `https://github.com/actions/checkout` `v7.0.1` -> `3d3c42e5aac5ba805825da76410c181273ba90b1`;
+   `https://github.com/actions/setup-python` `v7.1.0` -> `6d4fd22b20465ccc0f7354476588e8df7c9ca0e0`;
+   `https://github.com/actions/cache` `v6.1.0` -> `55cc8345863c7cc4c66a329aec7e433d2d1c52a9`;
+   `https://github.com/actions/upload-artifact` `v7.0.2` -> `cf430e030ddbb5b0abf93d22962f4752f3646cd9`;
+   `https://github.com/taiki-e/install-action` `v2.87.31` -> `1e29709c0ec63babbe8f266397a465f29a825f91`.
+   The pinned hash must equal the `refs/tags/<tag>^{}` line if one is printed (an annotated tag), else the
+   `refs/tags/<tag>` line. Any other result: stop (ADR-109 item 5).
+5. **[O] Build.** In `~/p/oradmp`:
+   `env -u ORADMP_BUILD_ROOT TMPDIR=/var/tmp/oradmp-tmp CARGO_BUILD_JOBS=2 tools/release_build.sh 4b9883c52ebf709ccf0161883505844fdcc45345 --twice --release 2>&1 | tee /var/tmp/oradmp-a4-build.log; echo "status ${PIPESTATUS[0]}"`.
+   Expected: `status 0`; in L: `release root: canonical`, `commit:   4b9883c52ebf...` (= C), `epoch:    1793315613
+   (SOURCE_DATE_EPOCH)`, `root:     /var/tmp/oradmp-release`, `check_dist: ok` twice, `identical:` for W and for S,
+   `reproducible`. Else stop. W and S in `R/dist` are the release; nothing is rebuilt later.
+6. **[O] Hashes (gate).** `ls -A /var/tmp/oradmp-release/dist` lists exactly W, S, `SHA256SUMS`;
+   `cat /var/tmp/oradmp-release/dist/SHA256SUMS` shows the two expected hashes above, all 64 characters equal. A
+   difference stops the release. For a wheel difference, list its members and compare with the member list in C's
+   `wheel` summary: `python3 -I -c 'import sys,zipfile,hashlib; z=zipfile.ZipFile(sys.argv[1]); [print(hashlib.sha256(z.read(i)).hexdigest(), i.file_size, i.filename) for i in z.infolist() if not i.is_dir()]' /var/tmp/oradmp-release/dist/W`.
+7. **[O] Network check.** `cd /var/tmp/oradmp-release/src && cargo deny check`: advisories, bans, licenses, sources
+   each `ok`. An advisory against a crate in the wheel stops the release until the Architect rules.
+8. **[O] Install on the VM** (normal user). `mkdir /var/tmp/a4-check && cp ~/p/oradmp/corpus/fixtures/18c/t_text_exp_18c.dmp /var/tmp/a4-check/`.
+   - `uv venv --python 3.11 X/v311`; `uv pip install --python X/v311/bin/python /var/tmp/oradmp-release/dist/W
+     pytest==9.1.1 pyarrow==15.0.2 pandas==2.2.3`; `X/v311/bin/python -c 'import oradmp; print(oradmp.__version__,
+     oradmp.__file__)'` prints `0.1.0a4` and a path in `X/v311/.../site-packages/oradmp/`.
+   - `cd /var/tmp/oradmp-release/src && X/v311/bin/pytest -rs -q -p no:cacheprovider`: **253 passed, 3 skipped**, the
+     three skips in `tests/test_internal.py` (no probes in a release).
+   - `X/v311/bin/python tools/stream_memory.py corpus/fixtures` (still in `R/src`): prints `PASS`, exit 0; keep the
+     printed RSS lines for the record.
+   - `X/v311/bin/oradmp --version` prints `oradmp 0.1.0a4`; `X/v311/bin/oradmp tables X/t_text_exp_18c.dmp` lists
+     `T_TEXT`; `X/v311/bin/oradmp tables X/missing.dmp; echo $?` prints `oradmp: error: [E-IO] No such file or
+     directory: ...missing.dmp` and `3`.
+   - Source build once: `uv venv --python 3.11 X/vsrc`; `TMPDIR=/var/tmp/oradmp-tmp CARGO_BUILD_JOBS=2 uv pip install
+     --python X/vsrc/bin/python /var/tmp/oradmp-release/dist/S` (Rust and network); `X/vsrc/bin/python -m oradmp survey
+     --no-names X/t_text_exp_18c.dmp` exits 0.
+9. **[O] Rocky Linux 8 container, as root (gate; ADR-109 item 5).**
+   `docker run --rm -it -v /var/tmp/oradmp-release:/var/tmp/oradmp-release:ro -v /var/tmp/a4-check:/x:ro rockylinux:8 bash`,
+   then inside:
+   - `dnf install -y python3.11 python3.11-pip git`; `git config --global --add safe.directory
+     /var/tmp/oradmp-release/src`; `cd /var/tmp/oradmp-release/src`; `W=/var/tmp/oradmp-release/dist/W` (the full name).
+   - (a) `python3.11 -m venv /v/a && /v/a/bin/pip install "$W" pytest==9.1.1 pyarrow==15.0.2 pandas==2.2.3`;
+     `/v/a/bin/pytest -rs -q -p no:cacheprovider`: **250 passed, 6 skipped** = the three probe tests, `tests/test_cli.py:594`
+     ("root can write to a read-only folder"), `tests/test_cli.py:923` ("root can read a file of mode 000"),
+     `tests/test_paths.py:121` ("root can write to a read-only folder").
+   - (b) `python3.11 -m venv /v/b && /v/b/bin/pip install "$W" pytest==9.1.1 pyarrow`; pytest as (a): **243 passed, 7
+     skipped** (the six of (a) and `tests/test_consumers.py`, pandas); `/v/b/bin/oradmp export /x/t_text_exp_18c.dmp
+     T_TEXT -o /tmp/t.csv` and `-o /tmp/t.parquet` each exit 0.
+   - (c) The newest CPython: `/v/a/bin/pip install uv==0.12.21`; `/v/a/bin/uv python install 3.14`;
+     `/v/a/bin/uv venv --python 3.14 /v/c`; `/v/a/bin/uv pip install --python /v/c/bin/python "$W" pytest==9.1.1 pyarrow
+     pandas`; pytest as (a): **250 passed, 6 skipped**. If no pyarrow wheel exists for that Python on this image, record
+     that and go on (6c ran 3.14.7 on the VM).
+   - In each venv: `oradmp --version` prints `oradmp 0.1.0a4`; `oradmp tables /x/t_text_exp_18c.dmp` lists `T_TEXT`.
+   - If `git` could not be installed, each count has one more skip (`tests/test_project_name.py:34`, "not a git
+     clone"). Any failure, or any other skip: stop. `exit` (the container is removed).
+10. **[O] RHEL 8 host**: not a gate; no host at hand: record "not done" (ADR-109 item 5).
+11. **[O] Tag, local only.** Write the release notes of ADR-110 item 7 into `/var/tmp/a4-tag-message.txt` (first line
+    `oradmp 0.1.0a4`, a blank line, then the text). `git tag -a v0.1.0a4 -F /var/tmp/a4-tag-message.txt
+    4b9883c52ebf709ccf0161883505844fdcc45345`; `git rev-parse 'v0.1.0a4^{commit}'` equals the `commit:` line of L.
+    Not pushed yet.
+12. **[O] TestPyPI.** Close every agent session; a new terminal; `cd /var/tmp/a4-check`; `(cd /var/tmp/oradmp-release/dist
+    && sha256sum -c SHA256SUMS)` prints two `OK`. On test.pypi.org create an API token scoped to the project `oradmp`
+    and copy it from the page. Then:
+    `read -rs UV_PUBLISH_TOKEN` (paste, Enter; nothing is echoed, and the history holds only this command line),
+    `export UV_PUBLISH_TOKEN`,
+    `uv publish --publish-url https://test.pypi.org/legacy/ --check-url https://test.pypi.org/simple/ /var/tmp/oradmp-release/dist/oradmp-0.1.0a4-cp311-abi3-manylinux_2_28_x86_64.whl /var/tmp/oradmp-release/dist/oradmp-0.1.0a4.tar.gz`,
+    `unset UV_PUBLISH_TOKEN`. Never the token on a command line (`UV_PUBLISH_TOKEN=... uv publish`, `--token`), in a
+    file, or in `~/.pypirc`. No glob, no `--dry-run`.
+    Compare: `curl -s https://test.pypi.org/simple/oradmp/ | grep -o 'oradmp-0\.1\.0a4[^"#]*#sha256=[0-9a-f]*'` prints
+    two lines with the hashes of step 6 (a missing line right after the upload is index lag: retry for a few minutes).
+    Install: `python3 -m venv vt`; `vt/bin/pip install "pyarrow>=15"`; `vt/bin/pip download --no-deps --only-binary
+    :all: --index-url https://test.pypi.org/simple/ "oradmp==0.1.0a4" -d dl && sha256sum dl/*` equals W's hash;
+    `vt/bin/pip install --no-deps --index-url https://test.pypi.org/simple/ "oradmp==0.1.0a4"`; `vt/bin/oradmp --version`;
+    `vt/bin/oradmp tables t_text_exp_18c.dmp`. Any difference: stop before PyPI.
+13. **[O] PyPI.** As step 12 with a new token scoped to `oradmp` on pypi.org, no `--publish-url`, `--check-url
+    https://pypi.org/simple/`; `unset UV_PUBLISH_TOKEN`. Compare against `https://pypi.org/simple/oradmp/` as in 12. In a
+    new venv `vp`: `vp/bin/pip install "oradmp==0.1.0a4"` (dependencies from PyPI), `vp/bin/oradmp --version`,
+    `vp/bin/oradmp tables t_text_exp_18c.dmp`. In one more fresh venv: `pip install oradmp` without a version; record
+    the version it picks and `pip --version`.
+14. **[O] Push the tag.** `cd ~/p/oradmp && git push origin refs/tags/v0.1.0a4`; `git ls-remote --tags origin v0.1.0a4`
+    prints the tag object and a `^{}` line whose hash is C. Only `origin` (the public repository); nothing goes to the
+    Gogs archive or `oradmp-private` (ADR-105 item 7). No agent pushes.
+15. **[O] GitHub release page** (ADR-110 item 4): Releases, "Draft a new release", choose the existing tag
+    `v0.1.0a4`, title `oradmp 0.1.0a4`, body = the tag message, the two SHA-256 of step 6 and
+    `https://pypi.org/project/oradmp/0.1.0a4/`; tick "Set as a pre-release"; attach no file; publish.
+16. **[O] Afterwards.**
+    - Tokens: delete both API tokens (TestPyPI and PyPI, account settings, API tokens; ADR-110 item 5); log out of
+      both web sites. Check, counts only: `ls -a ~ | grep -c pypirc` prints 0; `grep -c 'pypi-' ~/.bash_history` prints
+      0; `env | grep -c UV_PUBLISH_TOKEN` prints 0.
+    - `ls -A /var/tmp/oradmp-release/dist` lists exactly W, S, `SHA256SUMS` (anything else is removed; a file that could
+      hold a token means that token is revoked, as it is anyway).
+    - Folders: `mv /var/tmp/oradmp-release /var/tmp/oradmp-release-0.1.0a4` (keeps the shipped files and the build clone;
+      the canonical root is free for the next release); keep L next to it; delete `/var/tmp/a4-check` (with `vt`, `vp`,
+      `dl`), `/var/tmp/a4-tag-message.txt`, and `/var/tmp/oradmp-release-old-2026-10-27` once you have looked at what it
+      holds (it predates C); `/var/tmp/oradmp-review-6c` if anything is left of it.
+    - `oradmp-private`: now the owner's choice (ADR-106 item 4); recommendation: archive it read-only on GitHub
+      (Settings, "Archive this repository"), not delete it, because the a3 record cites its runs. The snapshot folder:
+      the owner's choice. O-24 stays open (not a gate).
+17. **[O] Record** (to the Architect, next session): the report lines of L (commit, epoch, root, `SHA256SUMS`,
+    `check_dist`, `identical`); steps 4 and 7 results; step 8 and 9 counts with every skip line; the `stream_memory.py`
+    lines; step 10; the TestPyPI and PyPI comparison lines; the plain `pip install oradmp` result with `pip --version`;
+    the `git ls-remote` lines of step 14; the release page's URL. The Architect writes "Release 0.1.0a4 record" here.
+    `HISTORY.md` is not changed; there is no changelog file (ADR-110 item 6).
+
 ## CI minutes budget (session 23; ADR-92 item 4)
 
 **Session 26**: the repository is public; standard hosted runners are free there and this budget lapses (O-23 (b)
@@ -3267,7 +3457,31 @@ Rules while private: a push runs only `checks` and `wheel`; a dispatch only when
 needed; T-16b: at most three; T-16c: as its note asks, Linux only); the note records the minutes of each dispatched run.
 After the cut the budget lapses for standard runners; the dispatch rule for `extended` stays (it is long, not costly).
 
-## Order of the next tasks (session 27)
+## Order of the next tasks (session 28)
+
+Machine rule unchanged (session 16 below). CI runs on the public GitHub repository and is not a build on the VM.
+**OWNER** marks an owner action.
+
+| order | task | can start | runs in parallel with | touches | model | waits for a human? |
+|---|---|---|---|---|---|---|
+| done | T-20b (C = `4b9883c`); its push run, proof run and the two dispatches on C; Reviewer 6c (no blocking finding); this session | - | - | - | - | - |
+| 1 | **OWNER**: commit `docs/review/review-06c.md` (done, `075a6bf`) and this session's documents; one push | now | everything | `docs/` | - | yes |
+| 2 | **OWNER: release 0.1.0a4** from C: "Release 0.1.0a4 checklist (session 28)", steps 1 to 16 (old root aside, action pins, build at the canonical root, both hashes, `cargo deny`, VM and Rocky Linux 8 installs, `stream_memory.py`, tag, TestPyPI, PyPI, tag pushed to `origin`, release page, tokens deleted) | after row 1 | **nothing that builds** (steps 5 to 9) | the VM, PyPI, a tag | - | **OWNER** all steps |
+| 3 | **Architect**: the a4 record from the owner's paste (step 17) | after row 2 | - | `docs/design/` | - | no |
+| 4 | **T-21** SF-1, N-1, N-2, N-3, N-5 (ADR-109) | after the a4 tag | row 7, row 8 | `ci.yml`, two `t11_*.rs`, `common/synth.rs`, two generators, `CONTRIBUTING.md`, one new test | Sonnet | **OWNER** commits, pushes, one `extended` dispatch, pastes |
+| 5 | **T-16b** macOS / Windows; **T-16c** `manylinux2014` acceptance (ADR-106 item 3) | after row 4 is pushed (both edit `ci.yml`) | row 7, row 8 | `.github/workflows/`, `tools/`, `check_dist.py`, gates, README | Sonnet | **OWNER** for T-16c's glibc 2.17 run |
+| 6 | **Reviewer 7** on T-21, T-16b, T-16c (rule 7) | after row 5 | - | `docs/review/` | Opus | **OWNER** starts it |
+| 7 | **OWNER: Q-4**, the real-dump counts with `oradmp survey` from the a4 wheel, on the owner's side, counts only | after the a4 tag | everything | nothing in the repository | - | yes |
+| 7' | **R-052** (Analyst request, exists) only if Q-4 shows a LONG of 65,522 to 65,524 bytes or a field starting `fb ff` / `fc ff` (ADR-101 item 5) | after row 7 | everything | `corpus/` (owner) | - | yes |
+| 8 | **R-046** (low): the CL8MSWIN1251 CLOB / NCLOB short-form end | any time | everything | `corpus/` (owner) | - | yes |
+| 9 | **Data Pump** (phase 2): an Architect session plans it | after the a4 tag | rows 4 to 8 | `docs/design/` | - | scope with the owner |
+| 10 | **Analyst 21** (documents only; "Inputs for Analyst session 21"), if not done | any time | everything | `docs/formats/` | - | **OWNER** starts it |
+
+Standing owner items (none blocks a4): O-24; the RHEL 8 host test (with the a4 wheel when a host is at hand);
+`oradmp-private` and the snapshot folder after the tag (checklist step 16); Q-13; O-20; the Gogs mirror of the new
+commits stays "moved".
+
+## Order of the next tasks (session 27, history)
 
 Machine rule unchanged (session 16 below). CI runs on the public GitHub repository and is not a build on the VM.
 **OWNER** marks an owner action.

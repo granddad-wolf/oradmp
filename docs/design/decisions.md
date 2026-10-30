@@ -4,7 +4,7 @@
 `oradmp` (crates `oradmp-core`, `oradmp-py`, import `oradmp`, classes `OradmpError` / `OradmpWarning`).
 
 Architect session 1, 2026-10-07; session 2, 2026-10-14; sessions 3 and 4, 2026-10-15; sessions 5 and
-6, 2026-10-16; sessions 7 to 13, 2026-10-17; sessions 14 and 15, 2026-10-18; sessions 16 and 17, 2026-10-21; session 18, 2026-10-22; sessions 19 to 23, 2026-10-24; sessions 24 and 25, 2026-10-25; sessions 26 and 27, 2026-10-29. Each record:
+6, 2026-10-16; sessions 7 to 13, 2026-10-17; sessions 14 and 15, 2026-10-18; sessions 16 and 17, 2026-10-21; session 18, 2026-10-22; sessions 19 to 23, 2026-10-24; sessions 24 and 25, 2026-10-25; sessions 26 and 27, 2026-10-29; session 28, 2026-10-30. Each record:
 context, decision, consequences, rejected. Status is **decided** (the Implementer follows it; reopening
 needs a new record) or **needs the project owner** (question in `open-questions.md`). Rule numbers are
 those of `docs/formats/exp_reader_rules.md` (v3.4 from session 4 on, v3.5 from session 8 on, v3.7 from session 24 on, **v3.9 from session 25 on**); section
@@ -14,6 +14,20 @@ numbers without a file name are those of `exp-reader-architecture.md`.
 names a commit of the owner's private archive, not of this repository (`HISTORY.md`); the hashes are not rewritten.
 Cites of `docs/prompts/...`, `.claude/` and `CLAUDE.md` name files the owner keeps privately; nothing a contributor must
 do depends on them (the checks a contributor runs are in `CONTRIBUTING.md`).
+
+## Changes in session 28
+
+- Basis: Reviewer 6c (`docs/review/review-06c.md`, C = `4b9883c52ebf709ccf0161883505844fdcc45345`: 0 blocking, SF-1,
+  N-1 to N-7) and the owner's facts of session 28 (C's CI runs, the `t20b-proof` run, the release facts). Checked in this
+  session (reading only): `git rev-parse 4b9883c`; `%ct` of C = 1793315613; `075a6bf` adds only the review;
+  `.github/workflows/ci.yml` at C, lines 57, 178, 200, 318, 363, 402 and the five `uses:` pins with their version
+  comments; `tools/release_build.sh` (what it clones, `SOURCE_DATE_EPOCH`, the root checks, `dist/`); the root-only
+  skips at C (`tests/test_cli.py:594`, `:923`, `tests/test_paths.py:121`); the stale counts of N-2 and two more of the same
+  kind (`t11_options.rs:11`, `:492`); the `uv run` lines of N-3; CONTRIBUTING's setup line against CI's pins. Nothing
+  built.
+- New: **ADR-109** (6c recorded; T-20b DONE; SF-1, N-1 to N-7 and the unchecked items ruled; task T-21), **ADR-110** (the
+  release commit, the hashes it must give, the a4 checklist, the release page, tokens, records, the order after a4).
+- Amended in place (an "Amendment (session 28)" line): ADR-106 item 3, ADR-108 item 4.
 
 ## Changes in session 27
 
@@ -4840,6 +4854,8 @@ Session 3 text (history):
      `pyarrow` 15 or later with a cp311 `manylinux2014` wheel and its numpy, full `pytest` against the installed wheel
      (T-16c (b)); the three venvs and Rocky Linux 8 (T-16c (c)); acceptance (d). a4 ships `manylinux_2_28` only (ADR-91
      unchanged); T-16c stays after the a4 tag.
+     Amendment (session 28): risk check (c) is shown: the `manylinux2014` summary of C's dispatch carries both `Tag:`
+     lines (owner's paste, ADR-109 item 2). T-16c (a) to (d) remain.
   4. **The owner's open items block nothing of a4.** Q-4 (the real-dump counts) is run with `oradmp survey` from the a4
      wheel, so it follows a4 by design; R-052 runs only on Q-4's condition (ADR-101 item 5); R-046 is low; the RHEL 8 host
      test is done with the a4 wheel and is no gate (as for a1 to a3); deleting scratch folders matters only for the
@@ -4928,6 +4944,11 @@ Session 3 text (history):
 
      No past run is in doubt as far as the pastes show: every pasted summary of S and `e1ed10b` gives passed counts,
      `ok` for the four `cargo deny` checks and 0 fuzz findings, read from the logs, not from the step status.
+     Amendment (session 28): "a hidden failure" (the blocking class of the plan's session 27 block, item 9) means a
+     failed command that leaves a check reported as passed (a red result shown green). A command substitution inside
+     the arguments of another command (`echo "X=$(...)"`) belongs to the same shell class but is ruled case by case;
+     the rule for `ci.yml` from T-21 on: a substitution whose status matters stands alone as an assignment, then its value
+     is used (ADR-109 item 3).
   5. **Task T-20b** (plan; Implementer; Sonnet; one small commit, `ci.yml` only): a workflow-level `defaults: run: shell:
      bash`, so every `run` step runs `bash --noprofile --norc -eo pipefail {0}`; the `set -o pipefail` line of
      `fuzz-check` removed (one mechanism); the two constructs that `pipefail` would turn wrong rewritten (the `probes=`
@@ -4948,3 +4969,144 @@ Session 3 text (history):
   ship from a commit whose CI shows green on a failed `cargo deny` or a fuzz finding, and 6c would review a commit that
   is not the release's); leaving `extended` and `manylinux2014` alone because they are dispatch-only (the `extended` run
   on C is a release step, ADR-106 item 1).
+
+## ADR-109 Reviewer 6c recorded; T-20b DONE; SF-1, N-1 to N-7 and the unchecked items ruled; task T-21 - decided (session 28)
+- Context: Reviewer 6c (`docs/review/review-06c.md`) on **C = `4b9883c52ebf709ccf0161883505844fdcc45345`** (T-20b):
+  0 blocking, 1 should-fix, 7 notes; "0.1.0a4 can be built from C as it stands". The owner's session 28 facts: C's push
+  run and its two dispatches; the `t20b-proof` run. Read in this session: `ci.yml` at C (the five `echo "...$(...)"`
+  lines 57, 178, 200, 318, 363; the `find` test at 402; line 199 `python -m pip install --quiet uv==0.12.21` right before
+  line 200 in the same step; the venv info line that prints each venv's Python version into the summary); `%ct` of C
+  = 1793315613 = the epoch 6c printed.
+- Decision:
+  1. **Reviewer 6c DONE; no closure task; C stays the candidate.** Verified by 6c in its scratch clone at C: fixture
+     checksums; fmt; clippy (three forms); `cargo deny check` (four ok); nextest **488 passed + 4 skipped** (the four
+     names of `ci.yml`); `maturin develop --features test-probes`; ruff, ruff format, mypy; pytest **256**; the
+     installed wheel in three venvs 253 + 3 / 253 + 3 / 246 + 4; two scratch-root builds byte-identical, `check_dist:
+     ok`; **sdist `510f2e39f8ae7eb9660fa4f2313062d2245c3c6d16ebd10740fa0e529c40c0fd` = CI's**; its wheel `79f1ea31...`
+     differs from CI's by the build root in the SBOM member only (ADR-90); the cut: 0 hits for home path, e-mail, host
+     name, Gogs host, password (text, binary, UTF-16) and the token forms, tree and public history; `HISTORY.md` agrees
+     with the archive; step 3b: no regression (the `T_BIG` scan watch showed once, -7.4 %, and the a3 core `460aef5`
+     measured in the same sitting was as slow or slower: the machine, ADR-106 item 2 satisfied); T-19 deviation 3
+     (`walk` uses the caller's `buffer_bytes`) right, shown for all 229 fixtures with a 64-byte buffer. Every repeated
+     mutation fails a named test except N-4.
+  2. **T-20b DONE** (`4b9883c`). Push run on C green with `e1ed10b`'s figures (nextest 488 + 4, `cargo deny` four ok,
+     pytest 256; `release root: canonical`, `check_dist: ok`, venvs 253 + 3 / 246 + 4 / 253 + 3; `fuzz-check` green);
+     `SOURCE_DATE_EPOCH` 1793315613; **wheel `2e4c69a57baafe84e6c5ec0b4b9bef1248c93ea2eabdb57adb17d49d58949dbd`**, **sdist
+     `510f2e39f8ae7eb9660fa4f2313062d2245c3c6d16ebd10740fa0e529c40c0fd`** at the canonical root. Dispatches on C:
+     `extended` green, 0 findings on 463 seeds (fewer runs than on `e1ed10b`: the runner; `checks` not slower);
+     `manylinux2014` green, wheel `1df8ed44bcae37444de00c72b54866d8bfe0c3fbd7794a2668e9632cbe87a1e9` (not shipped),
+     `auditwheel` consistent with `manylinux_2_17`, both `Tag:` lines present (ADR-106 item 3 (c) shown). Proof run
+     **40974068275** on `t20b-proof` (`75ad263`): `checks`, `wheel`, `extended`, `manylinux2014` red with exactly 3, 2,
+     7 and 1 exit-code-7 annotations (= the ids of T-20b (f): `nextest deny pytest` / `build venvs` / `seeds fread fwalk
+     fvalues props fclippy bench` / `audit`), `fuzz-check` green, the crash-artifact step ran; the branch deleted locally
+     and on `origin`. T-20b (a) to (g) met. **Risk 30 closed.**
+  3. **SF-1: not blocking; fixed after a4 in T-21.** The blocking class of session 27 is a failure that leaves a check
+     reported as passed (ADR-108 item 4, amended). Line 200 cannot do that: the `python` it calls has just run `python -m
+     pip install uv` in the same step, which fails the step first; if `python -c` still failed alone, `NEWEST_PY` would be
+     empty, uv would make the "newest" venv with its default interpreter, every check in that venv would still run, and
+     the summary's info line for that venv (`Python x.y.z, pyarrow ...`) shows which Python was tested: a visible wrong
+     input, not a hidden failed check. The four `JOB_START` lines feed only the summary's duration. Checklist step 1
+     reads that info line in C's pasted summary, which excludes the scenario for the release. Rule for `ci.yml` from now
+     on: a command substitution whose status matters stands alone as an assignment (`x="$(...)"`), then its value is
+     used; never inside the arguments of another command.
+  4. **The notes** (one line each):
+     - **N-1**: fix after a4 in **T-21** by the same rule (`regs="$(find ... -print -quit)"`, then `[ -n "$regs" ]`, so
+       a `find` error fails the step). Not before a4: a runner checkout has no unreadable folder.
+     - **N-2**: fix in **T-21**: the two test names lose the count, the comments cite `TOTALS` instead of a file count
+       (6c's four sites plus `t11_options.rs:11`, whose figures are those of 211 files, and `:492`). The T-19 (m) note's
+       "-5.0 to -6.8 %" reads **-4.8 to -6.8 %** (its own table and the plan are right); the note is history and stays,
+       this line corrects it.
+     - **N-3**: fix in **T-21**: both generator docstrings run them with `python3 -I` from `docs/formats/tools` (as 6c
+       did); regenerated outputs byte-identical.
+     - **N-4**: no action. The raise in `Dump::open` has no effect and cannot be tested; the two raises that matter are
+       each caught by a named test (R5, R6). A comment edit in `io.rs` would make step 3b due for a5 for no behaviour.
+     - **N-5**: fix in **T-21**: CONTRIBUTING pins what CI pins (`maturin==1.15.0 pytest==9.1.1 ruff==0.17.1
+       mypy==2.4.0`; `cargo install --locked cargo-nextest@0.9.146 cargo-deny@0.20.2`), and a pytest keeps the two
+       files equal.
+     - **N-6**: owner, checklist step 2 (the `mv` before the build); no task.
+     - **N-7**: no action; recorded in `benchmarks.md` (session 28). Rule 3 needs a confirming run and five of six did
+       not confirm; the 11 ms scan is the noisiest figure. The next step 3b reads `T_ROWS` direct first.
+  5. **What 6c did not check** (who, when):
+     - **The CI pastes**: given as owner's facts in session 28 and recorded in item 2; nothing more.
+     - **The `manylinux2014` `Tag:` line**: seen by the owner (item 2); done.
+     - **The action pins against their tags**: **before a4, the owner** (checklist step 4, five `git ls-remote` lines,
+       read-only, no token). A pin that is not its tag's commit stops the release until the Architect rules: CI would
+       then have run code nobody chose. The release files themselves do not depend on CI (built on the VM, checked
+       against CI by hash only).
+     - **The member-by-member comparison with the CI wheel**: replaced by the release build at the canonical root,
+       whose wheel must equal CI's `2e4c69a5...` byte for byte (a gate, ADR-90, ADR-98 item 1); on a difference the CI
+       summary's member list (sha256, size, name) is the comparison.
+     - **The remaining mutations** (T-19 M1 to M12, T-19b M2, M5, M7, M9 to M12, T-17b (b), (d) to (j), T-16a2 (a), (d) to
+       (g)): no action. Each was shown by its task's note; no file they guard changed since (`git diff --stat 1bb7785 C
+       -- crates python tests` lists T-20's `check_dist` files only, 6c item 1); every mutation 6c repeated or added
+       (R1 to R7, B1 to B3, T16a2-c, T-20 (b) and (f)) behaved as its task recorded, except N-4.
+     - **Fuzz runs**: no action; CI's `extended` on C (0 findings, 463 seeds) and T-19 (m)'s 600 s runs on the same core.
+     - **`tools/stream_memory.py`**: **before a4, the owner**, once on the release wheel (checklist step 8; seconds;
+       `PASS` required, `benchmarks.md` rule 4). Last run at T-15; the binding changed since (T-18d).
+     - **A Rocky Linux 8 install, runs as root**: **before a4, the owner**, in a `rockylinux:8` Docker container on the VM,
+       as root, three venvs (checklist step 9; a gate, as for a2 and a3). It proves: pip on a RHEL 8-family userland
+       (glibc 2.28) accepts the `manylinux_2_28` tag; the extension loads there; pyarrow and pandas resolve there; every
+       test passes against the installed wheel as root (with the root-only skips named). It does not prove: a RHEL 8
+       kernel, SELinux or FIPS settings, a corporate package mirror or proxy. That is the **RHEL 8 host test**: not done,
+       no host; not a gate (as for a1 to a3); done with the a4 wheel when a host is at hand (Q-4 time).
+     - **The README beyond four sections**: no action (its other sections are unchanged since 6a / 6b read them).
+  6. **Task T-21** (plan; Implementer; Sonnet; small; the first commit after the a4 tag): SF-1, N-1, N-2, N-3, N-5.
+     Reviewed with T-16b and T-16c as one group (rule 7: T-21 renames tests and changes comments, no assertion).
+- Consequences: no change to C; the release follows the a4 checklist (ADR-110). Risk 30 closed. T-21 precedes T-16b
+  (both edit `ci.yml`).
+- Rejected: SF-1 as blocking with a T-21 before a4 (a new candidate, a new push, two dispatches and a closure review for
+  a failure that cannot hide a check, and the release files do not come from CI); fixing the notes before a4 (each is a
+  document, a comment or a contributor's setup line; none touches the shipped files); a `PIPESTATUS`-style check in
+  each `echo` line (the assignment rule is shorter and also covers N-1).
+
+## ADR-110 The a4 release: tag on C, the hashes it must give, the checklist, the release page, tokens, records; the order after a4 - decided (session 28)
+- Context: ADR-109. After this session the owner pushes two docs commits (`075a6bf` with the review, and this session's),
+  so the public `master` head is no longer C. `tools/release_build.sh <commit>` clones the local repository, checks out
+  the given commit and sets `SOURCE_DATE_EPOCH` to that commit's `%ct` (read in this session); every archive's member
+  times come from it, so another commit gives other hashes even with an identical tree.
+- Decision:
+  1. **Tag `v0.1.0a4` goes on C = `4b9883c52ebf709ccf0161883505844fdcc45345`**, not on a later docs commit. C is the
+     commit 6c reviewed, whose CI is green and whose hashes are recorded; a docs commit has another `%ct`, so its
+     wheel and sdist differ from the reviewed ones although no shipped file changed, and the cross-check with CI would
+     need another run. The later docs commits are descendants of C; `git diff --stat C origin/master -- . ':!docs'` must
+     print nothing (checklist step 1).
+  2. **The hashes the owner's build must give** (`tools/release_build.sh C --twice --release` at the canonical root
+     `/var/tmp/oradmp-release`): epoch `1793315613`; wheel `oradmp-0.1.0a4-cp311-abi3-manylinux_2_28_x86_64.whl` =
+     `2e4c69a57baafe84e6c5ec0b4b9bef1248c93ea2eabdb57adb17d49d58949dbd`; sdist `oradmp-0.1.0a4.tar.gz` =
+     `510f2e39f8ae7eb9660fa4f2313062d2245c3c6d16ebd10740fa0e529c40c0fd` (C's CI push run; the sdist also = 6c's). **Both
+     are gates**: the sdist does not depend on the root; the wheel equals CI's at the canonical root since ADR-98 item 1.
+     Compare with C's run only: the CI runs of the docs commits give other hashes (other epoch).
+  3. **The a4 checklist** is in the plan ("Release 0.1.0a4", session 28 block), numbered for the owner. Changes against
+     the a3 checklist: the old canonical root moved aside; the `--release` build at the canonical root; both hashes
+     known in advance; the five action pins resolved; `stream_memory.py` on the release wheel; the Rocky Linux 8 counts
+     at C with three root-only skips; one remote (`origin`) for the tag; a GitHub release page; the tokens deleted
+     after use; the build root kept under a versioned name.
+  4. **GitHub release page: yes**, made by the owner from the pushed tag, marked pre-release, body = the tag message,
+     the two SHA-256 and the PyPI link; **no files attached** (PyPI is the one place to download; the hashes let anyone
+     check). Rejected: attaching the files (a second copy to keep equal); no page (the tag message is not shown on
+     GitHub's front page, and users look for notes there).
+  5. **Tokens**: the owner creates a project-scoped token on TestPyPI and one on PyPI for this release, types each with
+     `read -rs`, and **deletes both after the uploads** (amends ADR-67's "keep the scoped one in the password manager"
+     from a4 on). Reason: releases are weeks apart; no upload credential then exists between them; a new scoped token
+     takes a minute. A token never appears on a command line, in a file, in an environment that outlives the upload, or
+     in an agent session (CLAUDE.md rule 8).
+  6. **Records**: the owner pastes the results (checklist step 17); the Architect writes "Release 0.1.0a4 record" in the
+     plan, as for a3. `HISTORY.md` is not changed (it explains the archive and a1 to a3; a4's provenance is its public
+     tag). No `CHANGELOG.md` now: the tag message and the release page carry the notes (a file is a later Implementer
+     task if users ask; one more place to keep equal is not worth it for an alpha).
+  7. **Release notes** (tag message and release page; the LONG sentence is ADR-104's of session 25):
+     "oradmp 0.1.0a4. LONG and LONG RAW values on the conventional path are read in the three forms `exp` writes (one
+     field up to 65,529 bytes, a 4-byte length for 65,530 to 65,533 bytes, 4,000-byte chunks from 65,534 bytes;
+     confirmed on 11g and 18c up to 100,000 bytes), and a value of 65,522 to 65,524 bytes, a size no test file has, is
+     read with a `W-UNTESTED-LAYOUT` warning. Dump and output file names that are not valid UTF-8 are accepted by
+     `oradmp.open`, the `oradmp` command and `survey`; messages write such bytes as `\xHH`. PyPI now links the source
+     repository and the issue tracker. Linux x86_64 wheel (`manylinux_2_28`) and sdist; Python 3.11 or later, pyarrow
+     15 or later."
+  8. **After a4** (plan, order table of session 28): the owner's record paste and a short Architect session (the a4
+     record); **T-21** (first commit after the tag); **T-16b** and **T-16c**, then Reviewer 7 on T-21, T-16b, T-16c;
+     **Q-4** (the owner's `oradmp survey` counts from the a4 wheel on the real dumps, on his side) any time after the
+     tag; **R-052** only if Q-4 shows a LONG of 65,522 to 65,524 bytes or a field starting `fb ff` / `fc ff` (ADR-101
+     item 5); **R-046** low, any time; Data Pump planning after a4.
+- Consequences: the release needs no new commit; the plan's a4 record is written after the owner's paste.
+- Rejected: tagging the docs head (other hashes than the reviewed ones, item 1); rebuilding C's hashes from a CI run of
+  the docs head (other epoch); keeping project-scoped tokens between releases (item 5).

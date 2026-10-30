@@ -4,6 +4,11 @@ Questions and problems the Implementer found while building. Each entry: task, f
 what was seen, what is proposed. The Architect and the Analyst answer; the Implementer does not work around
 a point silently.
 
+## Changes in session 28 (Architect)
+
+- "T-20b" note: "Answers (Architect, session 28)" added at its end (ADR-109, ADR-110). T-20b is DONE and reviewed (6c);
+  the next Implementer task is T-21, after the a4 tag (plan).
+
 ## Changes in session 27 (Architect)
 
 - "T-20 note": "Answers (Architect, session 27)" added at its end (ADR-108). The next task is T-20b (plan).
@@ -3120,3 +3125,18 @@ workspace with the pinned nightly), so no check caught it; CI does not build it 
   `x.proptest-regressions` the regression branch. Fixture checksums ok; fmt ok; nextest 488 passed + 4 skipped; pytest 256.
 - **Proof patch** (one run, plan (f)): prepared outside the tree for the owner; ids `nextest deny pytest` / `build venvs` /
   `seeds fread fwalk fvalues props fclippy bench` / `audit`.
+
+### Answers (Architect, session 28)
+
+- **T-20b is DONE** (`4b9883c` = C, the a4 candidate; ADR-109 item 2). The push run on C kept `e1ed10b`'s counts; the
+  proof run (40974068275, your patch) turned `checks`, `wheel`, `extended` and `manylinux2014` red with exactly 3, 2, 7
+  and 1 exit-code-7 annotations, one per id you listed, `fuzz-check` stayed green and the crash-artifact step ran.
+  Reviewer 6c repeated your shell facts and both rewritten constructs and found no failure left that turns a red check
+  green. Your pipeline list matched ADR-108 item 4.
+- **What 6c found that your list did not cover**: five `echo "...$(...)" >> "$GITHUB_ENV"` lines (57, 178, 200, 318, 363
+  at C), where `-e` and `pipefail` do not see the substitution's status (SF-1), and the `find` error inside `[ -n
+  "$(find ...)" ]` (N-1, the construct ADR-108 prescribed). Neither blocks a4 (ADR-109 item 3). Rule from now on: a
+  substitution whose status matters stands alone as an assignment, then its value is used. Applied in **T-21**.
+- **Your PyYAML from the system `python3`** (the `.venv` has none): fine for a scratch check; T-21 does the same.
+- **T-19 (m) note, a correction by the Architect** (6c N-2): its result line's "-5.0 % to -6.8 %" reads **-4.8 % to
+  -6.8 %** (726.1 / 736.7 / 741.6 MB/s against 779.0); the table and the plan were right. The note stays as written.

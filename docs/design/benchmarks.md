@@ -1,10 +1,26 @@
 # Legacy EXP reader: benchmark baseline
 
 Architect session 16, 2026-10-21 (new file; arch 4.3, 4.4; ADR-62 item 8, ADR-66); session 20, 2026-10-24 (baseline 2,
-ADR-78). Sources: the T-15 note and Reviewer session 4 (baseline 1, now section 6); the T-15b and T-18b notes
+ADR-78); session 28, 2026-10-30 (Reviewer 6c's step 3b recorded). Sources: the T-15 note and Reviewer session 4 (baseline 1, now section 6); the T-15b and T-18b notes
 (`implementer-notes.md`) and Reviewer session 6a, section 3 (`docs/review/review-06a-t13j-t18b.md`), which repeated
 them (baseline 2, section 4). Nothing here is a promise to users (arch 4.3: "reported, not promised"); the README
 carries no performance figure.
+
+## Changes in session 28
+
+- Reviewer 6c's step 3b on the a4 candidate C = `4b9883c` (core of `1bb7785`; review 06c, "Step 3b") is the a4 "no
+  regression" check: micro-benchmarks -0.3 to -6.3 % (all at the baseline or faster); `T_ROWS` and `T_BIG` throughput
+  no regression under rule 3, two single "watch" figures (below); memory within rule 4 (highest end peaks 7,608 to
+  7,848 kB, ratios 0.99 to 1.06). The `T_BIG` scan watch
+  (-7.4 %, run 1 of 6) is the machine: the a3 core `460aef5`, run alone in the same sitting, gave -4.1 to -6.8 % against
+  C's -0.8 to -2.7 % (ADR-106 item 2 done, no bisect). One `T_ROWS` direct "watch" (run 6 of 6: scan -15.0 %, read
+  -12.2 %) was not confirmed by the other five runs (6c N-7; rule 3 needs a confirming run): recorded, no action; the
+  next step 3b reads `T_ROWS` direct first.
+- **Baseline 2 stays.** A baseline 3 from T-19 (m) and 6c would be allowed by rule 1, but 6c's same-sitting runs show the
+  machine slower than at baseline 2 for unchanged code; a new baseline now would absorb that drift. Revisited at the
+  next core change (ADR-109).
+- `tools/stream_memory.py` runs once on the a4 release wheel (a4 checklist step 8); its figures are added to 4.3 from
+  the a4 record.
 
 ## Changes in session 26
 
