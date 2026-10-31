@@ -4,7 +4,7 @@
 Run (read-only on the fixtures; the tools are imported, not copied; writes three TSV files next to this
 script, nothing else):
 
-    cd docs/formats/tools && uv run ../../../crates/oradmp-core/tests/data/gen_walk_expected.py
+    cd docs/formats/tools && python3 -I ../../../crates/oradmp-core/tests/data/gen_walk_expected.py
 
 Outputs (in tests/data/):
   walk_expected.tsv   one line per file: header fields, sections, parts, rows, fields, NULL fields, lines

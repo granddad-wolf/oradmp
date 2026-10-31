@@ -1305,7 +1305,7 @@ fn the_lob_unconfirmed_message_names_the_database_set_id() {
 }
 
 /// T-14 (h), ADR-61 item 3: the rule is checked over the `Display` text (what the stream carries) of every error
-/// and warning of the 211 files (`no_message_of_the_fixtures_holds_a_value` runs `assert_no_nul` on each of
+/// and warning of the fixture files (`no_message_of_the_fixtures_holds_a_value` runs `assert_no_nul` on each of
 /// them); this test shows that the check itself fails on a NUL, and that the texts it sees start with the code.
 #[test]
 fn the_nul_check_fails_on_a_nul_and_the_texts_are_the_display_texts() {

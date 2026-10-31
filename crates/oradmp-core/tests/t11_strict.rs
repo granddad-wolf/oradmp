@@ -803,7 +803,7 @@ fn documented_count(table: &str) -> usize {
 }
 
 #[test]
-fn strict_over_the_201_files_fails_exactly_on_the_documented_list() {
+fn strict_over_all_fixture_files_fails_exactly_on_the_documented_list() {
     let files = exp_files();
     assert_eq!(files.len(), TOTALS.files);
     let mut tally: BTreeMap<(String, String, &str, &str), usize> = BTreeMap::new();

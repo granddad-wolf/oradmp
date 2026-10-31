@@ -3,7 +3,7 @@
 
 Run (read-only on the fixtures, writes one TSV next to this script, nothing else):
 
-    cd docs/formats/tools && uv run ../../../crates/oradmp-core/tests/data/gen_number_parts.py
+    cd docs/formats/tools && python3 -I ../../../crates/oradmp-core/tests/data/gen_number_parts.py
 
 One line per binary part of every `*_exp_*.dmp` fixture (229 files): where its rows start, the path, the row
 count, the column type codes and, as the independent expectation of the Rust field reader in the test, the

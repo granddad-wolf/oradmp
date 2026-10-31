@@ -8,7 +8,7 @@
 //! text with its own parser, a cross-check with Python `decimal` over the same file gave rows [25, 27, 30, 31],
 //! fractions 38, 125, 37, 40 and 115), `truth_num3.txt` (all six rows rounded), `truth_date.txt` (rows 8, 9: year
 //! below 1), `truth_misc2.txt` (rows 2, 3: months beyond 32 bits), `common::TOTALS` (rules file v3.7: 243,303
-//! fields, 19,960 NULL fields, 126 LOB values over the 211 files, from `corpus_counts.py` and `rowlen_stats.py`).
+//! fields, 19,960 NULL fields, 126 LOB values over the fixture files, from `corpus_counts.py` and `rowlen_stats.py`).
 #![allow(
     clippy::unwrap_used,
     clippy::expect_used,
@@ -372,7 +372,7 @@ fn the_digits_parser_of_this_file_agrees_with_the_plan_on_the_t_num_rows() {
 // ---------------------------------------------------------------------------------------------
 
 #[test]
-fn the_counting_core_agrees_with_the_totals_of_the_201_files() {
+fn the_counting_core_agrees_with_the_totals_of_all_fixture_files() {
     let mut fields = 0u64;
     let mut nulls = 0u64;
     let mut rows = 0u64;
@@ -398,7 +398,7 @@ fn the_counting_core_agrees_with_the_totals_of_the_201_files() {
     assert_eq!(fields, TOTALS.fields);
     assert_eq!(nulls, TOTALS.nulls);
     assert_eq!(lob_values, TOTALS.lob_values);
-    // ADR-25 item 5, plan session 8 (f): 0 values refused on all 211 files
+    // ADR-25 item 5, plan session 8 (f): 0 values refused on all fixture files
     assert_eq!(refused, 0);
 }
 
@@ -489,7 +489,7 @@ fn the_counting_core_counts_years_below_1_and_months_beyond_32_bits_like_the_rea
             Some(2)
         );
     }
-    // no other DATE-family column of the 211 files has a year below 1, no other interval column an overflow
+    // no other DATE-family column of the fixture files has a year below 1, no other interval column an overflow
     let mut others = 0u64;
     for rel in exp_files() {
         let mut d = open_fixture(&rel);
@@ -687,7 +687,7 @@ fn values_of(d: &mut oradmp_core::dump::Dump) -> Vec<Vec<u8>> {
     f.0
 }
 
-/// Every error and warning text produced from the 211 fixtures under the options below, and from the 178 copy.
+/// Every error and warning text produced from the fixtures under the options below, and from the 178 copy.
 fn texts_of(rel: &str, strict: bool, ro: &ReadOptions) -> Vec<String> {
     let o = Options {
         strict,

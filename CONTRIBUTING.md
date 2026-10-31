@@ -16,7 +16,7 @@ exporter. If you are unsure whether a source is allowed, ask in the pull request
 
 ```
 uv venv .venv
-uv pip install --python .venv/bin/python maturin pytest pyarrow ruff mypy pandas     # pandas is optional
+uv pip install --python .venv/bin/python maturin==1.15.0 pytest==9.1.1 ruff==0.17.1 mypy==2.4.0 pyarrow pandas   # pandas is optional
 .venv/bin/maturin develop --features test-probes    # builds the extension and installs the package (editable)
 ```
 
@@ -24,7 +24,8 @@ uv pip install --python .venv/bin/python maturin pytest pyarrow ruff mypy pandas
 it those three tests skip with that reason. A release build never has the feature (`tests/check_dist.py` rejects a
 wheel that does).
 
-The checks of the definition of done:
+The checks of the definition of done (the two Rust tools are installed once with
+`cargo install --locked cargo-nextest@0.9.146 cargo-deny@0.20.2`; the versions are the ones CI pins):
 
 ```
 cargo fmt --check
@@ -89,7 +90,7 @@ in the SBOM member and `RECORD` only. Nothing is claimed for any other machine. 
 from a commit of this repository with `--release`.
 
 The version comes from the root `Cargo.toml` only. Publishing follows the release checklist
-(`docs/design/implementation-plan.md`, "First release"); only the project owner tags and uploads.
+(`docs/design/implementation-plan.md`, the newest "Release 0.1.0a<n> checklist"); only the project owner tags and uploads.
 
 ## CI
 

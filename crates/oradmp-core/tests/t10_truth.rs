@@ -1441,7 +1441,7 @@ fn expected_counts() -> (BTreeMap<&'static str, usize>, BTreeMap<&'static str, u
     (checked, deleg)
 }
 
-/// The warnings the reads of the 211 files produce (the two `ru_lob2_*` files add none), by (table, code), with the number of files: the
+/// The warnings the reads of the fixture files produce (the two `ru_lob2_*` files add none), by (table, code), with the number of files: the
 /// inventory the plan asks for. `W-TSLTZ` is the one of arch 5.1 (T_TSTZ.TSLTZ); `W-NUMBER-ROUNDED` and
 /// `W-VALUE-NULLED` are the counted warnings of the lenient re-reads of T_NUM, T_NUM2, T_NUM3, T_DATE, T_TS.
 const EXPECTED_WARNINGS: &[(&str, &str, usize)] = &[

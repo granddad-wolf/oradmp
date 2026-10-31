@@ -142,7 +142,7 @@ const fn hc(
     }
 }
 
-/// The one list `random_spec` draws its header from. Fixture counts (211 files, the test's own reading of
+/// The one list `random_spec` draws its header from. Fixture counts (see `common::TOTALS`; the test's own reading of
 /// H1 to H4): 11g RTABLES: clients 873/171/178/1 with db 171, and 873/178/1 with db 873; 11g RUSERS: 873/171/178/1
 /// with db 171, and 873/178 with db 873; 18c RTABLES: 873/178/1 with db 873; 18c RUSERS: 873/178 with db 873.
 pub const HEADER_CHOICES: [HeaderChoice; 24] = [

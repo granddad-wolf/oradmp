@@ -1,6 +1,6 @@
 //! Task T-5: declared types and the type mapping (architecture 5.1, 5.5; ADR-6, ADR-14, ADR-19, ADR-24).
 //!
-//! Expected numbers come from the Analyst's `docs/formats/tools/collist.py` (run read-only over the 211 fixtures:
+//! Expected numbers come from the Analyst's `docs/formats/tools/collist.py` (run read-only over the fixtures:
 //! 404 `CREATE TABLE` lines, 1,981 column definitions, 0 problems, 8 sections "moved") and from the `truth_decl.txt`
 //! and `truth_probe11.txt` files; the Arrow types come from architecture 5.1 and ADR-19 (session 4).
 #![allow(
@@ -50,7 +50,7 @@ fn exp_files() -> Vec<String> {
     v
 }
 
-/// All 211 fixtures opened and scanned once.
+/// All fixtures opened and scanned once.
 fn scanned() -> &'static BTreeMap<String, Dump> {
     static CELL: OnceLock<BTreeMap<String, Dump>> = OnceLock::new();
     CELL.get_or_init(|| {

@@ -239,7 +239,7 @@ fn length_statistics_and_the_long_chain_counts() {
     }
 }
 
-/// The `E-LOB-UNCONFIRMED` count of the survey is 0 over the 211 fixtures (every CLOB / NCLOB value is of a
+/// The `E-LOB-UNCONFIRMED` count of the survey is 0 over the fixtures (every CLOB / NCLOB value is of a
 /// confirmed database set) and equals the reader's nulled values on the 178 copy of T-6M (d): C one long value
 /// (row 2), N two values.
 #[test]
@@ -260,7 +260,7 @@ fn the_unconfirmed_lob_count_is_zero_on_the_fixtures_and_matches_the_reader_on_t
         }
     }
     assert_eq!(refused, 0);
-    // the LOB values were looked at (126 over the 211 files, rules v3.5 via `common::TOTALS`)
+    // the LOB values were looked at (126 over the fixture files, rules v3.5 via `common::TOTALS`)
     assert_eq!(lob_values, TOTALS.lob_values);
 
     let p = patched_file(

@@ -54,7 +54,8 @@ jobs:
         run: |
           mkdir -p "$RUNNER_TEMP/tmp" "$RUNNER_TEMP/logs"
           echo "TMPDIR=$RUNNER_TEMP/tmp" >> "$GITHUB_ENV"
-          echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
+          job_start="$(date +%s)"
+          echo "JOB_START=$job_start" >> "$GITHUB_ENV"
 
       - name: Fixture checksums (the three SHA256SUMS)
         run: |
@@ -175,7 +176,8 @@ jobs:
         run: |
           mkdir -p "$RUNNER_TEMP/tmp" "$RUNNER_TEMP/logs"
           echo "TMPDIR=$RUNNER_TEMP/tmp" >> "$GITHUB_ENV"
-          echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
+          job_start="$(date +%s)"
+          echo "JOB_START=$job_start" >> "$GITHUB_ENV"
 
       - name: Fixture checksums (the three SHA256SUMS)
         run: |
@@ -197,7 +199,8 @@ jobs:
           rustc --version
           python -m pip install --quiet uv==0.12.21
           uv --version
-          echo "NEWEST_PY=$(python -c 'import sys; print("%d.%d" % sys.version_info[:2])')" >> "$GITHUB_ENV"
+          newest="$(python -c 'import sys; print("%d.%d" % sys.version_info[:2])')"
+          echo "NEWEST_PY=$newest" >> "$GITHUB_ENV"
 
       # actions/cache v6.1.0 (the release build keeps its own target folder below /var/tmp, so only the registry)
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
@@ -315,7 +318,8 @@ jobs:
       - name: Environment
         run: |
           mkdir -p "$RUNNER_TEMP/logs"
-          echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
+          job_start="$(date +%s)"
+          echo "JOB_START=$job_start" >> "$GITHUB_ENV"
 
       - name: Fuzz toolchain (the nightly of fuzz/rust-toolchain.toml)
         run: |
@@ -360,7 +364,8 @@ jobs:
           mkdir -p "$RUNNER_TEMP/tmp" "$RUNNER_TEMP/logs"
           echo "TMPDIR=$RUNNER_TEMP/tmp" >> "$GITHUB_ENV"
           echo "ORADMP_FUZZ_TMP=$RUNNER_TEMP/fuzz-tmp" >> "$GITHUB_ENV"
-          echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
+          job_start="$(date +%s)"
+          echo "JOB_START=$job_start" >> "$GITHUB_ENV"
 
       - name: Fixture checksums (the three SHA256SUMS)
         run: |
@@ -399,7 +404,8 @@ jobs:
         run: |
           PROPTEST_CASES=10000 cargo nextest run -p oradmp-core --test t14_damage -j 2 2>&1 | tee "$RUNNER_TEMP/logs/t14.log"
           PROPTEST_CASES=2000 cargo nextest run -p oradmp-core --test t17_synth -j 2 2>&1 | tee "$RUNNER_TEMP/logs/t17.log"
-          if [ -n "$(find . -name '*.proptest-regressions' -print -quit)" ]; then
+          regs="$(find . -name '*.proptest-regressions' -print -quit)"
+          if [ -n "$regs" ]; then
             echo "a proptest regression file was written" >&2
             exit 1
           fi
@@ -465,7 +471,8 @@ jobs:
         run: |
           mkdir -p "$RUNNER_TEMP/tmp" "$RUNNER_TEMP/logs"
           echo "TMPDIR=$RUNNER_TEMP/tmp" >> "$GITHUB_ENV"
-          echo "JOB_START=$(date +%s)" >> "$GITHUB_ENV"
+          job_start="$(date +%s)"
+          echo "JOB_START=$job_start" >> "$GITHUB_ENV"
 
       - name: Fixture checksums (the three SHA256SUMS)
         run: |

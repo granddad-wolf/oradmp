@@ -1,6 +1,6 @@
 //! Task T-6, N-13: the field bytes that the row decoder's seam (`RowSink`, `TableRows::next_row_with`) delivers
 //! reproduce the per-part SHA-256 of `tests/data/value_parts.tsv` over the NUMBER fields of the binary
-//! parts of the 211 files (counts derived from the TSV; the Analyst's totals 418 / 86,124 are compared with it in
+//! parts of the fixture files (counts derived from the TSV; the Analyst's totals 418 / 86,124 of rules v3.5 are compared with it in
 //! `t1_walk.rs`) (the walker replaces T-4's test-only field reader). The expectation is the
 //! Analyst's `docs/formats/tools/exp_parse.py` through `tests/data/gen_number_parts.py`; each field is hashed as
 //! one length byte followed by its bytes.

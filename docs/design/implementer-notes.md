@@ -2986,7 +2986,7 @@ licenses, sources ok (one `Zlib` license-not-encountered warning as before); `ma
 
 ## T-19 (m): step 3b on T-19b's commit `1bb7785`, and the fuzz runs (2026-10-25)
 
-Result in one line: **no regression beyond rule 3** (one "watch": `T_BIG` scan, -5.0 % to -6.8 %); walk and read fuzz runs 600 s each with 0 findings; **the `values` fuzz target does not compile**
+Result in one line: **no regression beyond rule 3** (one "watch": `T_BIG` scan, -4.8 % to -6.8 %); walk and read fuzz runs 600 s each with 0 findings; **the `values` fuzz target does not compile**
 (needs a source change in `fuzz/`, not done: the owner's task allowed the note only). Only this note changed (`git status` shows only `docs/design/implementer-notes.md`).
 
 ### Conditions

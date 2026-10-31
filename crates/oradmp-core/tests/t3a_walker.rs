@@ -3,7 +3,7 @@
 //! [E2a], the header checks of ADR-17, list K compared in all four fields (that last one is in `t1_walk.rs`).
 //!
 //! Expected values come from the Analyst's tools through `tests/data/gen_walk_expected.py`:
-//! `walk_parts.tsv` (one line per binary part, 418 for the 211 files: offsets, rows, NULLs, end marker; from
+//! `walk_parts.tsv` (one line per binary part, 418 for the fixture files of rules v3.5, now see `common::TOTALS`: offsets, rows, NULLs, end marker; from
 //! `exp_parse.py`) and `lob_expected.tsv` (m, the column entries, k per row, every LOB value with offset, form,
 //! stored length and chunk lengths; from `exp_parse.py`, the data `lob_check.py` checks). Numbers written into
 //! the tests as constants are those of the rules file v3.3 (the corpus totals: `common::TOTALS`, rules v3.5) (`exp_reader_rules.md` L1 to L6, T10, T8) and of
@@ -151,7 +151,7 @@ fn rle(chunks: &[u16]) -> String {
 }
 
 // ---------------------------------------------------------------------------------------------
-// every part of the 211 files at the offsets of the tool
+// every part of the fixture files at the offsets of the tool
 // ---------------------------------------------------------------------------------------------
 
 #[test]
@@ -1199,10 +1199,10 @@ fn e2a_text_that_is_not_an_item_is_a_row_and_a_long_first_column_with_rows_is_re
 }
 
 // ---------------------------------------------------------------------------------------------
-// the fixtures give none of these errors or warnings (211 files); damaged files never panic
+// the fixtures give none of these errors or warnings (all fixture files); damaged files never panic
 // ---------------------------------------------------------------------------------------------
 
-/// T-3c (a): all 211 files walk to the second `EXIT`, none stops, none warns (the rules v3.4 cover every
+/// T-3c (a): all fixture files walk to the second `EXIT`, none stops, none warns (the rules v3.4 cover every
 /// layout the fixtures hold, `W-LONG-DIRECT` is retired), and AQ-1: no long LOB value has a total of 0
 /// (walker and tool agree: the `lob_zero_total` column of `walk_expected.tsv` is 0 in every file).
 #[test]
