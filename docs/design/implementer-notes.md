@@ -3169,7 +3169,7 @@ the Implementer's report as the owner pasted it in session 30, recorded in the p
 
 ## T-16c note (Implementer, 2026-10-31): `manylinux2014` acceptance (ADR-115; plan "Session 30" block)
 
-**Verdict: pending.** Check (0) passed (below), the build and every local check pass; the verdict "accepted" or "rejected"
+**Verdict: T-16c: proposed accepted; verdict for the Architect to confirm** (figures in "Results" at the end of this note; was: pending). Check (0) passed (below), the build and every local check pass; the verdict "accepted" or "rejected"
 needs the dispatch of the `manylinux2014` job (items (b) and (c)); the owner pastes the summaries and the Implementer
 adds the figures here (a second docs-only commit, plan (g)).
 
@@ -3240,3 +3240,26 @@ glibc 2.17 (20.0.0, pandas 2.3.2 expected; printed in the summary).
 T-16c fix (Implementer, 2026-10-31), found by the first public run of the `wheel` job (a8da2cc): `tests/test_release_build.py::test_manylinux_good_values_get_past_the_option_checks` failed there with "the build root /var/tmp/oradmp-release exists already" instead of "no such commit".
 Cause: the job's release build had just created the canonical root, and `release_build.sh` checks the root (line 114) before the commit (line 116), as in a4; the test assumed the root was absent.
 Fix (test only, script unchanged): the `--release` call now expects exit 1 and "exists already" if the canonical root exists, else "no such commit"; no skip. Verified with the empty root present and absent, and by mutating each string.
+
+### Results (Implementer, 2026-10-31; docs only; the owner pasted the summaries, I ran no CI and no build)
+
+History of two commits: `a8da2cc` (T-16c) failed in the `wheel` job because `tests/test_release_build.py` assumed the canonical build root was absent. `94b6368` fixed the test; the script was not changed, and its root-before-commit check is a4 behaviour.
+
+Push run on `94b6368`:
+- `checks`: nextest 488 passed, 4 skipped; cargo deny ok; pytest 266 passed, 0 skips.
+- `fuzz-check`: `fuzz/` compiles with `--locked` on the pinned nightly.
+- `wheel`: root canonical, `check_dist` ok. Venvs: py311 pa15 pd223 263 passed + 3 skipped; py311 pyarrow-only 256 + 4; py3.15 latest 263 + 3. The skips are the 3 probe skips, plus the pandas skip in the pyarrow-only venv. Wheel `df3be6326d18371d4c4163124961cda12228ebb167d979f10335cfac627afd56`, sdist `0e2dd8866e5fb2b83bdad54a51559c5a5e5ed753461d7dadfef55208c91f3755`. `_core.abi3.so` `d0efa2dff42b57f5203429ace3b7789d4d1cfbbb7fd09ce986b5badf51b4789c`, equal to a4's. Members: 16 in the wheel, 53 in the sdist, 69 in total.
+
+Dispatch `manylinux2014` on `94b6368` (dispatch 1 of at most 3), green:
+- Wheel `oradmp-0.1.0a4-cp311-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl` `4327e1a72817fdb7f807da800cf2b32eddc4f41d6e9fc3418b84b1494c7c5e44`; sdist the same as in the `wheel` job. `_core.abi3.so` `aa6ef3ac7593febc23cc9384eb535f5c9a9469975a5809b5be77a691fa666255`, so it differs from the manylinux_2_28 build.
+- Images: `quay.io/pypa/manylinux2014_x86_64@sha256:5f0bcf92ed65391c7df442763168887d97ae734f2fbb17012eb6bed4a8aef98f` (glibc 2.17), `rockylinux:8@sha256:9794037624aaa6212aeada1d28861ef5e0a935adaf93e4ef79837119f2a2d04c` (glibc 2.28). These equal the digests recorded above.
+- auditwheel 6.8.2: platform tag `manylinux_2_17_x86_64`; highest symbol `GLIBC_2.14`.
+- Glibc 2.17 venvs: py311 newest 260 + 6, py311 pa15 pd223 260 + 6, py313 pyarrow-only 253 + 7. Rocky 8: py311 pa15 pd223 260 + 6, py311 pyarrow-only 253 + 7, py314 newest 260 + 6. Runner venvs 263 + 3, 256 + 4, 263 + 3. Expected skips as stated in this note (3 probes, 3 root-only, pandas where absent).
+- Python 3.14 on glibc 2.17: pyarrow cannot be installed (no cp314 wheel for that glibc). The job reports this as expected. It is a limit of pyarrow, not of oradmp.
+- Duration of the `manylinux2014` job: 1141 s to the summary step.
+
+Correction for the Architect: the member count of the a4-built artefacts is 69 (16 wheel + 53 sdist), not 68. Place found with "68" in this context: `docs/prompts/architect-30-update.md` line 14 ("all 68 members of the wheel and the sdist"). I searched `docs/` for member/file counts of 68 and found no other place; I changed nothing there. (`docs/design/implementer-notes.md` line 1412 says "50 members" for an older build; that is another build, not a correction.)
+
+Open for the Architect (ADR-113 item 4): whether a5 ships a second wheel tagged `manylinux_2_17` next to the `manylinux_2_28` one. Facts: it is a separate wheel; its `_core.abi3.so` hash differs from the `manylinux_2_28` one; it was tested on glibc 2.17 and on glibc 2.28. No recommendation.
+
+Differences between the brief figures and the repository: none found (names and tags agree with the notes above; the digests equal those in "What was built").
