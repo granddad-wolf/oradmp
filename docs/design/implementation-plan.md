@@ -1,13 +1,25 @@
 # Legacy EXP reader: implementation plan
 
 Architect session 1, 2026-10-07; session 2, 2026-10-14; sessions 3 and 4, 2026-10-15; sessions 5 and
-6, 2026-10-16; sessions 7 to 13, 2026-10-17; sessions 14 and 15, 2026-10-18; sessions 16 and 17, 2026-10-21; session 18, 2026-10-22; sessions 19 to 23, 2026-10-24; sessions 24 and 25, 2026-10-25; sessions 26 and 27, 2026-10-29; session 28, 2026-10-30; session 29, 2026-10-31. Tasks for the
+6, 2026-10-16; sessions 7 to 13, 2026-10-17; sessions 14 and 15, 2026-10-18; sessions 16 and 17, 2026-10-21; session 18, 2026-10-22; sessions 19 to 23, 2026-10-24; sessions 24 and 25, 2026-10-25; sessions 26 and 27, 2026-10-29; session 28, 2026-10-30; sessions 29 and 30, 2026-10-31. Tasks for the
 Implementer, in order; each is meant for one session. "Rules" are those of
 `docs/formats/exp_reader_rules.md` (v3.4; v3.5 from session 8; v3.6 from session 17; v3.7 from session 24; v3.9 from session 25); "arch n" is a section of `exp-reader-architecture.md`. Every
 task ends with `cargo fmt`, `cargo clippy -- -D warnings` and `cargo nextest run` green (`CLAUDE.md`,
 definition of done; in the public repository the same checks are listed in `CONTRIBUTING.md`, "Development setup")
 and adds no `unsafe` to the core. Commit hashes cited before session 26 name commits of the private archive
 (`HISTORY.md`, ADR-105).
+
+## Changes in session 30
+
+- **T-21: DONE** (`20bbc80`; push run and a manual run green; ADR-114): figures in its heading and its "Session 30
+  record". The wheel-unchanged check (i) passed by the CI listing of C; risk 32 closed (the a4 sdist builds from
+  source). Deviations accepted: six cases in `tests/test_contributing_pins.py`, eight more test files with comment
+  changes, no T-21 note in the repository.
+- **T-16c** made exact (ADR-115): "Session 30" block with the full "Done when" (it wins over the earlier blocks): check
+  (0) and what "rejected" writes where; `--manylinux 2014` in the release script; the glibc 2.17 image
+  `quay.io/pypa/manylinux2014_x86_64` and `rockylinux:8`, both in CI; nothing published.
+- "Release 0.1.0a4 record": step 16 gains the token-history line; "What remains of a4" updated.
+- New order table (session 30); the session 29 table is history.
 
 ## Changes in session 29
 
@@ -1985,7 +1997,7 @@ record with full hashes. The billed-minutes figure: O-23 (b).
   the sdist built from source and installed in a fresh venv on one Linux runner (in `extended`, so a push stays short),
   with `oradmp --version` and `python -m oradmp survey --no-names` on a copied fixture. Accepted wheels ship in a5.
 
-### T-16c `manylinux2014` acceptance (session 23; ADR-53 items 4, 5; ADR-91) - after the a4 tag, with or after T-16b
+### T-16c `manylinux2014` acceptance (session 23; ADR-53 items 4, 5; ADR-91; made exact in session 30, ADR-115) - next (after the session 30 docs push); the "Session 30" block below wins
 
 - Goal: decide on evidence whether the Linux wheel can move from `manylinux_2_28` to `manylinux2014` (glibc 2.17).
 - Inputs: ADR-53, ADR-56, ADR-90, ADR-91; `tools/release_build.sh`, `tests/check_dist.py`, `ci.yml`; PyPA's
@@ -2003,6 +2015,79 @@ record with full hashes. The billed-minutes figure: O-23 (b).
   no pyarrow wheel for glibc 2.17" (a valid end; a 2014 wheel of oradmp is useless without one). Otherwise (a) to (d)
   as above, with the pyarrow version found in (0) in the 2.17 venv. The README is not touched in T-16c (an accepted
   wheel's README lines go into a5's version commit).
+- **Session 30 (ADR-115; this block wins where the text above or ADR-91 item 2 differs)**.
+  - **Inputs** add: ADR-114, ADR-115; `tests/test_release_build.py`; the `wheel` and `manylinux2014` jobs of `ci.yml`
+    at `20bbc80`; PyPA's `manylinux` README (the `manylinux2014` image); pip's documentation of `pip download`
+    (`--platform`, `--python-version`, `--only-binary`).
+  - **Needs from the owner**: the commit and one push to `origin`; one `manylinux2014` dispatch on the pushed commit (at
+    most three before asking the Architect); the pasted summaries of the push run's `wheel` job (with its member list)
+    and of the dispatch. Nothing on the VM with Docker (the Rocky Linux 8 run is in CI now; the VM run as in a4 step 9 is
+    the fallback only if (c) says so). No tag, no release, no token.
+  - **Done when:**
+    (0) **Check first, no CI, no build.** In a scratch venv outside the repository (`uv venv --seed
+    /var/tmp/oradmp-t16c-pip`, rule 9), for `--python-version` 3.11, 3.13 and 3.14: `<venv>/bin/python -m pip download
+    --no-deps --only-binary :all: --platform manylinux2014_x86_64 --python-version <v> -d <scratch> "pyarrow>=15"`, and
+    the same for `numpy` and `pandas`. The note records the file each command downloads (or pip's "No matching
+    distribution" line). Expected from PyPI's index as read in session 30: cp311 `pyarrow` 20.0.0, `numpy` 2.2.6,
+    `pandas` 2.3.2; cp313 `pyarrow` 20.0.0; cp314 none of the three. A different result is a line in the note, not a
+    stop, unless it is the rejection: **no pyarrow 15 or later for cp311** ends T-16c "rejected: no pyarrow wheel for
+    glibc 2.17": the commit holds the note only (its first line that verdict, then the commands and their output); no
+    change to `tools/`, `tests/` or `ci.yml`; `manylinux_2_28` stays; the Architect records it. No cp314 wheel is not a
+    rejection (it limits the claim, (e)). The scratch folders are deleted afterwards.
+    (a) **Release script**: `tools/release_build.sh [COMMIT] [--twice] [--release] [--manylinux 2014|2_28]`, default
+    `2_28` (the line maturin gets is unchanged for it); `2014` gives `--compatibility manylinux2014`; any other value or
+    a missing value exits 2 with a message naming the value, before any folder is made. After each build the script
+    fails unless the wheel name holds `-cp311-abi3-` and the platform tag asked for (`manylinux_2_28_x86_64` resp.
+    `manylinux_2_17_x86_64.manylinux2014_x86_64`), and it prints `manylinux: <value>`; `--help` names the option.
+    `tests/test_release_build.py` gains cases (as its existing ones, with a commit that does not exist so nothing is
+    built): a bad value and a missing value exit 2 before "no such commit"; `--help` names `--manylinux`. Mutation: the
+    value check removed, the bad-value case fails. On the VM, once, alone on the machine:
+    `ORADMP_BUILD_ROOT=/var/tmp/oradmp-t16c-build tools/release_build.sh HEAD --manylinux 2014` (no `--release`: the
+    VM's canonical root is kept free for a5) gives `check_dist: ok` and the 2014 wheel name; the folder is deleted.
+    (b) **CI, the `manylinux2014` job** (still `workflow_dispatch` only, still never publishing): builds with `bash
+    tools/release_build.sh "$GITHUB_SHA" --release --manylinux 2014` (canonical root on the runner, as the `wheel`
+    job); `auditwheel show` (6.8.2, pinned) consistent with `manylinux_2_17`; both `Tag:` lines `cp311-abi3-`; then:
+    - **glibc 2.17**: `docker run` of **`quay.io/pypa/manylinux2014_x86_64@sha256:<digest>`** (the digest written in
+      `ci.yml` and the note), the checkout and the `dist/` folder mounted read-only, the checkout copied inside to a
+      work folder; `ldd --version` first line must say 2.17 (else the step fails); `ls /opt/python`. Four venvs from
+      `/opt/python/cp3XX-cp3XX/bin/python`, every install `--only-binary :all:` with `pytest==9.1.1`: (i) 3.11, pyarrow
+      15.0.2, pandas 2.2.3; (ii) 3.11, the newest cp311 pyarrow and pandas of (0); (iii) 3.13, the newest cp313 pyarrow
+      of (0), no pandas; (iv) 3.14: only the pyarrow install is tried, its failure is printed and does not fail the step
+      (if it succeeds, (iv) runs as (iii) and the note says so).
+    - **glibc 2.28**: `docker run` of **`rockylinux:8@sha256:<digest>`**: `dnf install -y python3.11 git`, `uv` (pinned
+      as in the `wheel` job) for a 3.14 interpreter; the `wheel` job's three venvs (3.11 + pyarrow 15.0.2 + pandas
+      2.2.3; 3.14 + newest; 3.11 + pyarrow only) with the 2014 wheel. If `dnf` or `uv` cannot provide an interpreter in
+      CI, the step says so and fails; the owner then runs the same three venvs on the VM as in a4 step 9 and pastes the
+      counts (the only owner Docker run of the task).
+    - **The runner**: the `wheel` job's three venvs with the 2014 wheel (`run_one` may move to a script under `tools/`
+      used by both jobs; the `wheel` job's behaviour does not change).
+    - In every venv: `oradmp --version` = the version of the commit; `oradmp` is the installed package; full `pytest -rs
+      -q -p no:cacheprovider` from the copied checkout (a git clone; `git config --global --add safe.directory` when
+      root), 0 failed. Allowed skips: the three probe tests; in the containers (root) the three root-only tests
+      (`test_cli.py` two, `test_paths.py` one, as a4 step 9); `tests/test_consumers.py` where pandas is absent. Any other
+      skip fails the step (the `wheel` job's skip check, extended by the root list).
+    - The job summary: image digests, `ldd --version` of both containers, the interpreters found, per venv Python,
+      pyarrow, numpy and pandas versions and the last pytest line, the 3.14 outcome on 2.17, the wheel's SHA-256 and
+      member list. The 2014 wheel is **not** uploaded as an artifact.
+    (c) **The default route unchanged**: the push run's `wheel` job still says `manylinux: 2_28`, `check_dist: ok`; its
+    member list equals that of T-21's run on `20bbc80` except the SBOM and `RECORD` (equal size) and sdist members whose
+    path T-16c changed (if any). Any other difference: stop, the Architect rules.
+    (d) **Checks** (definition of done): fixture checksums; fmt; clippy (two forms); nextest 488 passed + 4 skipped
+    (no Rust change); `cargo deny` (four ok, the expected warnings of ADR-112 item 2); `maturin develop --features
+    test-probes`; ruff, ruff format, mypy; pytest 262 + the new cases, 0 skipped; YAML parse and `bash -n` of every
+    `run` block of `ci.yml` (as T-21).
+    (e) **Verdict** (first line of the note): "accepted" when (a) to (c) pass and every venv of (b) has 0 failed with
+    only the allowed skips; the note then states the claim a5's README would make: "glibc 2.17 or later; below glibc
+    2.28, CPython 3.11 to 3.13 and pyarrow up to <newest of (0)>". Otherwise "rejected: <reason>" (e.g. pyarrow does
+    not import on 2.17, a test fails only there). Both are valid ends.
+    (f) **Nothing published**: no tag, no version change, no README change, no upload to PyPI or TestPyPI, no GitHub
+    release, no `gh`, no token. The Implementer prepares the change and the note; the owner commits and pushes.
+    (g) **The note** ("T-16c note" in `implementer-notes.md`) is **part of the commit** (ADR-114 item 4 (c)): (0)'s
+    output, the VM build line, the mutation, the counts of (d), and after the dispatch the summary figures of (b) and
+    (c) (added by the Implementer in a second docs-only commit if the dispatch comes after the first commit).
+  - **Touches**: `tools/release_build.sh`, `tests/test_release_build.py`, `.github/workflows/ci.yml` (the
+    `manylinux2014` job; a shared `tools/` script if `run_one` moves), the note. Not `README.md`, `pyproject.toml`,
+    `Cargo.*`, `crates/*/src`, `python/`. **Model: Sonnet.** Reviewed with T-21 and T-16b (Reviewer 7).
 
 ## T-19 The conventional LONG forms of R-040; the ten session 17 fixtures in the tests (session 24; ADR-94, ADR-95, ADR-97) - DONE (2026-10-25, `921971f`; nextest 463 passed + 4 skipped, pytest 250, CI green on `bbf921b`; deviations ruled by ADR-102; item (m) not run, now **T-19 (m)** after T-19b; to be reviewed in Reviewer 6c)
 
@@ -2380,7 +2465,7 @@ record with full hashes. The billed-minutes figure: O-23 (b).
   (not shipped), `auditwheel` consistent with `manylinux_2_17`, both `Tag:` lines. Reviewer 6c: no hidden failure that
   turns a red check green; SF-1 (five `echo "...$(...)"` lines) and N-1 go to T-21.
 
-## T-21 The first commit after a4: substitutions in `ci.yml`, stale counts, generator docstrings, CONTRIBUTING pins (session 28; ADR-109 items 3, 4) - after the a4 tag
+## T-21 The first commit after a4: substitutions in `ci.yml`, stale counts, generator docstrings, CONTRIBUTING pins (session 28; ADR-109 items 3, 4) - DONE (2026-10-31, `20bbc80`; nextest 488 + 4 skipped, pytest 262, CI green; risk 32 closed; ADR-114; to be reviewed in Reviewer 7)
 
 - Goal: review 6c's SF-1, N-1, N-2, N-3 and N-5 fixed in one small commit; nothing shipped changes behaviour.
 - Inputs: `docs/review/review-06c.md` (SF-1, N-1, N-2, N-3, N-5); ADR-108 item 4 (as amended), ADR-109; `ci.yml` at the
@@ -2452,6 +2537,27 @@ record with full hashes. The billed-minutes figure: O-23 (b).
     /var/tmp/oradmp-release-0.1.0a4/dist/oradmp-0.1.0a4.tar.gz`; `<venv>/bin/oradmp --version` prints `oradmp 0.1.0a4`;
     `<venv>/bin/python -m oradmp survey --no-names <copy of corpus/fixtures/18c/t_text_exp_18c.dmp>` exits 0. Alone on
     the machine (a release build). The folder is deleted afterwards. A failure: stop, the Architect rules (risk 32).
+- **Session 30 record** (ADR-114; S = owner's facts or the Implementer's report as pasted, E = checked in session 30):
+  - Commit `20bbc80b842cc5b280b920445aaf395742b10a50`, 17 files (E): `ci.yml`, `CONTRIBUTING.md`, the new
+    `tests/test_contributing_pins.py`, `implementer-notes.md` (the T-19 (m) figure only), `common/synth.rs`, the two
+    generators and ten `t*.rs` files under `crates/oradmp-core/tests/` (comments and the two renamed tests only).
+  - Push run and a manual (dispatch) run on it green (S). `checks`: nextest 488 passed + 4 skipped, `cargo deny` four
+    ok, pytest 262. `fuzz-check`: `Finished dev profile` in 17.28 s, 24 s to the end of the step. `wheel`: `release root:
+    canonical`, `check_dist: ok`, epoch 1793458070, wheel `df5522bc96c30a573df3d63035dfccbcc096e166b0c3c8bea91aa0121abeaa06`,
+    sdist `81cd7fe1876bf23a4a6ca8ba817f1f084d5bf4bf763bc9529a5093702a15a85f` (not release hashes); installed-wheel pytest
+    259 + 3, 252 + 4, 259 + 3 (a4's 253, 246, 253 + the six new cases). `extended`: 0 findings on 463 seeds (`read`
+    54,176 runs, `walk` 153,433, `values` 9,196,793), `t14_damage` 5 passed, `t17_synth` 30 passed + 1 skipped, fuzz
+    clippy ok, bench report only (slower runner), 515 s. `manylinux2014`: wheel `084d9b8ff7c6717d3b36bf176bb239250cf05cfcc2cbdf389f0ae6a202d0e1de`
+    (not shipped), `auditwheel` consistent with `manylinux_2_17`, symbols up to `GLIBC_2.14`.
+  - (a): five `JOB_START` lines, `newest=` and `regs=` as assignments (E). (d): pins and the CONTRIBUTING pointer (E).
+  - (h): `cargo deny` four ok (S); the expected warnings are not restated in the facts.
+  - (i) **passed** (ADR-114 item 2): reference = the `wheel` listing of the run on C (= a4's released bytes, a4 record
+    step 6); all wheel and sdist members equal in SHA-256 except the SBOM and `RECORD`; `_core.abi3.so` `d0efa2df...`.
+    The two members' sizes: not stated (Reviewer 7).
+  - (k) **passed**, risk 32 closed: the a4 sdist `510f2e39...` from PyPI built from source into a fresh 3.11 venv in 2 min
+    11 s; `oradmp 0.1.0a4`; `survey --no-names` on a copy of `t_text_exp_18c.dmp` exit 0 (S).
+  - Deviations accepted (ADR-114 item 4): six pin cases, not five; eight test files beyond (e)'s list, comments only;
+    no T-21 note committed (this record stands in).
 
 ## T-18 The command-line tool `oradmp` (session 18; ADR-72) - DONE (2026-10-24, `2ba62eb`; ran before T-16, ADR-73 swap; 412 Rust tests, 196 pytest; findings ruled by ADR-75; (l)'s CI part moved to T-16; reviewed: review-06a, SF-1 and SF-2 go to T-18c)
 - Goal: `oradmp` as a thin console tool on the public Python API: list tables, show columns, print the first rows,
@@ -3214,10 +3320,11 @@ statement. Steps are those of the session 28 checklist below. C = `4b9883c52ebf7
 | 13 PyPI | W and S uploaded 2026-10-31 11:43:34Z / 11:43:36Z (PyPI JSON, fetched in session 29); PyPI's JSON lists the hashes and sizes of step 6 (E); `requires_python` `>=3.11`, `project_urls` Source and Issues, licence expression `MIT OR Apache-2.0` (PyPI JSON, session 29; the evidence file does not hold them). Clean venv `uv pip install oradmp==0.1.0a4`: pulled pyarrow 26.0.0; `oradmp 0.1.0a4`; `_core.abi3.so` sha256 `d0efa2dff42b57f5203429ace3b7789d4d1cfbbb7fd09ce986b5badf51b4789c` (E). Plain `pip install oradmp` with `pip --version`: not done; dropped from later checklists (ADR-111 item 4). |
 | 14 Tag pushed | to `origin` only, about 11:48 UTC, after the PyPI upload; `git ls-remote`: `582045a1... refs/tags/v0.1.0a4`, `4b9883c5... refs/tags/v0.1.0a4^{}` (E). |
 | 15 Release page | `https://github.com/granddad-wolf/oradmp/releases/tag/v0.1.0a4`: pre-release, no files attached; body = the SHA-256 lines and the PyPI link (S). The tag message in the body: not shown, not claimed. |
-| 16 Afterwards | both project-scoped tokens (TestPyPI, PyPI) deleted; the GitHub CLI token revoked; tokens typed with `read -rs` in a plain shell, no agent session open (S). The three count checks and the folder steps: in the clean-up below. |
+| 16 Afterwards | both project-scoped tokens (TestPyPI, PyPI) deleted; the GitHub CLI token revoked; tokens typed with `read -rs` in a plain shell, no agent session open (S). The three count checks and the folder steps: in the clean-up below. Session 30: during the clean-up the owner found an older shell-history line (an earlier session) with a token typed on the command line; all three tokens were already revoked, the lines removed; no value recorded (ADR-114 item 6). |
 | 17 Record | this table (Architect, session 29). |
 
-What remains of a4: the RHEL 8 host test (not a gate); the sdist source build (T-21 (k)); the clean-up below.
+What remains of a4: the RHEL 8 host test (not a gate). Session 30: the sdist source build is done (T-21 (k), risk 32
+closed); the clean-up is done (owner, session 30 facts).
 
 #### Clean-up after a4 (session 29; ADR-113 item 1; for the owner, in order, no agent session needed)
 
@@ -3583,7 +3690,32 @@ Rules while private: a push runs only `checks` and `wheel`; a dispatch only when
 needed; T-16b: at most three; T-16c: as its note asks, Linux only); the note records the minutes of each dispatched run.
 After the cut the budget lapses for standard runners; the dispatch rule for `extended` stays (it is long, not costly).
 
-## Order of the next tasks (session 29)
+## Order of the next tasks (session 30)
+
+Machine rule unchanged (session 16 below). CI runs on the public GitHub repository and is not a build on the VM.
+**OWNER** marks an owner action. ADR-113 items 3 and 4; ADR-114; ADR-115.
+
+| order | task | can start | runs in parallel with | touches | model | waits for a human? |
+|---|---|---|---|---|---|---|
+| done | **T-21** (2026-10-31, `20bbc80`; ADR-114; risk 32 closed); this session | - | - | - | - | - |
+| 1 | **OWNER**: commit and push this session's documents (docs only) | now | rows 5 to 9 | `docs/design/` | - | yes |
+| 2 | **T-16c** `manylinux2014` acceptance (plan T-16c, "Session 30" block): check (0) first (may end "rejected" with the note alone); then the release-script option, the CI job with the glibc 2.17 and Rocky Linux 8 containers, the default route unchanged; nothing published | after row 1 | rows 5 to 9 (its one VM build alone on the machine) | `tools/release_build.sh`, `tests/test_release_build.py`, `ci.yml` (`manylinux2014` job), the note | Sonnet | **OWNER** commits, pushes, one `manylinux2014` dispatch (at most three), pastes the `wheel` and `manylinux2014` summaries; Rocky 8 on the VM only as fallback |
+| 3 | **T-16b** macOS / Windows, plus the sdist build check in `extended` | after row 2 is pushed (both edit `ci.yml`) | rows 5 to 9 | `.github/workflows/`, `tests/check_dist.py`, `target_os` gates, tests a platform proves wrong | Sonnet | **OWNER** pushes, dispatches, pastes |
+| 4 | **Reviewer 7** on T-21, T-16c, T-16b (rule 7; also the SBOM / `RECORD` sizes of T-21 (i), ADR-114 item 2) and, if a5 is due by ADR-113 item 4, the a5 candidate after its version commit | after row 3 | - | `docs/review/` | Opus | **OWNER** starts it |
+| 4' | **a5** (only if ADR-113 item 4 holds, e.g. T-16c "accepted"): Architect session (record Reviewer 7, the a5 checklist with ADR-111 item 6 and ADR-114 item 6), version commit `0.1.0a5` (README lines, classifier), the owner's release | after row 4 | - | as named | - / Sonnet | **OWNER** all release steps |
+| 5 | **OWNER: Q-4**, the real-dump counts with `oradmp survey` from the a4 wheel, on the owner's side, counts only | now | everything | nothing in the repository | - | yes |
+| 5' | **R-052** (exists) only if Q-4 shows a LONG of 65,522 to 65,524 bytes or a field starting `fb ff` / `fc ff` (ADR-101 item 5); a reader change from it makes a5 due | after row 5 | everything | `corpus/` (owner), then a task | - | yes |
+| 6 | **R-046** (low): the CL8MSWIN1251 CLOB / NCLOB short-form end | any time | everything | `corpus/` (owner) | - | yes |
+| 7 | **OWNER: RHEL 8 host test** with the a4 wheel (not a gate; when a host is at hand) | any time | everything | nothing in the repository | - | yes |
+| 8 | **Data Pump** (phase 2): an Architect session plans it, scope with the owner | now (T-21 is done) | rows 2 to 7 | `docs/design/` | - | scope with the owner |
+| 9 | **Analyst 21** (documents only; "Inputs for Analyst session 21"), if not done | any time | everything | `docs/formats/` | - | **OWNER** starts it |
+
+What the owner does, in order: push these documents; start the Implementer on T-16c; after its commit push and one
+`manylinux2014` dispatch, paste both summaries to the Implementer (for the note) and then to the next Architect session;
+then T-16b the same way; then start Reviewer 7. Q-4, R-046, the RHEL 8 host test at any time. Standing owner items:
+O-24; Q-13; O-20; the Gogs mirror stays "moved". **What makes a5** (ADR-113 item 4): unchanged.
+
+## Order of the next tasks (session 29, history)
 
 Machine rule unchanged (session 16 below). CI runs on the public GitHub repository and is not a build on the VM.
 **OWNER** marks an owner action. ADR-113 items 3 and 4.

@@ -4,6 +4,13 @@ Questions and problems the Implementer found while building. Each entry: task, f
 what was seen, what is proposed. The Architect and the Analyst answer; the Implementer does not work around
 a point silently.
 
+## Changes in session 30 (Architect)
+
+- "T-20b" note, the session 28 answer on the T-19 (m) figure: "The note stays as written" replaced (T-21 corrected the
+  result line to "-4.8 % to -6.8 %"; ADR-114 item 5). No other place in this file holds the old figure.
+- New section "T-21 (no note committed; Architect, session 30)" with "Answers (Architect, session 30)" at the end of the
+  file (ADR-114, ADR-115). T-21 is DONE; the next task is T-16c (plan, its "Session 30" block).
+
 ## Changes in session 28 (Architect)
 
 - "T-20b" note: "Answers (Architect, session 28)" added at its end (ADR-109, ADR-110). T-20b is DONE and reviewed (6c);
@@ -3139,4 +3146,23 @@ workspace with the pinned nightly), so no check caught it; CI does not build it 
   substitution whose status matters stands alone as an assignment, then its value is used. Applied in **T-21**.
 - **Your PyYAML from the system `python3`** (the `.venv` has none): fine for a scratch check; T-21 does the same.
 - **T-19 (m) note, a correction by the Architect** (6c N-2): its result line's "-5.0 % to -6.8 %" reads **-4.8 % to
-  -6.8 %** (726.1 / 736.7 / 741.6 MB/s against 779.0); the table and the plan were right. The note stays as written.
+  -6.8 %** (726.1 / 736.7 / 741.6 MB/s against 779.0); the table and the plan were right. Corrected in the note's
+  result line by T-21 (`20bbc80`); session 30 replaced this answer's earlier "the note stays as written".
+
+## T-21 (no note committed; Architect, session 30)
+
+The T-21 commit `20bbc80` holds no note of its own (its only change here is the T-19 (m) figure); the figures below are
+the Implementer's report as the owner pasted it in session 30, recorded in the plan's T-21 "Session 30 record".
+
+### Answers (Architect, session 30; ADR-114, ADR-115)
+
+- **T-21 is DONE** (`20bbc80`): push run and a manual run green; nextest 488 + 4, pytest 262, the venvs 259 + 3,
+  252 + 4, 259 + 3; `extended` 0 findings; `manylinux2014` with both tags. Reviewed in Reviewer 7 with T-16c and T-16b.
+- **(i)**: done by the owner's assistant against the `wheel` listing of the run on C, not against the local a4 folder;
+  accepted, because C's CI files are byte-identical to the released ones (a4 record step 6). Only the SBOM and `RECORD`
+  differ; `_core.abi3.so` is `d0efa2df...`. Their sizes were not stated; Reviewer 7 reads them.
+- **(k)**: passed (sdist `510f2e39...` from PyPI, built in 2 min 11 s, `oradmp 0.1.0a4`, `survey` exit 0). Risk 32 closed.
+- **Six pin cases instead of five**: accepted; six tools are pinned, the plan miscounted.
+- **Eight more test files with comment edits** (beyond (e)'s list): accepted; (b)'s `git grep` needed them, and no
+  assertion changed (diff read in session 30).
+- **No note committed**: accepted this once. From T-16c on the task's note is part of its commit (T-16c (g)).

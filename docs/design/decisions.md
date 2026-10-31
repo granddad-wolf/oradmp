@@ -4,7 +4,7 @@
 `oradmp` (crates `oradmp-core`, `oradmp-py`, import `oradmp`, classes `OradmpError` / `OradmpWarning`).
 
 Architect session 1, 2026-10-07; session 2, 2026-10-14; sessions 3 and 4, 2026-10-15; sessions 5 and
-6, 2026-10-16; sessions 7 to 13, 2026-10-17; sessions 14 and 15, 2026-10-18; sessions 16 and 17, 2026-10-21; session 18, 2026-10-22; sessions 19 to 23, 2026-10-24; sessions 24 and 25, 2026-10-25; sessions 26 and 27, 2026-10-29; session 28, 2026-10-30; session 29, 2026-10-31. Each record:
+6, 2026-10-16; sessions 7 to 13, 2026-10-17; sessions 14 and 15, 2026-10-18; sessions 16 and 17, 2026-10-21; session 18, 2026-10-22; sessions 19 to 23, 2026-10-24; sessions 24 and 25, 2026-10-25; sessions 26 and 27, 2026-10-29; session 28, 2026-10-30; sessions 29 and 30, 2026-10-31. Each record:
 context, decision, consequences, rejected. Status is **decided** (the Implementer follows it; reopening
 needs a new record) or **needs the project owner** (question in `open-questions.md`). Rule numbers are
 those of `docs/formats/exp_reader_rules.md` (v3.4 from session 4 on, v3.5 from session 8 on, v3.7 from session 24 on, **v3.9 from session 25 on**); section
@@ -14,6 +14,19 @@ numbers without a file name are those of `exp-reader-architecture.md`.
 names a commit of the owner's private archive, not of this repository (`HISTORY.md`); the hashes are not rewritten.
 Cites of `docs/prompts/...`, `.claude/` and `CLAUDE.md` name files the owner keeps privately; nothing a contributor must
 do depends on them (the checks a contributor runs are in `CONTRIBUTING.md`).
+
+## Changes in session 30
+
+- Basis: the owner's facts of session 30 (T-21 committed and pushed as `20bbc80`, its runs, the wheel-unchanged check by
+  the owner's assistant, the Implementer's report on the sdist source build). Checked in this session (reading only):
+  `git show --stat 20bbc80` and the diff of every file under `crates/`; `ci.yml`, `tests/test_contributing_pins.py`,
+  `tools/release_build.sh`, `tests/test_release_build.py`, `pyproject.toml` at `20bbc80`; PyPI's JSON API for
+  `pyarrow`, `numpy`, `pandas` (which versions have `manylinux2014` wheels for cp311 to cp314); PyPA's `manylinux`
+  README (the `manylinux2014` image). Nothing built.
+- New: **ADR-114** (T-21 recorded; risk 32 closed; the wheel-unchanged check as done; T-21's deviations; the token
+  line), **ADR-115** (T-16c made exact: check (0) and its expected result, the images, the build route, the install
+  tests, nothing published).
+- Amended in place (an "Amendment (session 30)" line): ADR-91 item 2, ADR-112 item 4.
 
 ## Changes in session 29
 
@@ -4303,6 +4316,9 @@ Session 3 text (history):
      the newest pyarrow found; if pyarrow 15 or later cannot be installed there on Python 3.11, T-16c ends "rejected:
      no supported pyarrow" and 2_28 stays.
   3. The dispatched `manylinux2014` job stays a risk check until T-16c replaces it; it never publishes.
+     Amendment (session 30): item 2 is made exact by ADR-115 (check (0) first; the 2.17 image
+     `quay.io/pypa/manylinux2014_x86_64`; (c)'s Rocky Linux 8 run moves into CI; `--only-binary :all:`; nothing
+     published).
 - Rejected: 2014 in a4 (untested, built without remaps); shipping both Linux wheels (two wheels for one platform double
   the install tests and the upload checks for no named user); dropping 2014 now (cheap to test once on CI; corporate
   hosts older than RHEL 8 exist).
@@ -5259,6 +5275,8 @@ Session 3 text (history):
      case occurred, which settles ADR-56's open point; (c) every sdist member equal, except members whose path is in
      T-21's diff list (e.g. `CONTRIBUTING.md` if the sdist holds it); `PKG-INFO` equal. Any other difference stops;
      the Architect rules.
+     Amendment (session 30): done in T-21 with the `wheel` job's listing of the run on C as the reference (the same
+     bytes as a4's released files, a4 record step 6); passed; the SBOM / `RECORD` sizes are Reviewer 7's (ADR-114 item 2).
   5. **The sdist source build** (not recorded for a4, ADR-111 item 4): T-21 does it once on the VM, outside the
      repository (rule 9): a scratch folder below `/var/tmp`, a fresh `uv` venv with Python 3.11, `uv pip install` of
      the released `oradmp-0.1.0a4.tar.gz` (Rust and network; `TMPDIR=/var/tmp/oradmp-tmp`, `CARGO_BUILD_JOBS=2`), then
@@ -5326,3 +5344,118 @@ Session 3 text (history):
   (each holds a full clone and target; their hashes are recorded); a5 made of T-21 alone (nothing changes for a user);
   T-16b before T-16c (T-16c is Linux only and may end at its first check; T-16b is the larger task and both edit
   `ci.yml`, so they run one after the other).
+
+## ADR-114 T-21 recorded; risk 32 closed; the wheel-unchanged check as done; T-21's deviations - decided (session 30)
+- Context: the owner's facts of session 30: T-21 committed and pushed as `20bbc80b842cc5b280b920445aaf395742b10a50`,
+  its push run and one manual run green (figures in the plan, T-21 heading and "Session 30 record"); item (i) done by
+  the owner's assistant from the member lists of two CI runs; the Implementer's report on (k). Checked in this session
+  (reading only): `git show --stat 20bbc80` (17 files: `ci.yml`, `CONTRIBUTING.md`, `tests/test_contributing_pins.py`,
+  `docs/design/implementer-notes.md`, `common/synth.rs`, the two generators and ten other files under
+  `crates/oradmp-core/tests/`); the diff of every file under `crates/` (comments, the two docstrings and the two test
+  names only; no assertion, no code); the five `job_start=` assignments, `newest=` and `regs=` in `ci.yml`;
+  `tests/test_contributing_pins.py` (four Python and two cargo tools, six parametrised cases); `pyproject.toml`
+  `[tool.maturin] exclude` (`tests/**`, `crates/*/tests/**`, `docs/**` are not in the sdist).
+- Decision:
+  1. **T-21 is DONE** (`20bbc80`): (a) to (h) and (k) shown by the run figures and the report; (i) by item 2; (j) moot
+     (the reference listing came from CI, item 2). Reviewed with T-16c and T-16b in Reviewer 7 (rule 7).
+  2. **Item (i), the wheel-unchanged check: passed in substance, by another route.** The plan asked for a listing of a4's
+     released files at `/var/tmp/oradmp-release-0.1.0a4/dist/`; the owner's assistant used the `wheel` job's listing of
+     the run on C = `4b9883c` instead. The two are the same files: the a4 record (step 6, E) shows C's CI wheel and
+     sdist hashes equal the released ones (`2e4c69a5...`, `510f2e39...`), so their member lists are equal by
+     construction. Result: all members equal in SHA-256 except `oradmp-0.1.0a4.dist-info/sboms/oradmp-py.cyclonedx.json`
+     and `RECORD` (the allowed exception of ADR-112 item 4 (b)); `oradmp/_core.abi3.so` =
+     `d0efa2dff42b57f5203429ace3b7789d4d1cfbbb7fd09ce986b5badf51b4789c` = the library installed from PyPI (a4 record step
+     13); no sdist member differs (T-21's changed paths are all excluded from the sdist, so none could). **Open, not
+     blocking**: the facts do not state that the two differing members kept their **size** (ADR-112 item 4 (b)
+     requires equal size); Reviewer 7 reads it from the two public run summaries. **ADR-56's open point**: the SBOM
+     differs between two commits of one tree and was identical in a4's `--twice` build of one commit, so its
+     timestamp follows the commit (`SOURCE_DATE_EPOCH`), not the clock; recorded as settled in practice.
+  3. **Risk 32 closed**: the published a4 sdist (`510f2e39...`, from PyPI) built from source on the VM in a fresh
+     Python 3.11 venv in 2 min 11 s; `oradmp --version` = `oradmp 0.1.0a4`; `survey --no-names` on a copy of
+     `t_text_exp_18c.dmp` exit 0 (Implementer's report, S). The permanent check is T-16b's (`extended`).
+  4. **Deviations, accepted**: (a) `tests/test_contributing_pins.py` has **six** cases, one per pinned tool (maturin,
+     pytest, ruff, mypy, cargo-nextest, cargo-deny); the plan's "five versions" miscounted; six is right. pytest 256 + 6
+     = 262; each CI venv + 6 (259, 252, 259 against a4's 253, 246, 253). (b) Eight test files beyond (e)'s list changed
+     (`t10_truth`, `t12_messages`, `t12_survey`, `t1_walk`, `t3a_walker`, `t3c_walker`, `t5_types`, `t6_value_parts`),
+     comments only: they held "211 files" / "211 fixtures" and (b)'s `git grep` required none to remain; (e)'s intent
+     (no shipped file, no assertion) holds. (c) **No T-21 note in the repository**: the T-21 commit changed
+     `implementer-notes.md` in one line only (the T-19 (m) figure); the counts and (k)'s figures exist only in the
+     Implementer's report as pasted by the owner. Accepted for T-21 (every figure is in the plan's record now); from
+     T-16c on, the task's note is part of its commit ("Done when" says so).
+  5. **The T-19 (m) figure**: the result line now reads "-4.8 % to -6.8 %" (T-21); the Architect's session 28 answer that
+     said "the note stays as written" is corrected in place (`implementer-notes.md`). No other design file holds the old
+     figure; `docs/review/review-06c.md` quotes it as the finding it was.
+  6. **Tokens** (one line for the record, no value anywhere): while cleaning up, the owner found an old shell-history
+     line from an earlier session where a token had been typed on the command line instead of at the hidden `read -rs`
+     prompt; both index tokens and the GitHub token had already been revoked, and the history lines were removed. For
+     the a5 checklist (ADR-111 item 6): `read -rs NAME` stands alone on its line, the token is typed at the prompt only,
+     and after the release the owner checks that the shell history holds no token prefix (`pypi-`, `ghp_`,
+     `github_pat_`) and prints only the count.
+- Consequences: T-16c can start after this session's docs push. Risk 32 closed. The SBOM / `RECORD` size is Reviewer 7's.
+- Rejected: repeating (i) against the local a4 folder (the CI listing of C is a listing of the same bytes); reopening
+  T-21 for the missing note (nothing it would hold is unrecorded now).
+
+## ADR-115 T-16c made exact: the pyarrow check and its result, the images, the build route, nothing published - decided (session 30)
+- Context: ADR-53 items 4, 5; ADR-91 item 2; ADR-106 item 3; ADR-113 item 3; `tools/release_build.sh` (one
+  `--compatibility manylinux_2_28` line, options `--twice`, `--release`); `tests/test_release_build.py`; the
+  `manylinux2014` job of `ci.yml` (builds with plain `maturin`, `auditwheel show`, the `Tag:` lines; no install).
+  **PyPI's JSON API** for `pyarrow`, `numpy`, `pandas` (read in this session; final releases, x86_64 wheels tagged
+  `manylinux2014` / `manylinux_2_17`, not the free-threaded ones): pyarrow has such wheels for cp311 from 10.0.1 to
+  **20.0.0** (each of 15.0.2, 16.1.0, 17.0.0, 18.1.0, 19.0.1, 20.0.0 checked by name), for cp313 from 18.0.0 to 20.0.0,
+  **none for cp314**; from 21.0.0 on only `manylinux_2_28` and `musllinux_1_2`. numpy: cp311 up to **2.2.6**, none for
+  cp314. pandas: cp311 up to **2.3.2**, none for cp314. **PyPA's `manylinux` README** (read in this session):
+  `quay.io/pypa/manylinux2014_x86_64` is a supported image, "CentOS 7 based, glibc 2.17", with CPython 3.9 to 3.15 in
+  `/opt/python/`; CentOS 7 itself reached end of life on 2024-06-30.
+- Decision:
+  1. **Check (0) stays first and is expected to pass**: on today's index, glibc 2.17 hosts get pyarrow 15.0.2 to 20.0.0
+     on CPython 3.11 to 3.13, and nothing on 3.14 or later. The Implementer repeats it (the index can change) and
+     records the output. **"Rejected" at (0)** means: no pyarrow of 15 or later (our floor, `pyarrow>=15`) with a
+     `manylinux2014` wheel for cp311. Then T-16c's commit is the note alone: its first line "T-16c: rejected: no
+     pyarrow wheel for glibc 2.17", the commands and their output; no `ci.yml`, `tools/` or test change; the
+     `manylinux2014` job stays a risk check; `manylinux_2_28` stays. No 3.14 wheel is not a rejection: it limits what an
+     accepted wheel may claim (item 5).
+  2. **The images** (what exists, what is allowed). glibc 2.17: **`quay.io/pypa/manylinux2014_x86_64`, pinned by
+     digest**, run with `docker run` in a CI step on the Ubuntu runner (ADR-91 item 2 (b)); it is the only glibc 2.17
+     image with a CPython 3.11 to 3.14 already in it. glibc 2.28: **`rockylinux:8` pinned by digest** (Docker Hub
+     official image; a4 step 9 used it), also run in the same CI job, Python 3.11 from the image's package manager
+     (`dnf install python3.11`; a4 step 9 had the system Python 3.11.13) and 3.14 through `uv python install` (a4 step 9
+     used a downloaded CPython 3.14.10); if the package step fails in CI, the owner runs it on the VM as in a4 step 9 (fallback, not the plan). No agent
+     runs Docker on the VM. Rejected: `centos:7` (no Python 3.11; its package mirrors moved to the vault at end of life,
+     so a foreign CPython is needed: two moving parts), `oraclelinux:7` and UBI 7 (same lack), `amazonlinux:2` (glibc
+     2.26, not 2.17), the owner's VM for the 2.17 test (nothing gained over CI, costs his time).
+  3. **The build route**: `tools/release_build.sh [COMMIT] [--twice] [--release] [--manylinux 2014|2_28]` (default
+     `2_28`; `2014` passes `--compatibility manylinux2014` to maturin; any other value or a missing value exits 2
+     before anything is written). After the build the script checks the wheel name holds the platform tag it asked
+     for (`manylinux_2_28_x86_64` resp. `manylinux_2_17_x86_64.manylinux2014_x86_64`) and `-cp311-abi3-`, and prints a
+     line `manylinux: <value>`. In CI the `manylinux2014` job calls it with `--release --manylinux 2014` at the
+     runner's canonical root (as the `wheel` job), then `auditwheel show` (6.8.2), the two `Tag:` lines (`cp311-abi3-`),
+     then the installs of item 4. On the VM the Implementer builds once with `ORADMP_BUILD_ROOT=/var/tmp/oradmp-t16c-build`
+     **without** `--release` (the VM's canonical root is a5's), alone on the machine, `check_dist: ok`, then deletes the
+     folder. The default route must not change: the push run's `wheel` member list equals T-21's (`20bbc80` run) except
+     the SBOM and `RECORD` (and sdist members whose path T-16c changes, if the sdist holds any).
+  4. **The install tests and the acceptance rule** (ADR-53 item 4 applied): every install with `--only-binary :all:`
+     (a source build of pyarrow on 2.17 would hide a missing wheel). In the 2.17 container: (i) CPython 3.11, pyarrow
+     15.0.2, pandas 2.2.3; (ii) CPython 3.11, the newest pyarrow and pandas (0) found for cp311; (iii) CPython 3.13, the
+     newest pyarrow (0) found for cp313, no pandas; (iv) CPython 3.14: the pyarrow install is tried and its failure
+     recorded (expected; not a failure of the task). In the Rocky 8 container and in three runner venvs: the `wheel`
+     job's three venvs (same packages) with the 2014 wheel. Each: `oradmp --version`, full `pytest -rs` from a copy of
+     the checkout (a git clone, so `test_project_name.py` runs; `safe.directory` set as root), 0 failed. Allowed skips:
+     the three probe tests; as root the three root-only tests; `tests/test_consumers.py` without pandas; any other skip
+     is a line in the note and needs an Architect answer. The "full `cargo nextest run` on that platform" of ADR-53 item
+     4 is met by the `checks` job of the same commit: the Rust code is the same, and what differs on glibc 2.17 is only
+     the library's link, which the installed-wheel tests exercise.
+  5. **Verdict and what an acceptance claims**: "accepted" when (a) the build passes `check_dist` and shows the tags, and
+     every run of item 4 passes; the claim for a5's README (written in a5's version commit, not in T-16c): "glibc 2.17
+     or later (RHEL / Oracle Linux 7 and later); on glibc below 2.28, CPython 3.11 to 3.13 and pyarrow up to 20.0.0
+     (the newest with a wheel for such systems)". Otherwise "rejected: <reason>". Either way the a5 decision is the
+     Architect's (ADR-113 item 4).
+  6. **Nothing is published in T-16c**: no tag, no version change, no upload to PyPI or TestPyPI, no GitHub release,
+     no `gh`, no token; the 2014 wheel is not even a workflow artifact (the job prints its hash and member list only).
+     The Implementer has no token and no `gh`; the owner commits, pushes, dispatches `manylinux2014` (at most three
+     dispatches before asking the Architect) and pastes the two summaries.
+- Consequences: T-16c touches `tools/release_build.sh`, `tests/test_release_build.py`, `.github/workflows/ci.yml`
+  (the `manylinux2014` job only, plus anything shared it factors out without changing the `wheel` job's behaviour) and
+  its note. ADR-91 item 2 (c)'s Rocky 8 run moves from the owner to CI. Risk 33 opened.
+- Rejected: shipping a 2014 wheel and keeping the 2_28 one (ADR-91); a glibc 2.17 test only through `auditwheel`
+  (shows symbols, not that pyarrow and our library load together); `--compatibility manylinux_2_17` as the spelling
+  (maturin and the existing job use `manylinux2014`; both name the same policy).
