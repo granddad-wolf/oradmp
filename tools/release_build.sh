@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Builds the release wheel and sdist of oradmp from a clean clone at a neutral path (ADR-56).
 #
-#   tools/release_build.sh [COMMIT] [--twice] [--release]
+#   tools/release_build.sh [COMMIT] [--twice] [--release] [--manylinux 2014|2_28]
 #
 #   COMMIT   the commit to build (default HEAD of this repository). Uncommitted changes are not built.
 #   --twice  after the first build, build the wheel and the sdist a second time from scratch into $ROOT/dist2
@@ -10,6 +10,10 @@
 #   --release  a release build (ADR-90): the build root must be the canonical /var/tmp/oradmp-release (after
 #            `realpath -m`), so ORADMP_BUILD_ROOT must be unset or name that folder; any other root is refused
 #            with both paths named. Prints `release root: canonical`. Without it any root is accepted.
+#   --manylinux 2014|2_28  the platform tag of the wheel (ADR-115 item 3; default 2_28): `2_28` builds with
+#            `--compatibility manylinux_2_28` (glibc 2.28 or later), `2014` with `--compatibility manylinux2014`
+#            (glibc 2.17 or later). Any other value, or none, exits 2 before anything is made. After each build the
+#            wheel name must hold `-cp311-abi3-` and the tag asked for. Prints `manylinux: <value>`.
 #
 # Environment:
 #   ORADMP_BUILD_ROOT  the build folder (default /var/tmp/oradmp-release). It must not exist, must not be
@@ -26,12 +30,30 @@ set -euo pipefail
 commit=HEAD
 twice=0
 release=0
-for arg in "$@"; do
+manylinux=2_28
+while [ "$#" -gt 0 ]; do
+    arg="$1"
+    shift
     case "$arg" in
         --twice) twice=1 ;;
         --release) release=1 ;;
+        --manylinux)
+            if [ "$#" -eq 0 ]; then
+                echo "release_build: --manylinux needs a value (2014 or 2_28); none given" >&2
+                exit 2
+            fi
+            manylinux="$1"
+            shift
+            case "$manylinux" in
+                2014 | 2_28) ;;
+                *)
+                    echo "release_build: --manylinux must be 2014 or 2_28, not '$manylinux'" >&2
+                    exit 2
+                    ;;
+            esac
+            ;;
         -h | --help)
-            sed -n '2,22p' "$0"
+            sed -n '2,26p' "$0"
             exit 0
             ;;
         -*)
@@ -41,6 +63,16 @@ for arg in "$@"; do
         *) commit="$arg" ;;
     esac
 done
+case "$manylinux" in
+    2014)
+        compat=manylinux2014
+        platform_tag=manylinux_2_17_x86_64.manylinux2014_x86_64
+        ;;
+    *)
+        compat=manylinux_2_28
+        platform_tag=manylinux_2_28_x86_64
+        ;;
+esac
 
 repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ROOT="${ORADMP_BUILD_ROOT:-/var/tmp/oradmp-release}"
@@ -101,7 +133,7 @@ build() { # build into the folder $1
     local out="$1"
     (
         cd "$ROOT/src"
-        maturin build --release --locked --zig --compatibility manylinux_2_28 --out "$out"
+        maturin build --release --locked --zig --compatibility "$compat" --out "$out"
         maturin sdist --out "$out"
     )
 }
@@ -110,6 +142,10 @@ check() { # check the archives of the folder $1 and write its SHA256SUMS
     local out="$1" wheel sdist
     wheel="$(ls "$out"/oradmp-*.whl)"
     sdist="$(ls "$out"/oradmp-*.tar.gz)"
+    case "$(basename "$wheel")" in
+        *-cp311-abi3-"$platform_tag".whl) ;;
+        *) fail "the wheel name $(basename "$wheel") does not hold -cp311-abi3-$platform_tag (--manylinux $manylinux)" ;;
+    esac
     "$ROOT/venv/bin/python" -I "$ROOT/src/tests/check_dist.py" --build-root "$ROOT" "$wheel" "$sdist"
     (cd "$out" && sha256sum -- *.whl *.tar.gz >SHA256SUMS)
 }
@@ -119,6 +155,7 @@ check "$ROOT/dist"
 
 echo "--- release_build"
 echo "commit:   $full"
+echo "manylinux: $manylinux"
 echo "rustc:    $(rustc --version)"
 echo "maturin:  $(maturin --version)"
 echo "zig:      $(python -c 'import ziglang, subprocess, sys; print(subprocess.check_output([sys.executable, "-m", "ziglang", "version"], text=True).strip())')"

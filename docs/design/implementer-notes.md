@@ -3166,3 +3166,73 @@ the Implementer's report as the owner pasted it in session 30, recorded in the p
 - **Eight more test files with comment edits** (beyond (e)'s list): accepted; (b)'s `git grep` needed them, and no
   assertion changed (diff read in session 30).
 - **No note committed**: accepted this once. From T-16c on the task's note is part of its commit (T-16c (g)).
+
+## T-16c note (Implementer, 2026-10-31): `manylinux2014` acceptance (ADR-115; plan "Session 30" block)
+
+**Verdict: pending.** Check (0) passed (below), the build and every local check pass; the verdict "accepted" or "rejected"
+needs the dispatch of the `manylinux2014` job (items (b) and (c)); the owner pastes the summaries and the Implementer
+adds the figures here (a second docs-only commit, plan (g)).
+
+### (0) The pip check (no CI, no build; scratch venv `uv venv --seed`, pip 26.2.2; the scratch folders are deleted)
+
+Command, for `<v>` in 3.11, 3.13, 3.14 and `<p>` in `"pyarrow>=15"`, `numpy`, `pandas`:
+`<venv>/bin/python -m pip download --no-deps --only-binary :all: --platform manylinux2014_x86_64 --python-version <v> -d <scratch> "<p>"`
+
+| `--python-version` | pyarrow | numpy | pandas |
+|---|---|---|---|
+| 3.11 | `pyarrow-20.0.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl` | `numpy-2.2.6-cp311-...` | `pandas-2.3.2-cp311-...` |
+| 3.13 | `pyarrow-20.0.0-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl` | `numpy-2.2.6-cp313-...` | `pandas-2.3.2-cp313-...` |
+| 3.14 | "No matching distribution found for pyarrow>=15 (from versions: none)" | none (same message) | none (same message) |
+
+Equal to the expectation of the plan (cp311 20.0.0 / 2.2.6 / 2.3.2; cp313 pyarrow 20.0.0; cp314 none). pyarrow 15 or
+later exists for cp311: not rejected. The 3.14 gap limits the claim (plan (e)). The claim a5's README would make if the
+dispatch accepts: "glibc 2.17 or later; below glibc 2.28, CPython 3.11 to 3.13 and pyarrow up to 20.0.0".
+
+### What was built (files)
+
+- `tools/release_build.sh`: `--manylinux 2014|2_28` (default `2_28`, the maturin line is unchanged for it through
+  `--compatibility "$compat"`); a bad or missing value exits 2 at option parsing, before the root rules, before "no such
+  commit", before any folder; `check()` fails unless the wheel name ends `-cp311-abi3-<tag>.whl` (`manylinux_2_28_x86_64`
+  resp. `manylinux_2_17_x86_64.manylinux2014_x86_64`); prints `manylinux: <value>`; `--help` (lines 2 to 26 of the header) names it.
+  The option loop is now a `while`/`shift` loop (the option takes a value).
+- `tests/test_release_build.py`: four cases (bad value exits 2 naming it, five values incl. empty and a value with a
+  blank; missing value exits 2; good values pass the option checks and reach "no such commit"; `--help` names the
+  option). Mutation: the value check `2014 | 2_28) ;;` changed to `*) ;;`: `test_manylinux_bad_value_exits_2_naming_it_before_anything_else`
+  fails, the others pass; restored.
+- `tools/ci_install_check.sh` (new; `run_one` of the `wheel` job generalised for pip or uv, `--only-binary :all:`, numpy
+  version in the info line, root-only skips allowed when uid 0, exactly 3 each), `tools/ci_container_2_17.sh`,
+  `tools/ci_container_rocky8.sh` (new; they run inside the containers). The `wheel` job is **not** changed (its
+  `run_one` stays inline; the plan allowed but did not require moving it).
+- `.github/workflows/ci.yml`: the `manylinux2014` job rewritten (still `workflow_dispatch` only, no upload, no artifact,
+  the wheel is not kept). Digests read from the registries' HTTP API on 2026-10-31 (no `docker pull`; ADR-115 item 2
+  says no agent runs Docker on the VM): `quay.io/pypa/manylinux2014_x86_64@sha256:5f0bcf92ed65391c7df442763168887d97ae734f2fbb17012eb6bed4a8aef98f`
+  (single-platform manifest), `rockylinux:8@sha256:9794037624aaa6212aeada1d28861ef5e0a935adaf93e4ef79837119f2a2d04c`
+  (image index; docker picks amd64). The containers were **not** run by me: their steps are untested until the dispatch.
+
+### Checks on the VM (alone on the machine)
+
+- Fixture checksums ok (3); `cargo fmt --check` ok; clippy twice ok; nextest 488 passed + 4 skipped; `cargo deny check`
+  advisories, bans, licenses, sources ok; `maturin develop --features test-probes`, ruff, ruff format, mypy ok; pytest
+  **266 passed** (262 + 4 new); YAML parse of `ci.yml` ok and `bash --noprofile --norc -eo pipefail -n` on all 41 `run`
+  blocks ok; `bash -n` on every `tools/*.sh` ok.
+- Default build unchanged: old script (a clone of `f8f0987`) and new script, commit `f8f0987`, same root
+  `/var/tmp/oradmp-t16c-build`: wheel `e97742b2...26aa` in both and sdist `c7d4456d...7f54` in both (identical
+  `SHA256SUMS`), `check_dist: ok`, the new one prints `manylinux: 2_28`.
+- `ORADMP_BUILD_ROOT=/var/tmp/oradmp-t16c-build tools/release_build.sh HEAD --manylinux 2014`: `check_dist: ok`,
+  `manylinux: 2014`, wheel `oradmp-0.1.0a4-cp311-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl`
+  (`08eb5fd3...695b`), same sdist `c7d4456d...`. `auditwheel show` (6.8.2): "consistent with ... manylinux_2_17_x86_64",
+  symbols up to GLIBC_2.14; `Tag:` lines `cp311-abi3-manylinux_2_17_x86_64` and `cp311-abi3-manylinux2014_x86_64`.
+  The CI greps were run against these outputs and pass. All scratch folders were deleted.
+- `tools/ci_install_check.sh` on the VM host with that wheel (pip, Python 3.13.5, not root): 263 passed + 3 skipped
+  (the probe tests); without pandas and with the extra file allowed 256 passed + 4 skipped. Mutations: no extra allowed
+  -> "unexpected skips", exit 1; wrong `VERSION` -> exit 1; unreachable pytest pin -> exit 1; pytest replaced by `false`
+  in front of `| tee` -> exit 1; the `ldd` substitution of the 2.17 container script replaced by `$(false)` -> exit 1.
+  The root-only branch (`id -u` 0) and both containers are not run here.
+
+### Risks the first dispatch may show (not guessed away)
+
+The 2.17 image may lack `git` (then `git --version` fails and the step says so); the root-only skip count (3, as a4 step
+9) is exact; `uv python install 3.14` or `dnf install python3.11 python3.11-pip` may fail in the Rocky container (the plan
+then asks for the VM fallback); the `auditwheel show` text is matched by `manylinux_2_17|manylinux2014` (confirmed on the
+VM). The 2.17 venvs (ii) and (iii) install `pyarrow pandas` / `pyarrow` unpinned, so pip picks the newest wheel for
+glibc 2.17 (20.0.0, pandas 2.3.2 expected; printed in the summary).

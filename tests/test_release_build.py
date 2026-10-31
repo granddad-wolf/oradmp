@@ -56,3 +56,39 @@ def test_help_names_release_and_the_canonical_root() -> None:
     r = run("--help", root=None)
     assert r.returncode == 0
     assert "--release" in r.stdout and CANONICAL in r.stdout
+
+
+# Task T-16c (a), ADR-115 item 3: ``--manylinux 2014|2_28``. A bad or a missing value exits 2 before "no such commit",
+# before the root rules and before any folder is made.
+
+
+def test_manylinux_bad_value_exits_2_naming_it_before_anything_else() -> None:
+    for value in ("2010", "2_17", "manylinux2014", "", "2_28 "):
+        r = run(BOGUS, "--release", "--manylinux", value, root=OTHER)
+        assert r.returncode == 2, (value, r.returncode, r.stderr)
+        assert f"'{value}'" in r.stderr and "--manylinux" in r.stderr, (value, r.stderr)
+        assert "no such commit" not in r.stderr and "needs the canonical build root" not in r.stderr
+        assert "release root: canonical" not in r.stdout
+    assert not Path(OTHER).exists()
+
+
+def test_manylinux_missing_value_exits_2() -> None:
+    r = run(BOGUS, "--manylinux", root=OTHER)
+    assert r.returncode == 2 and "needs a value" in r.stderr, r.stderr
+    assert "no such commit" not in r.stderr
+    assert not Path(OTHER).exists()
+
+
+def test_manylinux_good_values_get_past_the_option_checks() -> None:
+    for value in ("2014", "2_28"):
+        r = run(BOGUS, "--manylinux", value, root=OTHER)
+        assert r.returncode == 1 and "no such commit" in r.stderr, (value, r.returncode, r.stderr)
+        r = run("--manylinux", value, BOGUS, "--release", root=None)
+        assert "release root: canonical" in r.stdout and "no such commit" in r.stderr, (value, r.stdout, r.stderr)
+    assert not Path(OTHER).exists()
+
+
+def test_help_names_manylinux() -> None:
+    r = run("--help", root=None)
+    assert r.returncode == 0
+    assert "--manylinux 2014|2_28" in r.stdout and "manylinux2014" in r.stdout and "manylinux_2_28" in r.stdout

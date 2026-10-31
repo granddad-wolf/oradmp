@@ -5,7 +5,8 @@
 #   wheel          every push and dispatch: tools/release_build.sh <commit>, then the wheel in three fresh venvs
 #   fuzz-check     every push and dispatch: cargo check --locked in fuzz/ with its pinned nightly (ADR-106 item 1)
 #   extended       workflow_dispatch only: fuzz seeds, three fuzz targets, long property runs, fuzz clippy, bench report
-#   manylinux2014  workflow_dispatch only: risk checks (b) and (c) of ADR-53 item 7 (the wheel is not shipped)
+#   manylinux2014  workflow_dispatch only: the 2014 wheel built by tools/release_build.sh --manylinux 2014, then installed
+#                  and tested on glibc 2.17 (PyPA image), glibc 2.28 (Rocky 8) and the runner (T-16c, ADR-115; not shipped)
 #
 # Every `run` step runs `bash --noprofile --norc -eo pipefail {0}` (defaults.run.shell below; T-20b, ADR-108): a failing
 # command in front of `| tee` fails its step. A new step needs nothing; never set `shell:` on a step.
@@ -454,12 +455,19 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
-  # workflow_dispatch only: risk checks (b) and (c) of ADR-53 item 7. The wheel is built, shown and dropped; never shipped.
+  # workflow_dispatch only (T-16c, ADR-115). The 2014 wheel is built, installed in containers and venvs, tested, and
+  # dropped: never shipped, never uploaded, not even as an artifact (its hash and member list go to the summary).
   manylinux2014:
-    name: manylinux2014 risk checks (Linux; not shipped)
+    name: manylinux2014 (Linux; not shipped)
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 90
+    env:
+      # glibc 2.17: PyPA's image, CentOS 7 based (ADR-115 item 2); the digest read from quay.io on 2026-10-31
+      IMAGE_217: quay.io/pypa/manylinux2014_x86_64@sha256:5f0bcf92ed65391c7df442763168887d97ae734f2fbb17012eb6bed4a8aef98f
+      # glibc 2.28: the Docker Hub official image (index digest; docker picks the amd64 entry), read on 2026-10-31
+      IMAGE_28: rockylinux:8@sha256:9794037624aaa6212aeada1d28861ef5e0a935adaf93e4ef79837119f2a2d04c
+      UV_VERSION: 0.12.21
     steps:
       # actions/checkout v7.0.1
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -469,7 +477,7 @@ jobs:
 
       - name: Environment (TMPDIR on the runner's temporary folder)
         run: |
-          mkdir -p "$RUNNER_TEMP/tmp" "$RUNNER_TEMP/logs"
+          mkdir -p "$RUNNER_TEMP/tmp" "$RUNNER_TEMP/logs/c217" "$RUNNER_TEMP/logs/rocky8" "$RUNNER_TEMP/logs/runner"
           echo "TMPDIR=$RUNNER_TEMP/tmp" >> "$GITHUB_ENV"
           job_start="$(date +%s)"
           echo "JOB_START=$job_start" >> "$GITHUB_ENV"
@@ -481,49 +489,159 @@ jobs:
             echo "checksums ok: $d"
           done
 
-      # actions/setup-python v7.1.0
+      # actions/setup-python v7.1.0; the last version listed is the default `python` (the newest CPython)
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0
         with:
-          python-version: "3.13"
+          python-version: |
+            3.11
+            3.x
 
-      - name: Rust toolchain from rust-toolchain.toml
+      - name: Rust toolchain from rust-toolchain.toml; uv; the expected version
         run: |
           rustup show active-toolchain || rustup toolchain install
           rustc --version
+          python -m pip install --quiet "uv==$UV_VERSION"
+          uv --version
+          newest="$(python -c 'import sys; print("%d.%d" % sys.version_info[:2])')"
+          echo "NEWEST_PY=$newest" >> "$GITHUB_ENV"
+          raw="$(awk -F'"' '/^version *=/ { print $2; exit }' Cargo.toml)"
+          version="$(printf '%s' "$raw" | sed -e 's/-alpha\./a/' -e 's/-beta\./b/' -e 's/-rc\./rc/')"
+          echo "version at this commit: $raw -> $version"
+          echo "VERSION=$version" >> "$GITHUB_ENV"
 
-      - name: Build a manylinux2014 wheel with --zig; auditwheel show; the abi3 tag
+      # actions/cache v6.1.0 (the release build keeps its own target folder below /var/tmp, so only the registry)
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: |
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            ~/.cargo/git/db
+          key: cargo-wheel-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml', '**/Cargo.lock') }}
+          restore-keys: cargo-wheel-${{ runner.os }}-
+
+      - name: Build the 2014 wheel (tools/release_build.sh --release --manylinux 2014); auditwheel show; the abi3 tags
+        id: build
         run: |
-          python -m venv "$RUNNER_TEMP/venv"
-          "$RUNNER_TEMP/venv/bin/python" -m pip install --quiet maturin==1.15.0 ziglang==0.17.0 auditwheel==6.8.2
-          export PATH="$RUNNER_TEMP/venv/bin:$PATH"
-          maturin build --release --locked --zig --compatibility manylinux2014 --out "$RUNNER_TEMP/mlx"
-          wheel="$(ls "$RUNNER_TEMP"/mlx/oradmp-*.whl)"
+          bash tools/release_build.sh "$GITHUB_SHA" --release --manylinux 2014 2>&1 | tee "$RUNNER_TEMP/logs/release_build.log"
+          grep -q '^check_dist: ok' "$RUNNER_TEMP/logs/release_build.log"
+          grep -q '^manylinux: 2014$' "$RUNNER_TEMP/logs/release_build.log"
+          cp /var/tmp/oradmp-release/dist/SHA256SUMS "$RUNNER_TEMP/logs/SHA256SUMS"
+          ls -l /var/tmp/oradmp-release/dist
+          wheel="$(ls /var/tmp/oradmp-release/dist/oradmp-*.whl)"
           basename "$wheel" | tee "$RUNNER_TEMP/logs/wheel-name.txt"
-          auditwheel --version 2>&1 | tee "$RUNNER_TEMP/logs/auditwheel-version.txt"
-          auditwheel show "$wheel" 2>&1 | tee "$RUNNER_TEMP/logs/auditwheel.log"
+          python -m venv "$RUNNER_TEMP/awvenv"
+          "$RUNNER_TEMP/awvenv/bin/python" -m pip install --quiet auditwheel==6.8.2
+          "$RUNNER_TEMP/awvenv/bin/auditwheel" --version 2>&1 | tee "$RUNNER_TEMP/logs/auditwheel-version.txt"
+          "$RUNNER_TEMP/awvenv/bin/auditwheel" show "$wheel" 2>&1 | tee "$RUNNER_TEMP/logs/auditwheel.log"
           unzip -p "$wheel" 'oradmp-*.dist-info/WHEEL' | grep '^Tag:' | tee "$RUNNER_TEMP/logs/tags.txt"
-          sha256sum "$wheel" | tee "$RUNNER_TEMP/logs/sha.txt"
-          grep -q -- '-cp311-abi3-' "$RUNNER_TEMP/logs/wheel-name.txt"
-          grep -q 'cp311-abi3-' "$RUNNER_TEMP/logs/tags.txt"
+          grep -Eq 'manylinux_2_17|manylinux2014' "$RUNNER_TEMP/logs/auditwheel.log"
+          grep -q -- '-cp311-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl$' "$RUNNER_TEMP/logs/wheel-name.txt"
+          test "$(grep -c '^Tag: cp311-abi3-' "$RUNNER_TEMP/logs/tags.txt")" = 2
+          grep -q '^Tag: cp311-abi3-manylinux_2_17_x86_64$' "$RUNNER_TEMP/logs/tags.txt"
+          grep -q '^Tag: cp311-abi3-manylinux2014_x86_64$' "$RUNNER_TEMP/logs/tags.txt"
+
+      - name: A clone of the commit to test from (the tests need a git clone, ADR-115 item 4)
+        run: |
+          git clone --quiet --no-local "$GITHUB_WORKSPACE" "$RUNNER_TEMP/clone"
+          git -C "$RUNNER_TEMP/clone" -c advice.detachedHead=false checkout --quiet "$GITHUB_SHA"
+          git -C "$RUNNER_TEMP/clone" log -1 --format='clone at %H'
+
+      - name: glibc 2.17 (PyPA manylinux2014 image, pinned by digest); four venvs, pyarrow wheels only
+        if: ${{ !cancelled() && steps.build.conclusion == 'success' }}
+        run: |
+          wheel="$(ls /var/tmp/oradmp-release/dist/oradmp-*.whl)"
+          name="$(basename "$wheel")"
+          docker run --rm \
+            -v "$RUNNER_TEMP/clone:/src:ro" \
+            -v /var/tmp/oradmp-release/dist:/dist:ro \
+            -v "$RUNNER_TEMP/logs/c217:/out" \
+            -e "WHEEL=/dist/$name" -e "VERSION=$VERSION" \
+            "$IMAGE_217" bash /src/tools/ci_container_2_17.sh 2>&1 | tee "$RUNNER_TEMP/logs/c217.log"
+
+      - name: glibc 2.28 (Rocky Linux 8, pinned by digest); the three venvs of the wheel job
+        if: ${{ !cancelled() && steps.build.conclusion == 'success' }}
+        run: |
+          wheel="$(ls /var/tmp/oradmp-release/dist/oradmp-*.whl)"
+          name="$(basename "$wheel")"
+          docker run --rm \
+            -v "$RUNNER_TEMP/clone:/src:ro" \
+            -v /var/tmp/oradmp-release/dist:/dist:ro \
+            -v "$RUNNER_TEMP/logs/rocky8:/out" \
+            -e "WHEEL=/dist/$name" -e "VERSION=$VERSION" -e "UV_VERSION=$UV_VERSION" \
+            "$IMAGE_28" bash /src/tools/ci_container_rocky8.sh 2>&1 | tee "$RUNNER_TEMP/logs/rocky8.log"
+
+      - name: The runner (Ubuntu 24.04), the three venvs of the wheel job
+        if: ${{ !cancelled() && steps.build.conclusion == 'success' }}
+        run: |
+          wheel="$(ls /var/tmp/oradmp-release/dist/oradmp-*.whl)"
+          mkdir -p "$RUNNER_TEMP/runner-venvs"
+          export WHEEL="$wheel" LOG_DIR="$RUNNER_TEMP/logs/runner" VENV_DIR="$RUNNER_TEMP/runner-venvs" INSTALLER=uv
+          cd "$RUNNER_TEMP/clone"
+          bash tools/ci_install_check.sh py311-pa15-pd223 3.11 "pyarrow==15.0.2 pandas==2.2.3" ""
+          bash tools/ci_install_check.sh pynewest-latest "$NEWEST_PY" "pyarrow pandas" ""
+          bash tools/ci_install_check.sh py311-pyarrow-only 3.11 "pyarrow" "tests/test_consumers.py"
 
       - name: Job summary
         if: always()
         run: |
           L="$RUNNER_TEMP/logs"
           {
-            echo "## manylinux2014 risk checks (Linux)"
+            echo "## manylinux2014 (Linux; not shipped)"
             echo
-            echo "- commit: \`$GITHUB_SHA\`"
-            echo "- runner image: ${ImageOS:-?} ${ImageVersion:-?} (runs-on ubuntu-24.04)"
+            echo "- commit: \`$GITHUB_SHA\`; expected version: ${VERSION:-?}"
+            echo "- runner image: ${ImageOS:-?} ${ImageVersion:-?} (runs-on ubuntu-24.04), user $(id -un) (uid $(id -u))"
             echo "- nproc: $(nproc)"
-            echo "- rustc: $(rustc --version); maturin 1.15.0; ziglang 0.17.0"
+            echo "- rustc: $(rustc --version); uv: $UV_VERSION"
+            echo "- release_build: $(grep -E '^(manylinux|maturin|zig|epoch):' "$L/release_build.log" 2>/dev/null | tr '\n' ';')"
+            echo "- check_dist: $(grep '^check_dist' "$L/release_build.log" 2>/dev/null | tr '\n' ';')"
             echo "- wheel: $(cat "$L/wheel-name.txt" 2>/dev/null)"
             echo "- wheel tags: $(tr '\n' ';' < "$L/tags.txt" 2>/dev/null)"
-            echo "- sha256 (not shipped): $(cat "$L/sha.txt" 2>/dev/null)"
             echo "- auditwheel: $(cat "$L/auditwheel-version.txt" 2>/dev/null) (pinned 6.8.2)"
             echo "- auditwheel show:"
             echo '```'
             cat "$L/auditwheel.log" 2>/dev/null || true
             echo '```'
+            echo "- image glibc 2.17: $IMAGE_217"
+            echo "- image glibc 2.28: $IMAGE_28"
+            for d in c217 rocky8; do
+              echo "- $d: ldd: $(cat "$L/$d/ldd.txt" 2>/dev/null)"
+              echo "  - interpreters:"
+              echo '```'
+              cat "$L/$d/interpreters.txt" 2>/dev/null || true
+              echo '```'
+            done
+            echo "- 3.14 on glibc 2.17:"
+            echo '```'
+            cat "$L/c217/py314.txt" 2>/dev/null || true
+            echo '```'
+            echo "- SHA-256 of the built files (the wheel is not uploaded):"
+            echo '```'
+            cat "$L/SHA256SUMS" 2>/dev/null || true
+            echo '```'
+            echo "- members of the wheel and of the sdist (sha256 size member):"
+            echo '```'
+            python3 - /var/tmp/oradmp-release/dist <<'PY' || true
+          import glob, hashlib, sys, tarfile, zipfile
+          d = sys.argv[1]
+          for w in sorted(glob.glob(d + "/oradmp-*.whl")):
+              with zipfile.ZipFile(w) as z:
+                  for i in z.infolist():
+                      if not i.is_dir():
+                          print(hashlib.sha256(z.read(i)).hexdigest(), i.file_size, i.filename)
+          for t in sorted(glob.glob(d + "/oradmp-*.tar.gz")):
+              with tarfile.open(t) as tf:
+                  for m in tf:
+                      if m.isfile():
+                          print(hashlib.sha256(tf.extractfile(m).read()).hexdigest(), m.size, m.name)
+          PY
+            echo '```'
+            for d in c217 rocky8 runner; do
+              for f in "$L/$d"/pytest-*.log; do
+                [ -e "$f" ] || continue
+                n="$(basename "$f" .log)"
+                echo "- $d $n: $(head -1 "$f.info" 2>/dev/null); $(tail -1 "$f"); $(cat "$f.version" 2>/dev/null)"
+                grep '^SKIPPED' "$f" | sed 's/^/  - /' || true
+              done
+            done
             echo "- duration: $(( $(date +%s) - JOB_START )) s (to this step)"
           } >> "$GITHUB_STEP_SUMMARY"
