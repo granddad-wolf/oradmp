@@ -40,6 +40,17 @@ epoch="$(git -C "$ROOT/src" log -1 --format=%ct "$GITHUB_SHA")"
 python -m venv "$ROOT/venv"
 if [ -d "$ROOT/venv/Scripts" ]; then bin="$ROOT/venv/Scripts"; else bin="$ROOT/venv/bin"; fi
 "$bin/python" -m pip install --quiet "maturin==1.15.0"
+# PATH holds the venv's script folder. In Git Bash a PATH entry written `D:/a/...` is cut at the colon (the first
+# dispatch ended with `maturin: command not found` for that reason), so on Windows the entry is converted to the
+# /d/a/... form; on macOS the entry is unchanged.
+if [ "$windows" = 1 ]; then pathbin="$(cygpath -u "$bin")"; else pathbin="$bin"; fi
+export PATH="$pathbin:$PATH"
+# the first lines of the log: a missing or wrong tool is obvious here
+echo "maturin (first line): $(command -v maturin || echo 'NOT FOUND on PATH') $(maturin --version 2>&1 || true)"
+if [ "$(maturin --version 2>&1 | tr -d '\r')" != "maturin 1.15.0" ]; then
+    echo "ci_platform_build: maturin 1.15.0 is not the maturin on PATH (venv folder $bin)" >&2
+    exit 1
+fi
 
 # the cargo home in every form rustc may print it (a Windows path has backslashes and a drive letter)
 cargo_home="${CARGO_HOME:-$HOME/.cargo}"
@@ -51,7 +62,6 @@ fi
 export RUSTFLAGS="$flags"
 export CARGO_TARGET_DIR="$ROOT/target"
 export SOURCE_DATE_EPOCH="$epoch"
-export PATH="$bin:$PATH"
 
 build() { # build the wheel and the sdist into the folder $1
     (

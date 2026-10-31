@@ -3417,4 +3417,50 @@ record each leg's duration.
 
 ### Results
 
-pending: first dispatch
+pending: dispatch 2 (dispatch 1 is recorded below; no verdict is proposed here)
+
+### Dispatch 1 (commit `bdc507b`; 1 of at most 3) and the fix (Implementer, 2026-10-31)
+
+Push jobs `checks`, `wheel`, `fuzz-check` green.
+
+macOS arm64 (`macos-15`) and macOS x86_64 (`macos-15-intel`): build, `check_dist` and nextest fine (488 passed, 4 skipped).
+Wheels `macosx_11_0_arm64` `ec57e7b70d769ad7ee26fda341d9e951ba941cddb874cdf6625de0c8891aeba3` and `macosx_10_12_x86_64`
+`349ceb60e2d783b22a2a9bc5466da4a1290feb560a0bd7ce9a0aecfb6bef89d9`; sdist `9d32534c97ccce10c88dcea2741c0114efe1ef9c13a3098f4ef41da6237db167`
+on both. Two builds in one job gave identical wheels and identical sdists on both legs. pytest: exactly 5 failed in every venv,
+all in `tests/test_release_build.py`, one cause: `realpath: illegal option -- m` (`tools/release_build.sh` uses GNU
+`realpath -m`; macOS `realpath` is BSD; the script is Linux-only by design, ADR-110). The five: the refuses-another-root,
+refuses-a-root-that-resolves-elsewhere, accepts-the-canonical-root, without-release-another-root and
+manylinux-good-values tests. Skips (3 probes, 8 "POSIX byte file names", pandas where absent) matched the allowed list.
+
+Windows x86_64 (`windows-2025`): nextest 487 passed, 4 skipped. The build step died: `tools/ci_platform_build.sh` line 59 and
+line 67, `maturin: command not found`, exit 127; so the hashes, members, two-build and venv sections were empty and no Windows
+pytest result exists. The line-ending probe (`core.autocrlf=true`) found 110 CR bytes in `tools/ci_platform_venvs.sh`; the
+fixtures stayed unchanged (checksums ok for 18c, 11g, 11g-cp1251).
+
+Causes and changes:
+- Windows maturin. maturin 1.15.0 was installed into the venv (`python -m pip install`, so `venv/Scripts/maturin.exe`), and the
+  script put `$bin` on PATH with `export PATH="$bin:$PATH"`. On Windows `$bin` is `D:/a/_temp/.../venv/Scripts` (PLAT_ROOT is the
+  `cygpath -m` form). Git Bash splits a PATH string at every `:`, so the entry became `D` and `/a/_temp/...`; maturin was not
+  found. Read from the code, not run on Windows. Fix in `tools/ci_platform_build.sh`: on Windows the entry is converted with
+  `cygpath -u`; on macOS it is unchanged (`$bin`, the same string as before). The export now comes right after the pip install,
+  and the script prints `maturin (first line): <path> <version>` at once and exits 1 if `maturin --version` is not exactly
+  `maturin 1.15.0`. The pinned version is the same on all legs.
+- Summary honesty (`.github/workflows/ci.yml`, `platforms` job, summary step only; ids `clone` and `venvs` added to two steps so
+  the summary can name their outcomes). Build, check_dist, venvs print "FAILED ..., see the step log" when nothing was recorded;
+  wheel-and-tags, hashes, two-build, member list go through one `section` helper that prints the same words instead of an empty
+  block. Checked locally by running the summary script against an empty log folder.
+- Linux-only tests. `tests/test_release_build.py` has a module `pytestmark` skipif (not `sys.platform.startswith("linux")`,
+  reason "release_build.sh is Linux-only (ADR-110)"). Verified by running that module with `sys.platform` patched to `darwin`:
+  9 skipped; on Linux the full suite is 266 passed, 0 skipped.
+- Allowed skips (`tools/ci_platform_venvs.sh`): new category "Linux-only release tooling" off Linux; it must be exactly 9, the
+  number from `pytest --collect-only -q tests/test_release_build.py` (9 tests collected); another count fails the venv, as does any
+  skip not in the list. The "allowed skips" line now shows the category.
+- Windows nextest 487 against 488: from the source, the test `x_a_replacement_with_the_same_size_and_time_is_told_by_its_inode`
+  (`crates/oradmp-core/tests/t3_catalog.rs`, `#[cfg(unix)]`, uses `std::os::unix::fs::MetadataExt`); `dump.rs` has `file_id` with a
+  `cfg(not(unix))` branch returning `None`. Not changed. The summary text and the step's `488 passed` check will therefore fail on
+  Windows; the workflow step still says 488 (a Windows count is for the Architect to decide; I did not change it).
+
+Could not be checked here: all Windows behaviour past the build step (the maturin fix itself, `check_dist` on `D:/` paths, remaps,
+the three venvs, whether read-only-folder, mode-000 file and byte-file-name tests skip or fail on Windows; those categories are
+left as they were); macOS summary rendering of the new text.
+For the Architect: `.gitattributes` `*.sh text eol=lf` (110 CR bytes under `core.autocrlf=true`); no change made.

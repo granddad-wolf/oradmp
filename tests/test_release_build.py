@@ -7,12 +7,18 @@ from __future__ import annotations
 
 import os
 import subprocess
+import sys
 from pathlib import Path
+
+import pytest
 
 SCRIPT = Path(__file__).resolve().parent.parent / "tools" / "release_build.sh"
 CANONICAL = "/var/tmp/oradmp-release"
 OTHER = "/var/tmp/oradmp-release-t16a2-not-created"
 BOGUS = "0000000000000000000000000000000000000000"
+
+# tools/release_build.sh uses GNU realpath -m and a POSIX layout; it runs on Linux only
+pytestmark = pytest.mark.skipif(not sys.platform.startswith("linux"), reason="release_build.sh is Linux-only (ADR-110)")
 
 
 def run(*args: str, root: str | None) -> subprocess.CompletedProcess[str]:

@@ -15,7 +15,9 @@
 # Environment: WHEEL (path), VERSION (what `oradmp --version` must say after "oradmp "), VENV_DIR, LOG_DIR (exist),
 # PYTEST_PIN (default pytest==9.1.1). The user must not be root.
 # Allowed skips (plan T-16b (b)): the three probe tests (tests/test_internal.py); EXTRA_SKIP_FILE; off Linux,
-# tests/test_paths.py with the reason "POSIX byte file names"; on Windows the tests with the reason "POSIX permissions".
+# tests/test_paths.py with the reason "POSIX byte file names"; off Linux, every test of tests/test_release_build.py
+# (reason "release_build.sh is Linux-only (ADR-110)"; the count must equal the number of tests in that module, 9 at T-16b);
+# on Windows the tests with the reason "POSIX permissions".
 # Anything else fails. Written for bash 3.2 (macOS) and Git Bash.
 set -eo pipefail
 
@@ -73,9 +75,12 @@ if [ -n "$extra" ]; then
 fi
 paths=0
 perms=0
+rel=0
 case "$kernel" in
     Linux) ;;
     *)
+        rel="$(count 'release_build.sh is Linux-only')"
+        drop 'release_build.sh is Linux-only'
         paths="$(count 'POSIX byte file names')"
         drop 'POSIX byte file names'
         ;;
@@ -86,10 +91,14 @@ case "$kernel" in
         drop 'POSIX permissions'
         ;;
 esac
-echo "allowed skips in $name: probes $probes, POSIX byte file names $paths, POSIX permissions $perms" | tee "$log.allowed"
+echo "allowed skips in $name: probes $probes, POSIX byte file names $paths, Linux-only release tooling $rel, POSIX permissions $perms" | tee "$log.allowed"
 if [ -s "$log.rest" ]; then
     echo "unexpected skips in $name:" >&2
     cat "$log.rest" >&2
+    failed=1
+fi
+if [ "$kernel" != Linux ] && [ "$rel" != 9 ]; then
+    echo "expected exactly 9 Linux-only release tooling tests skipped in $name, got $rel" >&2
     failed=1
 fi
 if [ "$probes" != 3 ]; then

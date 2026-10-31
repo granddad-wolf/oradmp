@@ -792,6 +792,7 @@ jobs:
         run: bash tools/ci_platform_build.sh 2>&1 | tee "$PT/logs/build.log"
 
       - name: A clone of the commit to test from
+        id: clone
         if: ${{ !cancelled() && steps.build.conclusion == 'success' }}
         run: |
           git clone --quiet --no-local "${GITHUB_WORKSPACE//\\//}" "$PT/clone"
@@ -799,6 +800,7 @@ jobs:
           git -C "$PT/clone" log -1 --format='clone at %H'
 
       - name: The wheel in three fresh venvs (--only-binary :all:), pytest against the installed package
+        id: venvs
         if: ${{ !cancelled() && steps.build.conclusion == 'success' }}
         run: |
           WHEEL="$(ls "$PLAT_ROOT"/dist/oradmp-*.whl)"
@@ -812,8 +814,25 @@ jobs:
 
       - name: Job summary
         if: always()
+        env:
+          BUILD_OUTCOME: ${{ steps.build.outcome }}
+          CLONE_OUTCOME: ${{ steps.clone.outcome }}
+          VENVS_OUTCOME: ${{ steps.venvs.outcome }}
         run: |
           L="$PT/logs"
+          # a section whose command printed nothing says so in words, never an empty block
+          section() { # section TITLE FAILED_TEXT: the command's output is on stdin
+            local out
+            out="$(tr -d '\r' || true)"
+            echo "- $1"
+            if [ -n "$out" ]; then
+              echo '```'
+              echo "$out"
+              echo '```'
+            else
+              echo "  **$2: FAILED or not reached, see the step log** (build step: $BUILD_OUTCOME)"
+            fi
+          }
           {
             echo "## platforms: $PLATFORM_NAME (not shipped)"
             echo
@@ -823,29 +842,30 @@ jobs:
             echo "- default python: $(python -V 2>&1); bash $BASH_VERSION ($(uname -s))"
             echo "- nextest: $(grep -h 'Summary' "$L/nextest.lf" 2>/dev/null | sed 's/^ *//' || true)"
             echo "- nextest skipped (name): $(tr '\n' ';' < "$L/skipped.txt" 2>/dev/null)"
-            echo "- build: $(grep -E '^(rustc|maturin|python|epoch|root):' "$L/build.log" 2>/dev/null | tr -d '\r' | tr '\n' ';')"
-            echo "- check_dist: $(grep -E '^check_dist' "$L/build.log" 2>/dev/null | tr -d '\r' | tr '\n' ';')"
-            echo "- wheel and tags:"
-            echo '```'
-            grep -E '^(oradmp-.*\.whl|Tag:)' "$L/build.log" 2>/dev/null | tr -d '\r' | sort -u || true
-            echo '```'
-            echo "- SHA-256 of the built files (the wheel is not uploaded):"
-            echo '```'
-            tr -d '\r' < "$PLAT_ROOT/dist/SHA256SUMS" 2>/dev/null || true
-            echo '```'
-            echo "- two builds of the same commit (Q-15; recorded, not a gate):"
-            echo '```'
-            sed -n '/^--- two builds/,$p' "$L/build.log" 2>/dev/null | tr -d '\r' || true
-            echo '```'
-            echo "- members of the wheel and of the sdist (sha256 size member):"
-            echo '```'
-            python -I tools/ci_platform_report.py members "$PLAT_ROOT/dist" 2>&1 | tr -d '\r' || true
-            echo '```'
+            bl="$(grep -E '^(rustc|maturin|python|epoch|root):' "$L/build.log" 2>/dev/null | tr -d '\r' | tr '\n' ';' || true)"
+            if [ -n "$bl" ]; then
+              echo "- build: $bl (build step: $BUILD_OUTCOME)"
+            else
+              echo "- build: FAILED, see the step log (build step: $BUILD_OUTCOME; no build output was recorded)"
+            fi
+            cdl="$(grep -E '^check_dist' "$L/build.log" 2>/dev/null | tr -d '\r' | tr '\n' ';' || true)"
+            if [ -n "$cdl" ]; then
+              echo "- check_dist: $cdl"
+            else
+              echo "- check_dist: FAILED or not reached, see the step log"
+            fi
+            { grep -E '^(oradmp-.*\.whl|Tag:)' "$L/build.log" 2>/dev/null | sort -u || true; } | section "wheel and tags:" "wheel and tags"
+            { cat "$PLAT_ROOT/dist/SHA256SUMS" 2>/dev/null || true; } | section "SHA-256 of the built files (the wheel is not uploaded):" "hashes"
+            { sed -n '/^--- two builds/,$p' "$L/build.log" 2>/dev/null || true; } | section "two builds of the same commit (Q-15; recorded, not a gate):" "two-build comparison"
+            { python -I tools/ci_platform_report.py members "$PLAT_ROOT/dist" 2>/dev/null || true; } | section "members of the wheel and of the sdist (sha256 size member):" "member list"
             if [ -e "$L/crlf-probe.log" ]; then
               echo "- line-ending probe:"
               echo '```'
               tr -d '\r' < "$L/crlf-probe.log"
               echo '```'
+            fi
+            if ! ls "$L"/venvs/pytest-*.log >/dev/null 2>&1; then
+              echo "- venvs: FAILED or not run, see the step log (clone step: $CLONE_OUTCOME; venvs step: $VENVS_OUTCOME)"
             fi
             for f in "$L"/venvs/pytest-*.log; do
               [ -e "$f" ] || continue
