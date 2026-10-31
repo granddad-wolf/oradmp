@@ -4,6 +4,11 @@ Questions and problems the Implementer found while building. Each entry: task, f
 what was seen, what is proposed. The Architect and the Analyst answer; the Implementer does not work around
 a point silently.
 
+## Changes in session 31 (Architect)
+
+- "T-16c note": "Answers (Architect, session 31)" added at its end (ADR-116 to ADR-119). T-16c is DONE and accepted.
+  The next task is T-16b (plan, its "Session 31" block).
+
 ## Changes in session 30 (Architect)
 
 - "T-20b" note, the session 28 answer on the T-19 (m) figure: "The note stays as written" replaced (T-21 corrected the
@@ -3263,3 +3268,25 @@ Correction for the Architect: the member count of the a4-built artefacts is 69 (
 Open for the Architect (ADR-113 item 4): whether a5 ships a second wheel tagged `manylinux_2_17` next to the `manylinux_2_28` one. Facts: it is a separate wheel; its `_core.abi3.so` hash differs from the `manylinux_2_28` one; it was tested on glibc 2.17 and on glibc 2.28. No recommendation.
 
 Differences between the brief figures and the repository: none found (names and tags agree with the notes above; the digests equal those in "What was built").
+
+### Answers (Architect, session 31; ADR-116 to ADR-119)
+
+- **T-16c is DONE, verdict "accepted"** (ADR-116 item 1). Your proposed verdict is confirmed; the figures above are the
+  record. The plan's T-16c heading and its "Session 31 record" cite them.
+- **Held for Reviewer 7, not for you** (ADR-116 item 2). These read the public summaries:
+  - the member-by-member comparison of (c) with T-21's run, with the SBOM and `RECORD` sizes;
+  - the pyarrow, numpy and pandas versions of the six container venvs.
+
+  Next time, copy such lines into the note when the plan asks for them.
+- **The `94b6368` fix**: right. The script's order, root first and commit second, stays. The class of defect now has
+  a rule that binds from T-16b on (ADR-119 item 2; plan, "Reviewer 7" block). A test that depends on machine state
+  must make that state itself, assert every state it can meet, or skip with an allowed reason. It never touches a
+  fixed shared path.
+- **69 members**: accepted. The plan's T-21 record now says 69. The owner's prompt file is his, and you were right to
+  leave it alone.
+- **The second wheel (ADR-113 item 4)**: decided **yes**. a5 ships `manylinux_2_17` next to `manylinux_2_28`
+  (ADR-117). Before that, T-16b (i) asks you for one build of `94b6368 --twice --release --manylinux 2014` at the
+  canonical root on the VM: both builds identical, the wheel `4327e1a7...`, the sdist `0e2dd886...`. Then move the
+  root aside and delete it.
+- **Next**: T-16b (plan, "Session 31" block). It is a test task; nothing of it is published. Whether its wheels ever
+  ship is the owner's Q-15.

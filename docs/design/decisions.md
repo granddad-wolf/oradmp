@@ -4,7 +4,7 @@
 `oradmp` (crates `oradmp-core`, `oradmp-py`, import `oradmp`, classes `OradmpError` / `OradmpWarning`).
 
 Architect session 1, 2026-10-07; session 2, 2026-10-14; sessions 3 and 4, 2026-10-15; sessions 5 and
-6, 2026-10-16; sessions 7 to 13, 2026-10-17; sessions 14 and 15, 2026-10-18; sessions 16 and 17, 2026-10-21; session 18, 2026-10-22; sessions 19 to 23, 2026-10-24; sessions 24 and 25, 2026-10-25; sessions 26 and 27, 2026-10-29; session 28, 2026-10-30; sessions 29 and 30, 2026-10-31. Each record:
+6, 2026-10-16; sessions 7 to 13, 2026-10-17; sessions 14 and 15, 2026-10-18; sessions 16 and 17, 2026-10-21; session 18, 2026-10-22; sessions 19 to 23, 2026-10-24; sessions 24 and 25, 2026-10-25; sessions 26 and 27, 2026-10-29; session 28, 2026-10-30; sessions 29 to 31, 2026-10-31. Each record:
 context, decision, consequences, rejected. Status is **decided** (the Implementer follows it; reopening
 needs a new record) or **needs the project owner** (question in `open-questions.md`). Rule numbers are
 those of `docs/formats/exp_reader_rules.md` (v3.4 from session 4 on, v3.5 from session 8 on, v3.7 from session 24 on, **v3.9 from session 25 on**); section
@@ -14,6 +14,21 @@ numbers without a file name are those of `exp-reader-architecture.md`.
 names a commit of the owner's private archive, not of this repository (`HISTORY.md`); the hashes are not rewritten.
 Cites of `docs/prompts/...`, `.claude/` and `CLAUDE.md` name files the owner keeps privately; nothing a contributor must
 do depends on them (the checks a contributor runs are in `CONTRIBUTING.md`).
+
+## Changes in session 31
+
+- Basis: the owner's facts of session 31 (T-16c's commits `a8da2cc`, `94b6368`, `0bfa70d`, their CI runs, one
+  `manylinux2014` dispatch on `94b6368`) and the T-16c note with its "Results" section. Checked in this session (reading
+  only): `git show --stat` of the three commits; `tools/release_build.sh` at `0bfa70d` (the root check, line 114, before
+  the commit check, line 116); `pyproject.toml` `[tool.maturin] exclude`; the job list of `ci.yml`; a `grep` of `docs/`
+  for the member count 68 and the pytest count 249; GitHub runner-image reports for macOS x86_64 (secondary sources,
+  leads only, T-16b checks the primary list). Nothing built, nothing run on CI.
+- New: **ADR-116** (T-16c recorded and **accepted**; the corrections: 69 members, the pyarrow-only venv counts),
+  **ADR-117** (a5 ships a `manylinux_2_17` wheel **next to** `manylinux_2_28`; its gates), **ADR-118** (T-16b made exact;
+  the release route of non-Linux wheels is **Q-15**, needs the owner), **ADR-119** (Reviewer 7's scope; the rule for
+  tests that depend on machine state), **ADR-120** (when a5 is cut).
+- Amended in place (an "Amendment (session 31)" line): ADR-53 item 5, ADR-87 item 3, ADR-91 (rejected line), ADR-113
+  item 4, ADR-115 (rejected line).
 
 ## Changes in session 30
 
@@ -2459,6 +2474,8 @@ Session 3 text (history):
 - Rejected: cross-building Windows / macOS wheels on the VM and calling them supported (nothing would run their
   tests); `universal2` macOS wheels (one wheel, but two architectures to test in one artefact; separate wheels keep
   one test run per wheel); T-16 before the alpha (the owner's hosts are RHEL 8+ x86_64).
+- Amendment (session 31, ADR-117): item 5 is replaced: the accepted `manylinux2014` wheel ships **next to**
+  `manylinux_2_28`, it does not replace it. Item 4 stands; who builds a non-Linux release wheel is Q-15 (ADR-118).
 
 ## ADR-54 The project is renamed `oradmp` - decided (owner, Q-10 name part; session 13)
 - Context: the PyPI name `oradump` belongs to another project (owner, Q-10). The owner chose **`oradmp`** ("dmp"
@@ -4171,6 +4188,8 @@ Session 3 text (history):
   one T-16 that holds a4 until macOS and Windows are accepted (the owner's hosts are Linux; billed minutes or the cut's
   timing would hold the non-UTF-8 fix); a scheduled nightly job on the private repository (daily minutes); a `gh`
   token on the VM (rule 8).
+- Amendment (session 31, ADR-118): item 3's "accepted wheels ship in a5" now reads "accepted platforms are recorded;
+  their wheels ship only after the owner answers Q-15 (who builds a release wheel that the VM cannot build)".
 
 ## ADR-88 0.1.0a4 restated: content, order, Reviewer 6c - decided (session 22; the Project-URL depends on the cut, Q-14)
 - Context: ADR-84 planned a4 with T-18d, T-17, T-16 and Reviewer 6b on the candidate. 6b ran before T-16 (ADR-85);
@@ -4322,6 +4341,8 @@ Session 3 text (history):
 - Rejected: 2014 in a4 (untested, built without remaps); shipping both Linux wheels (two wheels for one platform double
   the install tests and the upload checks for no named user); dropping 2014 now (cheap to test once on CI; corporate
   hosts older than RHEL 8 exist).
+- Amendment (session 31, ADR-117): the rejection of "shipping both Linux wheels" is withdrawn for a5. The install tests
+  are now in CI (T-16c) and the gates are written; item 2 (d)'s "instead of" reads "next to".
 
 ## ADR-92 CI follow-ups: the fuzz crash artifact, benchmarks, what the owner pastes, the minutes budget; T-16a2 - decided (session 23)
 - Context: T-16a (h) forbids uploads; ADR-62 item 7 allows a crash file as a workflow artifact the owner downloads; the
@@ -5325,6 +5346,8 @@ Session 3 text (history):
      changed, and the a5 checklist with ADR-111 item 6. **The smallest release worth making** is one accepted platform
      wheel or one reader fix; T-21, README wording, classifiers or CI changes alone never make a release. Exception: a
      defect of a4 that harms a user makes a5 a fix release from `master` after a short closure review.
+     Amendment (session 31, ADR-120): T-16c is accepted, so a5 is due. A T-16b platform wheel counts only once Q-15 is
+     answered. The conditions under which a5 is cut are in ADR-120.
   5. **No new request for the Analyst**: nothing in a4 raised a format question. Next free number stays R-053.
   6. **The public face** (PyPI now shows the project):
      - **Owner, GitHub settings (no commit)**: the repository's "About": description as `pyproject.toml`'s, website
@@ -5459,3 +5482,310 @@ Session 3 text (history):
 - Rejected: shipping a 2014 wheel and keeping the 2_28 one (ADR-91); a glibc 2.17 test only through `auditwheel`
   (shows symbols, not that pyarrow and our library load together); `--compatibility manylinux_2_17` as the spelling
   (maturin and the existing job use `manylinux2014`; both name the same policy).
+- Amendment (session 31, ADR-117): the first rejected item applied to T-16c only, where nothing was published. For a5
+  both Linux wheels ship.
+
+## ADR-116 T-16c recorded and accepted; the corrections of session 31 - decided (session 31)
+- Context: the owner's facts and the T-16c note ("Results", Implementer, `0bfa70d`). Commits on `master`: `a8da2cc`
+  (T-16c: `tools/release_build.sh`, `tests/test_release_build.py`, `ci.yml`, three new `tools/ci_*.sh`, the note),
+  `94b6368` (the test only, and the note), `0bfa70d` (the note only). The first public `wheel` job on `a8da2cc` failed
+  in `test_manylinux_good_values_get_past_the_option_checks`: the job had just built at the canonical root
+  `/var/tmp/oradmp-release`, and the script checks the root (line 114) before the commit (line 116), as in a4.
+  `94b6368` makes the test expect exit 1 with "exists already" when the root exists and "no such commit" when it does
+  not. It does not skip either case. The script is unchanged.
+- Decision:
+  1. **T-16c is DONE, verdict "accepted"** (ADR-115 item 5). The evidence, all in the note:
+     - (0) gave the expected files: cp311 pyarrow 20.0.0, numpy 2.2.6 and pandas 2.3.2; cp313 pyarrow 20.0.0; nothing
+       for cp314.
+     - (a): the option, four test cases and a mutation that bites.
+     - (b): dispatch 1 of 3 on `94b6368` was green. `auditwheel` 6.8.2 reports `manylinux_2_17_x86_64` with symbols up
+       to `GLIBC_2.14`. The pytest counts:
+
+       | where | venvs (passed + skipped) |
+       |---|---|
+       | glibc 2.17 | 260 + 6, 260 + 6, 253 + 7 |
+       | Rocky 8 | 260 + 6, 253 + 7, 260 + 6 |
+       | runner | 263 + 3, 256 + 4, 263 + 3 |
+
+       Every skip is an allowed one. On glibc 2.17, CPython 3.14 has no pyarrow, as expected. The image digests match
+       the note.
+     - (c): `_core.abi3.so` is `d0efa2df...`, a4's file. The sdist is the same in both jobs.
+     - (d): nextest 488 + 4, pytest 266, `cargo deny` ok.
+
+     ADR-115 item 5's README claim stands for a5: "glibc 2.17 or later; below glibc 2.28, CPython 3.11 to 3.13 and
+     pyarrow up to 20.0.0".
+  2. **Held back for Reviewer 7**. These are checks of runs already recorded, not new runs. A finding reopens T-16c.
+     - (a) T-16c (c) asked for a member-by-member comparison of the push run's `wheel` listing with T-21's run on
+       `20bbc80`. The note gives `_core.abi3.so` and the counts, not the comparison, and not the sizes of the SBOM and
+       `RECORD` members.
+     - (b) The pyarrow, numpy and pandas versions of the six container venvs are printed in the dispatch summary, not
+       copied into the note. The README's "up to 20.0.0" rests on venv (ii) showing 20.0.0.
+
+     Not a condition of the verdict: the byte identity of the 2014 wheel between the VM and CI at the canonical root
+     has not been shown (the VM build was at a scratch root). That is a gate for shipping (ADR-117 item 2).
+  3. **The first-run defect** was a test that assumed machine state; `94b6368` is the right fix. The script's order,
+     root first and commit second, stays: it is a4 behaviour, and the root rule keeps a release root from being reused.
+     Two commits for one task is accepted. The note was part of each commit, as T-16c (g) asked. The defect class is
+     ruled in ADR-119 item 2.
+  4. **Corrections**:
+     - (a) The a4-built artefacts have **69 members** (16 in the wheel, 53 in the sdist), not 68. "68" appears only in
+       the owner's prompt for session 30 (`docs/prompts/architect-30-update.md` line 14), which is the owner's file and
+       is left unchanged. No file under `docs/design/` held 68. The plan's T-21 record now states 69.
+     - (b) The installed-wheel pytest counts in the pyarrow-only venv:
+
+       | state | commit | passed + skipped |
+       |---|---|---|
+       | a4 | `e1ed10b` / C | 246 + 4 |
+       | T-21 | `20bbc80` | 252 + 4 |
+       | T-16c | `94b6368` | 256 + 4 |
+
+       `tests/test_consumers.py` holds seven tests that count as one module skip, so this venv shows 6 fewer items than
+       a venv with pandas. No predicted "249" stands as a fact under `docs/design/`. The two 249s there are measured
+       figures and stay: a4 step 9 in the Rocky 8 container from a `git archive` (249 + 7), and T-19's VM run
+       (249 + 1). The session 31 prompt's "246 + 4 at the T-21 state" is a4's figure; T-21's is 252 + 4.
+  5. **Dispatch budget**: T-16c used 1 of its 3. The other two lapse with the task; T-16b has its own budget
+     (ADR-118 item 4).
+  6. **Risk 33 stays open**: no real glibc 2.17 host has run the wheel. It closes as ADR-115 says, now with a5 shipping
+     the wheel (ADR-117).
+- Consequences: the plan's T-16c heading reads DONE (accepted). The 2014 wheel is a5 content (ADR-117, ADR-120).
+- Rejected:
+  - "Accepted with conditions" as a pending verdict: the held items read existing summaries; they are not new evidence.
+  - A second dispatch only to copy lines into the note: the public summary holds them, and a re-run costs about 19
+    minutes for nothing new.
+
+## ADR-117 a5 ships a `manylinux_2_17` wheel next to `manylinux_2_28`; its gates - decided (session 31)
+- Context: ADR-53 item 5 said that an accepted 2014 wheel *replaces* 2_28. ADR-91 and ADR-115 rejected shipping both.
+  T-16c's facts (ADR-116):
+  - the 2014 wheel is a separate file;
+  - its `_core.abi3.so` (`aa6ef3ac...`) differs from 2_28's (`d0efa2df...`);
+  - it was tested on glibc 2.17, on Rocky 8 (2.28) and on the Ubuntu runner;
+  - the sdist is the same.
+
+  The owner's hosts are RHEL 8 (Q-9). `benchmarks.md` and the memory baselines were measured with the 2_28 build only.
+  Installers choose among compatible wheels by tag preference. The PyPA `packaging` library's `sys_tags()` documentation
+  says "The iterable is ordered so that the best-matching tag is first in the sequence" (read in session 31). It does
+  not say how the manylinux versions rank against each other. So "a glibc 2.28+ host takes the 2_28 wheel" is a
+  **hypothesis**. a5 checks it rather than assuming it (item 3 (f)). If pip took the 2014 wheel there, the install
+  would still be tested (Rocky 8, the runner), but the benchmarks would not describe it.
+- Decision:
+  1. **Yes: a5 ships both Linux wheels and the sdist.**
+     - Why: hosts with glibc 2.28 or later, the owner's among them, keep exactly the build route and library they have
+       used since a3, and that build is the one the benchmarks measured. Hosts with glibc 2.17 to 2.27 gain a tested
+       wheel; today they would need an untested source build.
+     - What it costs: one more build at the canonical root, the CI dispatch on the candidate (which runs anyway), a few
+       checklist lines and one more file to compare with the index.
+  2. **Pre-check before a5's version commit** (done in T-16b, item (i)):
+     - The VM builds `94b6368` with `tools/release_build.sh 94b6368 --twice --release --manylinux 2014` at the
+       canonical root, alone on the machine.
+     - Pass: the two builds are identical; the wheel = CI's `4327e1a72817fdb7f807da800cf2b32eddc4f41d6e9fc3418b84b1494c7c5e44`;
+       the sdist = `0e2dd8866e5fb2b83bdad54a51559c5a5e5ed753461d7dadfef55208c91f3755`.
+     - Afterwards: the root is moved to `/var/tmp/oradmp-release-t16c-2014`, its `SHA256SUMS` go into the note, and
+       the folder is deleted. The canonical root is then free again for a5.
+     - On a difference: the member listings go to the Architect, and the 2014 wheel does not ship until the difference
+       is explained. a5 is then due only through another change.
+     - This is the 2014 counterpart of what ADR-98 item 1 showed for 2_28.
+  3. **a5's gates for the second wheel.** They are added to ADR-110's gates and written into the a5 checklist.
+     - (a) **Build order**, both at the canonical root, because the SBOM names the root (ADR-90):
+       1. `tools/release_build.sh C --twice --release`;
+       2. `mv /var/tmp/oradmp-release /var/tmp/oradmp-release-0.1.0a5-2_28`;
+       3. `tools/release_build.sh C --twice --release --manylinux 2014`;
+       4. `mv` to `/var/tmp/oradmp-release-0.1.0a5-2014`.
+     - (b) **Reproducibility**: the 2_17 wheel has to meet the same rule as the 2_28 one: byte-identical in both
+       `--twice` builds at the canonical root, **and** equal to the wheel of the `manylinux2014` job of the dispatch on
+       C. The 2_28 wheel must equal the `wheel` job's, as for a4.
+     - (c) **One sdist**: the sdist of both builds, the `wheel` job's and the `manylinux2014` job's on C are all
+       identical. One copy is uploaded.
+     - (d) **The libraries**: each wheel's `_core.abi3.so` hash is recorded. The two are expected to differ from each
+       other, and each must equal the matching CI wheel's member.
+     - (e) **Installs**:
+       - the dispatch on C gives the glibc 2.17 and Rocky 8 counts for 0.1.0a5 (T-16c's venvs; skips as ADR-115 item 4);
+       - the VM venvs of a4 step 8 run with the 2_28 wheel;
+       - `tools/stream_memory.py` runs on both wheels.
+     - (f) **Index**:
+       - TestPyPI first, then PyPI; three files; each file's SHA-256 is compared with the index.
+       - **Selection check** on the VM against TestPyPI: `pip download --no-deps oradmp==0.1.0a5` must fetch the 2_28
+         file. With `--only-binary :all: --platform manylinux2014_x86_64 --python-version 3.11` it must fetch the 2014
+         file. Both downloads must equal the local files.
+     - (g) **`SHA256SUMS`** of the release has three lines.
+     - (h) **Upload**: all three files go up in one upload. No file is added to a5 afterwards.
+  4. **README and release notes** (a5's version commit): the "Wheels:" line names both Linux wheels. For the 2014 wheel
+     they carry ADR-115 item 5's claim, with the pyarrow ceiling confirmed by Reviewer 7 (ADR-116 item 2 (b)).
+  5. If a 2014 gate fails during the release, the 2014 wheel is left out. a5 then goes ahead only if it is due through
+     another change; otherwise it waits for the Architect.
+- Consequences:
+  - ADR-53 item 5, ADR-91 and ADR-115 are amended.
+  - The a5 checklist gains items 3 (a) to (h).
+  - Risk 33 moves to "shipping in a5".
+  - The `manylinux2014` job keeps running only on dispatch, and a dispatch on the candidate is required.
+- Rejected:
+  - **Replacing 2_28 with 2014** (ADR-53 item 5): every current user would move to a library linked against glibc 2.17
+    symbols whose speed and memory nobody has measured, for no gain on their hosts.
+  - **Deferring**: the evidence is complete now and the cost is small. Waiting leaves glibc 2.17 users with an untested
+    source build.
+  - **Building the 2014 release wheel at a scratch root**: its SBOM would differ from CI's, so there would be no
+    cross-check.
+  - **Adding the 2014 file to a5 later**: the files of a release are fixed at upload.
+
+## ADR-118 T-16b made exact; the release route of non-Linux wheels is Q-15 - needs the project owner for Q-15; the task itself is decided (session 31)
+- Context:
+  - Earlier records: ADR-53 items 2, 4 and 7; ADR-87 item 3; ADR-93 item 4; ADR-112 item 5; ADR-113 item 3.
+  - The repository is public: GitHub's standard hosted runners are free there (ADR-105 item 10).
+  - **The build rule**: `CLAUDE.md` rule 8 (the owner's) says "A release is built only from a committed tree with
+    `tools/release_build.sh <commit>`". That script is Linux-only: it builds with `maturin --zig` and uses GNU
+    `realpath -m`. ADR-87 item 6 and ADR-92 item 1 also forbid CI uploads and any artifact except fuzz crashes.
+  - So **no route exists today** by which a tested macOS or Windows wheel could become a release file.
+  - **macOS x86_64 runner images**: secondary sources (project pull requests, a forum post) report that `macos-13` was
+    retired on 2025-12-04 and that `macos-15-intel` is GitHub's last x86_64 macOS image, supported until about autumn
+    2027. These are leads; T-16b reads GitHub's runner-images list.
+- Decision:
+  1. **T-16b is a test task.** It gives each platform a verdict:
+     - "accepted": ADR-53 item 4 is met;
+     - "builds, not supported: <reason>";
+     - "rejected: <reason>", for example no pyarrow 15 or later wheel for cp311 there;
+     - "not tested: no runner".
+
+     Nothing of it is published or kept: no artifact, no upload, no README change. Whether accepted platforms ship
+     is **Q-15**.
+  2. **Platforms**:
+     - macOS arm64.
+     - macOS x86_64, only if GitHub's runner-images list offers an x86_64 image as a standard runner to public
+       repositories. Otherwise it is "not tested: no runner", with a note line.
+     - Windows x86_64.
+
+     **Out of scope**:
+     - Linux aarch64, Windows arm64, musllinux and `universal2`;
+     - porting `tools/release_build.sh` or cross-building on the VM;
+     - the memory and throughput tests, benchmarks, and fuzzing off Linux;
+     - any change to `crates/*/src/` or `python/oradmp/` unless the Architect agrees in the note first (a platform
+       defect in the code stops the task);
+     - the README, the version and classifiers;
+     - the `wheel`, `checks`, `fuzz-check` and `manylinux2014` jobs, which must not change.
+  3. **One new job `platforms`** (a matrix), `workflow_dispatch` only, like `extended` and `manylinux2014`.
+     Rejected: running it on every push. A push stays the quick check; macOS queues are long; and before acceptance a
+     red platform would turn every push red.
+  4. **Dispatch budget**:
+     - At most **three** dispatches on T-16b commits before asking the Architect in the note. The first one is the risk
+       check of ADR-53 item 7 (a): line endings, paths, file locks. Each dispatch runs all dispatch-only jobs.
+     - Push runs as needed.
+     - The note gives each job's duration.
+     - Runner minutes are free on the public repository. The cap is there for the owner's time: he dispatches and pastes.
+  5. **Pass criteria per platform** (plan T-16b, "Session 31" block):
+     - fixture checksums checked by a Python step;
+     - full `cargo nextest run`, with only the four ignored tests skipped;
+     - wheel and sdist built natively with maturin 1.15.0 (pinned) and path remaps;
+     - `tests/check_dist.py`, with no rule weakened;
+     - three fresh venvs, every install `--only-binary :all:`, with `oradmp --version` and full `pytest -rs`, 0 failed;
+     - only the allowed skips.
+  6. **The sdist build check** goes into `extended` (ADR-112 item 5): the sdist of the pushed commit is built from
+     source into a fresh Python 3.11 venv, then `oradmp --version` and `survey --no-names` on a copied fixture.
+  7. **Measured for Q-15, not a gate**: each platform job builds its wheel twice in one job and records whether the
+     two files are byte-identical. Where they differ, it records the differing members.
+  8. T-16b also carries ADR-117 item 2 (the 2014 pre-check on the VM) and follows ADR-119 item 2 (the test rule).
+  9. **Q-15 (needs the owner)**: may a release ship a wheel that `tools/release_build.sh` cannot build?
+     - **Recommendation**: yes, under these conditions:
+       - the wheel is built by the `platforms` job on the tagged commit in **two separate dispatches**, and both give
+         byte-identical files;
+       - the owner downloads one of them as a workflow artifact (a second artifact exception next to ADR-92 item 1,
+         kept 7 days);
+       - the owner checks its SHA-256 against both summaries;
+       - he uploads it together with the Linux files.
+     - **This needs**: the owner amends `CLAUDE.md` rule 8, and the Architect amends ADR-87 item 6 and ADR-92 item 1,
+       in the session after the answer.
+     - A platform whose wheel is not identical across two builds does not ship.
+     - **Alternative**: no non-Linux wheel on PyPI. Such users install from the sdist, and the README names the
+       platforms where that was tested. Simpler, but Windows users need a Rust toolchain.
+     - **When to answer**: before a5's version commit, if T-16b accepts any platform. Otherwise a5 is Linux only.
+- Consequences:
+  - The plan's T-16b block for session 31 wins over the earlier blocks.
+  - ADR-87 item 3 is amended.
+  - Risk 17 now waits for Q-15 as well as T-16b.
+- Rejected:
+  - Cross-building macOS or Windows wheels on the VM (ADR-53: nothing would test them there, and macOS needs Apple's SDK).
+  - Making T-16b produce release artifacts before Q-15 is answered (that would build a release route that has not been
+    decided).
+
+## ADR-119 Reviewer 7: scope and timing; tests that depend on machine state - decided (session 31)
+- Context: rule 7. T-21 (`20bbc80`), T-16c (`a8da2cc`, `94b6368`, `0bfa70d`) and T-16b form one group. T-16c's first
+  public run showed a class of defect: a test whose result depends on machine state that the test neither makes nor
+  checks, here the canonical build root that the `wheel` job had just created. The CI layout tests both states on every
+  push: `checks` runs pytest with the root absent, and `wheel` runs it after the release build, with the root present.
+- Decision:
+  1. **When**: Reviewer 7 runs after T-16b's results commit is pushed and before a5's version commit.
+     - If a5 is cut, a closure review reads the exact a5 candidate (ADR-120).
+     - If T-16b stalls, the owner may start Reviewer 7 on T-21 and T-16c alone. T-16b is then reviewed in the closure
+       review.
+  2. **The rule for tests (a standing rule, not a risk entry)**. A test whose result depends on state outside its own
+     temporary folder must do one of three things:
+     - (i) **make the state itself**, inside `tmp_path` or through an override such as `ORADMP_BUILD_ROOT`;
+     - (ii) **assert the expected result for every state it can meet**, as `94b6368` does: root present, root absent;
+     - (iii) **skip with a named reason**, only where a decision record allows that skip: the three probes, root-only,
+       pandas absent, POSIX byte names off Linux, not a git clone.
+
+     State covered: a fixed path such as `/var/tmp/oradmp-release`, the uid, whether the checkout is a git clone, an
+     optional package, an environment variable, the platform.
+
+     A test never creates, writes or deletes a fixed shared path. The VM's canonical root is the owner's release area.
+     - Why a rule and not a risk: the defect was caught before any release, by CI's two states. A rule plus a review
+       check prevents it from coming back, and the risk table is for harm to users.
+  3. **What Reviewer 7 reads**. Opus; it builds only in its own scratch folder under `/var/tmp`, never at the canonical
+     root; output `docs/review/review-07.md`.
+     - (a) **T-21**: the SBOM and `RECORD` member sizes of its listing against C's (ADR-114 item 2); its `ci.yml`
+       assignments (ADR-109 item 3).
+     - (b) **T-16c**:
+       - ADR-116 item 2 (a) and (b);
+       - `release_build.sh --manylinux`: option parsing before any folder; the wheel-name check;
+       - `tools/ci_install_check.sh`, `ci_container_2_17.sh` and `ci_container_rocky8.sh`: image digests;
+         `--only-binary :all:`; exact skip lists, including root-only only when uid 0; `pipefail` and the substitution
+         rule; nothing writes outside the job's folders; no secret;
+       - the `manylinux2014` job keeps no artifact and its wheel is not kept;
+       - `tests/test_release_build.py` against item 2.
+     - (c) **T-16b**:
+       - the `platforms` job: pins, `permissions`, `persist-credentials: false`, no artifact, the skip lists, and
+         `check_dist.py` unchanged in its rules;
+       - every per-platform verdict against ADR-53 item 4;
+       - the `extended` sdist check;
+       - the reproducibility measurement (ADR-118 item 7);
+       - the 2014 pre-check result (ADR-117 item 2).
+     - (d) **New, the machine-state inventory**:
+       - `grep -rnE "/var/tmp|/tmp/|Path\.home|expanduser|getuid|geteuid|os\.environ|getenv|shutil\.which|importorskip|sys\.platform"
+         tests/ crates/*/tests/` lists every test that touches machine state;
+       - each is classified (i), (ii) or (iii) of item 2; anything else is a finding;
+       - both states of `tests/test_release_build.py` are shown by the `checks` and `wheel` summaries of one push run,
+         not by making the canonical root on the VM.
+- Consequences:
+  - The rule is added to the plan, under the Reviewer 7 block and T-16b's "Done when", and applies from T-16b on.
+  - No new risk entry.
+- Rejected:
+  - A risk entry: it duplicates the rule and names no harm to users.
+  - Having the Reviewer create the VM's canonical root to test the second state: CI already shows both states, and the
+    root is the owner's.
+
+## ADR-120 When a5 is cut - decided (session 31)
+- Context: ADR-113 item 4 (as amended), ADR-116, ADR-117, ADR-118, ADR-119.
+- Decision: **a5 is due** because T-16c was accepted. It is cut when **all** of the following hold, in this order:
+  1. **T-16b** is done: every platform has a verdict and the results commit is pushed. Exception: if T-16b is stuck
+     (its budget spent with Architect questions open), the owner may ask an Architect session to cut a5 without it.
+  2. **The 2014 pre-check** (ADR-117 item 2) passed.
+  3. **Reviewer 7** has no blocking finding left open. Fixes go into a task before the version commit.
+  4. **Q-15** is answered, or a5 is declared Linux-only (two wheels and the sdist). The owner chooses; with no answer,
+     a5 is Linux-only.
+  5. **The a5 version commit** (Implementer, Sonnet):
+     - version `0.1.0a5` and the locks;
+     - README "Wheels:" with both Linux wheels and ADR-115 item 5's claim; "Other platforms" as T-16b and Q-15 decide;
+     - the classifier `Development Status :: 3 - Alpha`, plus an `Operating System` classifier only for shipped
+       platforms;
+     - its push run green; one dispatch on it green: `extended` (with the sdist check), `manylinux2014` and
+       `platforms`;
+     - every count of every job stated against the expected figures, which Reviewer 7's record fixes.
+  6. **A closure review** of that exact candidate (C) has no blocking finding. Step 3b runs only if
+     `crates/oradmp-core/src/` changed since a4.
+  7. **An Architect session** writes the a5 checklist: ADR-110 as amended, ADR-111 item 6, ADR-114 item 6 and ADR-117
+     item 3, with the hashes of C's CI run as gates.
+
+  A fix release for an a4 defect that harms a user is the exception (ADR-113 item 4). A reader change asked for by Q-4
+  or R-052 joins a5 if it is ready before the version commit; otherwise it goes into a6.
+- Consequences: the order table of session 31 follows this.
+- Rejected:
+  - Cutting a5 now, with only the 2014 wheel: Reviewer 7 has not read T-16c, and T-16b also edits `ci.yml`, so the
+    candidate would change twice.
+  - Waiting for a non-Linux platform: Q-15 may take time, and a Linux-only a5 is a complete release.
