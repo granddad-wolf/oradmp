@@ -1,9 +1,22 @@
 # Legacy EXP reader: open questions, requests, risks
 
 Architect session 1, 2026-10-07; session 2, 2026-10-14; sessions 3 and 4, 2026-10-15; sessions 5 and
-6, 2026-10-16; sessions 7 to 13, 2026-10-17; sessions 14 and 15, 2026-10-18; sessions 16 and 17, 2026-10-21; session 18, 2026-10-22; sessions 19 to 23, 2026-10-24; sessions 24 and 25, 2026-10-25; sessions 26 and 27, 2026-10-29; session 28, 2026-10-30. "arch n" is a
+6, 2026-10-16; sessions 7 to 13, 2026-10-17; sessions 14 and 15, 2026-10-18; sessions 16 and 17, 2026-10-21; session 18, 2026-10-22; sessions 19 to 23, 2026-10-24; sessions 24 and 25, 2026-10-25; sessions 26 and 27, 2026-10-29; session 28, 2026-10-30; session 29, 2026-10-31. "arch n" is a
 section of `exp-reader-architecture.md`; rule numbers are those of `docs/formats/exp_reader_rules.md`
 (v3.4; v3.5 from session 8; v3.6 from session 17; v3.7 from session 24; v3.9 from session 25).
+
+## Changes in session 29
+
+- (a) **0.1.0a4 is released** (2026-10-31, tag on C `4b9883c`; ADR-111; record in the plan). Pending owner actions, in
+  order: the docs push; the clean-up commands of the plan ("Clean-up after a4 (session 29)": the versioned name
+  `/var/tmp/oradmp-release-0.1.0a4`, the evidence folder, the deletions, the token counts, `gh auth status`);
+  **archive `oradmp-private` read-only now** (ADR-113 item 2, decided; deleting it later is the owner's choice, not
+  before a5); the GitHub "About" settings, Issues and private vulnerability reporting checked (ADR-113 item 6); the
+  pushes and two dispatches of T-21. Then, unchanged and none blocking: Q-4 with `oradmp survey` from the a4 wheel,
+  R-052 on Q-4's condition, R-046 (low), the RHEL 8 host test with the a4 wheel, O-24, Q-13, O-20.
+- (b) No new request for the Analyst (a4 raised no format question). Next free number stays **R-053**.
+- (c) **Risk 31 closed** (did not happen: the owner's build gave C's CI files, and those are on PyPI). **Risk 32**
+  (new): the published a4 sdist does not build from source; closed by T-21 (k).
 
 ## Changes in session 28
 
@@ -1847,7 +1860,8 @@ AL32UTF8 (confirmed).
 | 28 | (session 23; **session 26**: at S two CI runs gave one wheel and one sdist at the canonical root, the owner's scratch-root build the same sdist and another wheel, as predicted; claim unchanged, ADR-105 item 6) The wheel hash depends on the build root through the SBOM (ADR-90); a release built at another root, or a claim of reproducibility wider than the evidence, makes a later rebuild disagree with PyPI although nothing is wrong. | The first release after CI exists (a4) is the first whose hash can be cross-checked; a false claim in the README is public. | The canonical root and `--release` (T-16a2); `check_dist.py --build-root`; O-23 (a) decides the claim; the sdist cross-check stays a gate; the README says nothing until the confirmation. |
 | 29 | (**closed**, session 25: 65,533 is `fa ff` + n, 65,534 chunked, `long4_exp_<v>`@0x42295, 0x522a6; ADR-99 item 7) (session 24) A conventional LONG of exactly 65,533 or 65,534 bytes, if `exp` writes it as one field, has the u16 `fd ff` (the chunk marker) or `fe ff` (NULL): the reader then reads it as a chunked value or a NULL and misframes the rest (R-048's prediction is that the switch lies below 65,533). | A silent misread is possible until a later `Framing`; most likely a `Framing` or a missing `00 00` row end within the row. | ADR-95: a chunked total below 65,535 warns (`W-UNTESTED-LAYOUT`); the row-end check of [R4]; R-048 asks for exactly these sizes. |
 | 30 | (**closed**, session 28: T-20b's proof run turned every affected step red and Reviewer 6c found no failure left that turns a red check green; the five `echo "...$(...)"` lines (6c SF-1) go to T-21, ADR-109) (session 27) A CI step that pipes a command into `tee` without `pipefail` shows green when the command fails (`ci.yml` has no `defaults.run.shell`; GitHub runs `bash -e {0}`): `cargo deny`, test failures of nextest and pytest, the installed-wheel pytest, fuzz findings, fuzz clippy, `auditwheel show` (ADR-108 item 4). | A release built from a commit whose CI is green although a check failed; a fuzz finding never uploaded. | T-20b: `defaults: run: shell: bash` for the whole workflow, two constructs adjusted, a proof run with a deliberate failure in each affected step (ADR-108 item 5). Closed when T-20b's proof run is pasted and Reviewer 6c finds no hidden failure left. |
-| 31 | (session 28) The owner's build of C at the canonical root gives a wheel or sdist other than C's CI files (`2e4c69a5...`, `510f2e39...`), e.g. after a toolchain, `uv` or registry change on the VM since 2026-10-29; or the owner uploads files from another folder. | The uploaded files would be ones no review or CI run produced; PyPI file names cannot be reused. | Both hashes are gates before any upload (checklist step 6, ADR-110 item 2); the build pins rustc 1.99.0, maturin 1.15.0 and zig 0.17.0 and remaps the paths; the upload names the two files of `R/dist` and is compared against the index; TestPyPI first. |
+| 31 | (**closed**, session 29: did not happen; the owner's canonical-root build of C gave wheel `2e4c69a5...` and sdist `510f2e39...` = C's CI files, both builds identical, and PyPI lists exactly these two files; ADR-111 item 1) (session 28) The owner's build of C at the canonical root gives a wheel or sdist other than C's CI files (`2e4c69a5...`, `510f2e39...`), e.g. after a toolchain, `uv` or registry change on the VM since 2026-10-29; or the owner uploads files from another folder. | The uploaded files would be ones no review or CI run produced; PyPI file names cannot be reused. | Both hashes are gates before any upload (checklist step 6, ADR-110 item 2); the build pins rustc 1.99.0, maturin 1.15.0 and zig 0.17.0 and remaps the paths; the upload names the two files of `R/dist` and is compared against the index; TestPyPI first. |
+| 32 | (session 29) The published a4 sdist does not build from source (a member missing from the archive, a build step that needs the git clone): no build of C's sdist from source is recorded (the a4 checklist's step 8 source build is not in the owner's facts; 6c and CI compared its bytes only; ADR-111 item 4). | Users without a matching wheel (other platforms, older glibc) install from the sdist; it is the README's fallback ("Other platforms"). | T-21 (k): one source install of the released sdist on the VM, `survey` on a copied fixture (ADR-112 item 5); T-16b adds the check to `extended`. Closed when T-21 (k) passes; a failure is a defect of a4 and makes the a5 fix decision (ADR-113 item 4). |
 
 ### Session 3 ranking (history)
 

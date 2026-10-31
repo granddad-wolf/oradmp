@@ -1,13 +1,25 @@
 # Legacy EXP reader: implementation plan
 
 Architect session 1, 2026-10-07; session 2, 2026-10-14; sessions 3 and 4, 2026-10-15; sessions 5 and
-6, 2026-10-16; sessions 7 to 13, 2026-10-17; sessions 14 and 15, 2026-10-18; sessions 16 and 17, 2026-10-21; session 18, 2026-10-22; sessions 19 to 23, 2026-10-24; sessions 24 and 25, 2026-10-25; sessions 26 and 27, 2026-10-29; session 28, 2026-10-30. Tasks for the
+6, 2026-10-16; sessions 7 to 13, 2026-10-17; sessions 14 and 15, 2026-10-18; sessions 16 and 17, 2026-10-21; session 18, 2026-10-22; sessions 19 to 23, 2026-10-24; sessions 24 and 25, 2026-10-25; sessions 26 and 27, 2026-10-29; session 28, 2026-10-30; session 29, 2026-10-31. Tasks for the
 Implementer, in order; each is meant for one session. "Rules" are those of
 `docs/formats/exp_reader_rules.md` (v3.4; v3.5 from session 8; v3.6 from session 17; v3.7 from session 24; v3.9 from session 25); "arch n" is a section of `exp-reader-architecture.md`. Every
 task ends with `cargo fmt`, `cargo clippy -- -D warnings` and `cargo nextest run` green (`CLAUDE.md`,
 definition of done; in the public repository the same checks are listed in `CONTRIBUTING.md`, "Development setup")
 and adds no `unsafe` to the core. Commit hashes cited before session 26 name commits of the private archive
 (`HISTORY.md`, ADR-105).
+
+## Changes in session 29
+
+- **Release 0.1.0a4: DONE** (2026-10-31; tag `v0.1.0a4` on C = `4b9883c`; wheel `2e4c69a5...`, sdist `510f2e39...`
+  = C's CI files = PyPI's). The record is "Release 0.1.0a4 record (session 29)" under "Release 0.1.0a4" (ADR-111),
+  followed by the owner's clean-up commands (ADR-113 item 1).
+- **T-21** restated (ADR-112): five `JOB_START` lines (one per job), so one `extended` and one `manylinux2014`
+  dispatch; `deny.toml` unchanged (the warnings are expected); the member-list check that nothing shipped changes; the
+  one-time source build of the a4 sdist; the CONTRIBUTING pointer.
+- T-16c gains a first check (a pyarrow `manylinux2014` wheel for cp311 at all) and goes before T-16b; T-16b gains the
+  sdist build check (ADR-113 item 3, ADR-112 item 5). What makes a5: ADR-113 item 4.
+- New order table (session 29); the session 28 table is history.
 
 ## Changes in session 28
 
@@ -1969,6 +1981,9 @@ record with full hashes. The billed-minutes figure: O-23 (b).
   check: which macOS x86_64 runner image GitHub still offers (runner-images list); none means macOS x86_64 moves to
   "builds, not supported" or out of the matrix, with a line in the note and an Architect answer. The paste rule of
   ADR-92 item 3 applies.
+- **Session 29 (ADR-112 item 5, ADR-113 item 3)**: after T-21 and T-16c are pushed (all three edit `ci.yml`). Adds:
+  the sdist built from source and installed in a fresh venv on one Linux runner (in `extended`, so a push stays short),
+  with `oradmp --version` and `python -m oradmp survey --no-names` on a copied fixture. Accepted wheels ship in a5.
 
 ### T-16c `manylinux2014` acceptance (session 23; ADR-53 items 4, 5; ADR-91) - after the a4 tag, with or after T-16b
 
@@ -1981,6 +1996,13 @@ record with full hashes. The billed-minutes figure: O-23 (b).
   rejection is a valid end of the task. No release file changes in T-16c; an accepted 2014 wheel ships in a5.
 - Touches: `tools/release_build.sh`, `.github/workflows/ci.yml`, the note; `README.md` only if accepted. **Model:
   Sonnet.** Reviewed with T-16b.
+- **Session 29 (ADR-113 item 3)**: after T-21 is pushed, **before** T-16b. **(0) First check, no CI**: whether pip on a
+  glibc 2.17 system can install pyarrow at all: `pip download --no-deps --only-binary :all: --platform
+  manylinux2014_x86_64 --python-version 3.11 -d <scratch> "pyarrow>=15"` (and the same with `--python-version 3.14`);
+  the note records the newest pyarrow version each finds, or that none is found. None for 3.11: T-16c ends "rejected:
+  no pyarrow wheel for glibc 2.17" (a valid end; a 2014 wheel of oradmp is useless without one). Otherwise (a) to (d)
+  as above, with the pyarrow version found in (0) in the 2.17 venv. The README is not touched in T-16c (an accepted
+  wheel's README lines go into a5's version commit).
 
 ## T-19 The conventional LONG forms of R-040; the ten session 17 fixtures in the tests (session 24; ADR-94, ADR-95, ADR-97) - DONE (2026-10-25, `921971f`; nextest 463 passed + 4 skipped, pytest 250, CI green on `bbf921b`; deviations ruled by ADR-102; item (m) not run, now **T-19 (m)** after T-19b; to be reviewed in Reviewer 6c)
 
@@ -2400,6 +2422,36 @@ record with full hashes. The billed-minutes figure: O-23 (b).
   (g) **CI**: the push run green with (f)'s counts; each venv's passed count grows by the new test's cases, skips
   unchanged; the `extended` dispatch green, 0 findings.
 - Touches: as (e); the note. **Model: Sonnet.** Reviewed with T-16b and T-16c (Reviewer 7, rule 7).
+- **Session 29 (ADR-112; this block wins where the text above differs)**. Starts after the owner's session 29 docs push
+  and the clean-up rename (`/var/tmp/oradmp-release-0.1.0a4` must exist for (j)).
+  - **Needs from the owner**: one commit and one push to `origin`; **one `extended` and one `manylinux2014` dispatch**
+    on the pushed commit; the three summaries pasted (with the `wheel` job's member list). No tag, no release.
+  - (a) reads: "the same for the **five** `JOB_START` lines (57 `checks`, 178 `wheel`, 318 `fuzz-check`, 363
+    `extended`, 468 `manylinux2014` at C)", plus line 200's `NEWEST_PY` and line 402's `find`.
+  - (d) adds: the last paragraph of `CONTRIBUTING.md` "Release wheel" names "the newest `Release 0.1.0a<n>
+    checklist` in `docs/design/implementation-plan.md`" instead of "First release".
+  - (e) adds: `git diff --stat v0.1.0a4 HEAD -- README.md pyproject.toml Cargo.toml Cargo.lock fuzz/Cargo.lock deny.toml
+    python crates/oradmp-core/src crates/oradmp-py/src` prints nothing.
+  - (g) reads: the push run green with (f)'s counts; the `extended` dispatch green, 0 findings; the `manylinux2014`
+    dispatch green with both `Tag:` lines (its wheel hash is recorded, not compared).
+  - (h) **`cargo deny check`**: four ok; the only warnings are the unused allowances `ISC` and `Zlib` and the duplicate
+    `syn` (expected, ADR-112 items 2, 3; `deny.toml` unchanged). Any other warning: a line in the note.
+  - (i) **No member of the wheel changes** (ADR-112 item 4): the note holds two listings (sha256, size, member) made by
+    the `wheel` job summary's own Python lines: one from T-21's push-run summary, one from a4's released files at
+    `/var/tmp/oradmp-release-0.1.0a4/dist/` (read only; `sha256sum -c SHA256SUMS` first), and the `diff` of the two.
+    Pass: every wheel member equal in all three fields (`oradmp/_core.abi3.so` included; its a4 hash is expected to be
+    `d0efa2dff42b57f5203429ace3b7789d4d1cfbbb7fd09ce986b5badf51b4789c`), except the SBOM member
+    `oradmp-0.1.0a4.dist-info/sboms/oradmp-py.cyclonedx.json` and `RECORD`, which may differ in hash at **equal size**;
+    the note says whether they did (ADR-56's open point on the SBOM timestamp). Every sdist member equal except members
+    whose path is in (e)'s list; `PKG-INFO` equal. The whole-file hashes differ (another epoch) and are recorded only.
+    Any other difference: stop, the Architect rules.
+  - (j) The reference listing is made before any other build of the session touches `/var/tmp/oradmp-release*`; the
+    a4 folder is never written to.
+  - (k) **The a4 sdist from source, once** (ADR-112 item 5): in `/var/tmp/oradmp-t21-sdist/` (outside the repository,
+    rule 9), `uv venv --python 3.11`, `TMPDIR=/var/tmp/oradmp-tmp CARGO_BUILD_JOBS=2 uv pip install --python <venv>/bin/python
+    /var/tmp/oradmp-release-0.1.0a4/dist/oradmp-0.1.0a4.tar.gz`; `<venv>/bin/oradmp --version` prints `oradmp 0.1.0a4`;
+    `<venv>/bin/python -m oradmp survey --no-names <copy of corpus/fixtures/18c/t_text_exp_18c.dmp>` exits 0. Alone on
+    the machine (a release build). The folder is deleted afterwards. A failure: stop, the Architect rules (risk 32).
 
 ## T-18 The command-line tool `oradmp` (session 18; ADR-72) - DONE (2026-10-24, `2ba62eb`; ran before T-16, ADR-73 swap; 412 Rust tests, 196 pytest; findings ruled by ADR-75; (l)'s CI part moved to T-16; reviewed: review-06a, SF-1 and SF-2 go to T-18c)
 - Goal: `oradmp` as a thin console tool on the public Python API: list tables, show columns, print the first rows,
@@ -3138,7 +3190,81 @@ session running.
 in the alpha through T-6M; a further set only by a fixture of that set), the R-040 answer for conventional LONG values of 32 KB
 or more.
 
-### Release 0.1.0a4 (session 21; ADR-84; restated in session 22, ADR-88) - next
+### Release 0.1.0a4 (session 21; ADR-84; restated in session 22, ADR-88) - DONE (2026-10-31, C = `4b9883c`, tag `v0.1.0a4`; record below, ADR-111)
+
+#### Release 0.1.0a4 record (session 29; the owner's facts and evidence file, checked against the repository where it can be)
+
+"E" = shown by the owner's evidence file (captured 2026-10-31 11:55:33 UTC) or checked in session 29; "S" = the owner's
+statement. Steps are those of the session 28 checklist below. C = `4b9883c52ebf709ccf0161883505844fdcc45345`.
+
+| step | result |
+|---|---|
+| 1 Gate | `git fetch`; `master` level with `origin/master`; `git diff --stat C origin/master -- . ':!docs'` empty (S; re-checked in session 29 on the local refs: `HEAD` = `origin/master` = `9cb6e84`, diff empty, E). `master` was two docs commits ahead of C (`075a6bf`, session 28's). The `pytest-pynewest-latest` info-line check: not recorded. |
+| 2 Old root | moved to `/var/tmp/oradmp-release-20261027` (the checklist's name was `...-old-2026-10-27`; S). |
+| 3 Version | Cargo `0.1.0-alpha.4`; `pyproject.toml` `dynamic = ["version"]` (S). README grep not recorded; `tests/test_version.py` passed in every install run. |
+| 4 Pins | the five `uses:` pins resolve to their tags: `actions/cache` v6.1.0, `actions/checkout` v7.0.1, `actions/setup-python` v7.1.0, `actions/upload-artifact` v7.0.2, `taiki-e/install-action` v2.87.31 (S). |
+| 5 Build | `tools/release_build.sh C --twice --release` at `/var/tmp/oradmp-release`: exit 0, `check_dist: ok` twice, `reproducible`; rustc 1.99.0 (b940084d7 2026-09-28), maturin 1.15.0, zig 0.17.0, epoch 1793315613 = `%ct` of C (S; the epoch E). |
+| 6 Hashes (gate) | **W** `oradmp-0.1.0a4-cp311-abi3-manylinux_2_28_x86_64.whl` = `2e4c69a57baafe84e6c5ec0b4b9bef1248c93ea2eabdb57adb17d49d58949dbd` (3,637,834 bytes); **S** `oradmp-0.1.0a4.tar.gz` = `510f2e39f8ae7eb9660fa4f2313062d2245c3c6d16ebd10740fa0e529c40c0fd` (174,352 bytes); `dist/` and `dist2/` give the same two lines (E) = ADR-110 item 2's gates = C's CI push run; S also = Reviewer 6c's sdist. `SHA256SUMS` 206 bytes, sha256 `936bcd1434ba0d63b5db35d41d7a10a63c0bcafc4f9935ea6b48a35baab716e1` (E: rebuilt from the two lines). Sizes: PyPI's (E). |
+| 7 `cargo deny` | advisories, bans, licenses, sources ok; warnings only: duplicate `syn` (2.0.119, 3.0.6), unused allowances `ISC` (`deny.toml:20`) and `Zlib` (`:22`) (S). Ruled expected (ADR-112 items 2, 3). |
+| 8 VM installs | normal user, fresh `uv` venvs against W, the owner's `/var/tmp/a4-install-test.sh` (which also ran `sha256sum -c SHA256SUMS`): Python 3.11.16 + pyarrow 15.0.2 + pandas 2.2.3 **253 passed, 3 skipped**; Python 3.14 + newest **253 + 3**; Python 3.11 + pyarrow only **246 + 4**; skips = the three probe tests (+ `test_consumers.py` without pandas); `oradmp --version` = `oradmp 0.1.0a4` in all three (S; the three last pytest lines E, unlabelled, in the order 253, 246, 253). `tools/stream_memory.py` **PASS**: iterator RSS growth 0 kB, stream 20 kB, limit 10,240 kB (S; `benchmarks.md` 4.3). Not recorded: `oradmp tables`, the exit-3 case, **the sdist source build** (now T-21 (k)). |
+| 9 Rocky Linux 8 (gate) | Rocky Linux 8.9, glibc 2.28, **as root**, from a **`git archive` of C** (not a clone), `uv`, system Python 3.11.13 and a downloaded CPython 3.14.10: **249 + 7** (3.11, pyarrow 15.0.2, pandas 2.2.3), **249 + 7** (3.14), **242 + 8** (pyarrow only) (S). Skips: the three probe tests; the three root-only (`test_cli.py:594`, `:923`, `test_paths.py:121`); `test_project_name.py:34` "not a git clone" (the export; passes in a clone); `test_consumers.py` in the third. = the checklist's counts with its "one more skip" case. pyarrow for 3.14 on Rocky 8: no problem. `export` to CSV / Parquet: not recorded. |
+| 10 RHEL 8 host | **not done**, not a gate (Q-4 time). |
+| 11 Tag | annotated, tag object `582045a129b24e51c3b585083e463290da1a1039` on C (E, local `git rev-parse` in session 29); tagger time 2026-10-30 22:39:36 UTC; message = ADR-110 item 7 as one paragraph (no separate first line; accepted, ADR-111 item 3). |
+| 12 TestPyPI | `twine check` PASSED for both files (S); W and S uploaded (tool not named); clean venv, pyarrow and pandas from PyPI, `oradmp==0.1.0a4 --no-deps` from TestPyPI: `oradmp 0.1.0a4` (E), `_core.abi3.so` `d0efa2df...` (S). The `simple/` index hash lines: not recorded. |
+| 13 PyPI | W and S uploaded 2026-10-31 11:43:34Z / 11:43:36Z (PyPI JSON, fetched in session 29); PyPI's JSON lists the hashes and sizes of step 6 (E); `requires_python` `>=3.11`, `project_urls` Source and Issues, licence expression `MIT OR Apache-2.0` (PyPI JSON, session 29; the evidence file does not hold them). Clean venv `uv pip install oradmp==0.1.0a4`: pulled pyarrow 26.0.0; `oradmp 0.1.0a4`; `_core.abi3.so` sha256 `d0efa2dff42b57f5203429ace3b7789d4d1cfbbb7fd09ce986b5badf51b4789c` (E). Plain `pip install oradmp` with `pip --version`: not done; dropped from later checklists (ADR-111 item 4). |
+| 14 Tag pushed | to `origin` only, about 11:48 UTC, after the PyPI upload; `git ls-remote`: `582045a1... refs/tags/v0.1.0a4`, `4b9883c5... refs/tags/v0.1.0a4^{}` (E). |
+| 15 Release page | `https://github.com/granddad-wolf/oradmp/releases/tag/v0.1.0a4`: pre-release, no files attached; body = the SHA-256 lines and the PyPI link (S). The tag message in the body: not shown, not claimed. |
+| 16 Afterwards | both project-scoped tokens (TestPyPI, PyPI) deleted; the GitHub CLI token revoked; tokens typed with `read -rs` in a plain shell, no agent session open (S). The three count checks and the folder steps: in the clean-up below. |
+| 17 Record | this table (Architect, session 29). |
+
+What remains of a4: the RHEL 8 host test (not a gate); the sdist source build (T-21 (k)); the clean-up below.
+
+#### Clean-up after a4 (session 29; ADR-113 item 1; for the owner, in order, no agent session needed)
+
+Each deletion has its reason in ADR-113 item 1. Stop at the first command whose output differs from the comment.
+
+```
+# 0. look first (nothing changes)
+du -sh /var/tmp/oradmp-release /var/tmp/oradmp-release-* /var/tmp/a4-* /var/tmp/oradmp-a4-build.log 2>/dev/null
+
+# 1. a4: versioned name; evidence next to the shipped files
+mv /var/tmp/oradmp-release /var/tmp/oradmp-release-0.1.0a4
+test ! -e /var/tmp/oradmp-release && echo "canonical root free"            # canonical root free
+(cd /var/tmp/oradmp-release-0.1.0a4/dist && sha256sum -c SHA256SUMS)         # two lines OK
+mkdir /var/tmp/oradmp-release-0.1.0a4/evidence
+mv /var/tmp/a4-install-test.sh /var/tmp/a4-rocky-test.sh /var/tmp/oradmp-release-0.1.0a4/evidence/
+test -f /var/tmp/oradmp-a4-build.log && mv /var/tmp/oradmp-a4-build.log /var/tmp/oradmp-release-0.1.0a4/evidence/
+find /var/tmp/a4-venvs /var/tmp/a4-twine /var/tmp/a4-testpypi /var/tmp/a4-pypi /var/tmp/a4-src -maxdepth 2 -name '*.log' -print
+#    move every file the find prints into /var/tmp/oradmp-release-0.1.0a4/evidence/ before step 4
+
+# 2. a2 and a3: keep dist/ only, after checking it holds the recorded release hashes (each grep prints 2)
+grep -c -e 255cb122dcca3979e171984f89a719a293770709baf09a47936335f80b9b0f1c -e cae95420b83d29866f8b939d8427cd857902a0055abe466baa66e9753c88702d /var/tmp/oradmp-release-a2/dist/SHA256SUMS
+grep -c -e 15db873fd7b3b8700b0a1aa9ef65094cf89eae4a0b31f575e3f2c3a4dce2aa16 -e 36bc571d75d6b6bb66968e31ee4144ba46324aa9efa174888ea973ed6e9293e5 /var/tmp/oradmp-release-a3/dist/SHA256SUMS
+(cd /var/tmp/oradmp-release-a2/dist && sha256sum -c SHA256SUMS); (cd /var/tmp/oradmp-release-a3/dist && sha256sum -c SHA256SUMS)
+find /var/tmp/oradmp-release-a2 /var/tmp/oradmp-release-a3 -mindepth 1 -maxdepth 1 ! -name dist -exec rm -rf -- {} +
+
+# 3. the old canonical root: print for the record (paste with the next facts), then delete
+git -C /var/tmp/oradmp-release-20261027/src log -1 --format='%H %ci'; cat /var/tmp/oradmp-release-20261027/dist/SHA256SUMS
+rm -rf -- /var/tmp/oradmp-release-20261027
+
+# 4. comparison roots, the export, the venvs, the tag message file, leftovers
+rm -rf -- /var/tmp/oradmp-release-af6a54a /var/tmp/oradmp-release-ci /var/tmp/oradmp-release-ci2 /var/tmp/oradmp-release-d081109
+rm -rf -- /var/tmp/a4-venvs /var/tmp/a4-twine /var/tmp/a4-testpypi /var/tmp/a4-pypi /var/tmp/a4-tag-message.txt
+rm -rf -- /var/tmp/a4-src          # if "Permission denied" (made as root in the container): sudo rm -rf -- /var/tmp/a4-src
+rm -rf -- /var/tmp/a4-check /var/tmp/oradmp-review-6c                 # if present
+ls -d /var/tmp/oradmp-release* /var/tmp/a4-* 2>/dev/null               # oradmp-release-0.1.0a4, -a2, -a3 only
+
+# 5. token checks of checklist step 16 (counts only, never a value)
+ls -a ~ | grep -c pypirc                     # 0
+grep -c 'pypi-' ~/.bash_history              # 0
+env | grep -c UV_PUBLISH_TOKEN               # 0
+gh auth status                               # not logged in; if it shows an account: gh auth logout
+```
+
+Then, on GitHub: archive `granddad-wolf/oradmp-private` (its Settings, "Archive this repository"; ADR-113 item 2), and
+the "About" settings of ADR-113 item 6. Paste to the next Architect session: the output of step 3 and anything that
+differed from a comment.
+
 
 - **Content**: T-18d (the SF-1 fix; file names that are not UTF-8 in the API, the tool and `survey`; the `-n -1`
   subprocess case; README); T-17's tests (no reader change expected; a reader fix found by T-17 is its own task and
@@ -3457,7 +3583,32 @@ Rules while private: a push runs only `checks` and `wheel`; a dispatch only when
 needed; T-16b: at most three; T-16c: as its note asks, Linux only); the note records the minutes of each dispatched run.
 After the cut the budget lapses for standard runners; the dispatch rule for `extended` stays (it is long, not costly).
 
-## Order of the next tasks (session 28)
+## Order of the next tasks (session 29)
+
+Machine rule unchanged (session 16 below). CI runs on the public GitHub repository and is not a build on the VM.
+**OWNER** marks an owner action. ADR-113 items 3 and 4.
+
+| order | task | can start | runs in parallel with | touches | model | waits for a human? |
+|---|---|---|---|---|---|---|
+| done | **Release 0.1.0a4** (2026-10-31, tag on C `4b9883c`; record under "Release 0.1.0a4", ADR-111); this session | - | - | - | - | - |
+| 1 | **OWNER**: commit and push this session's documents (docs only; their CI run is not compared with anything); the clean-up of "Clean-up after a4 (session 29)" (at least step 1, the rename); archive `oradmp-private`; the GitHub "About" settings (ADR-113 item 6) | now | rows 6 to 9 | `docs/`, the VM, GitHub settings | - | yes |
+| 2 | **T-21** (ADR-109 items 3, 4; ADR-112; plan T-21 with its session 29 block): SF-1 (line 200, five `JOB_START` lines), N-1, N-2, N-3, N-5, the CONTRIBUTING pointer, `cargo deny`'s expected warnings, the member-list check, the a4 sdist built from source once | after row 1's rename | rows 6 to 9 (not with another VM build: (k) builds alone) | `ci.yml`, two `t11_*.rs`, `common/synth.rs`, two generators, `CONTRIBUTING.md`, one new test, the note | Sonnet | **OWNER** commits, pushes, one `extended` and one `manylinux2014` dispatch, pastes |
+| 3 | **T-16c** `manylinux2014` acceptance: first the `pip download` check for a pyarrow 2014 wheel (may end "rejected" there), then (a) to (d) of ADR-91 item 2 | after row 2 is pushed (both edit `ci.yml`) | rows 6 to 9 | `tools/release_build.sh`, `ci.yml`, the note | Sonnet | **OWNER** for the glibc 2.17 and Rocky Linux 8 runs, dispatches |
+| 4 | **T-16b** macOS / Windows, plus the sdist build check in `extended` | after row 3 is pushed | rows 6 to 9 | `.github/workflows/`, `tests/check_dist.py`, `target_os` gates, tests a platform proves wrong | Sonnet | **OWNER** pushes, pastes |
+| 5 | **Reviewer 7** on T-21, T-16c, T-16b (rule 7) and, if a5 is due by ADR-113 item 4, the a5 candidate after its version commit | after row 4 | - | `docs/review/` | Opus | **OWNER** starts it |
+| 5' | **a5** (only if ADR-113 item 4 holds): Architect session (record Reviewer 7, the a5 checklist with ADR-111 item 6), version commit `0.1.0a5` (Implementer; README lines, classifier), the owner's release | after row 5 | - | as named | - / Sonnet | **OWNER** all release steps |
+| 6 | **OWNER: Q-4**, the real-dump counts with `oradmp survey` from the a4 wheel, on the owner's side, counts only | now | everything | nothing in the repository | - | yes |
+| 6' | **R-052** (exists) only if Q-4 shows a LONG of 65,522 to 65,524 bytes or a field starting `fb ff` / `fc ff` (ADR-101 item 5); a reader change from it makes a5 due (ADR-113 item 4) | after row 6 | everything | `corpus/` (owner), then a task | - | yes |
+| 7 | **R-046** (low): the CL8MSWIN1251 CLOB / NCLOB short-form end | any time | everything | `corpus/` (owner) | - | yes |
+| 8 | **OWNER: RHEL 8 host test** with the a4 wheel (not a gate; when a host is at hand) | any time | everything | nothing in the repository | - | yes |
+| 9 | **Data Pump** (phase 2): an Architect session plans it, scope with the owner | after row 2 | rows 3 to 8 | `docs/design/` | - | scope with the owner |
+| 10 | **Analyst 21** (documents only; "Inputs for Analyst session 21"), if not done | any time | everything | `docs/formats/` | - | **OWNER** starts it |
+
+Standing owner items: O-24; Q-13; O-20; the snapshot folder (owner's choice); the Gogs mirror stays "moved".
+**What makes a5** (ADR-113 item 4): one accepted platform wheel (row 3 or 4) or one reader fix (row 6' or a user's
+defect report), reviewed; T-21, README wording, classifiers or CI changes alone never make a release.
+
+## Order of the next tasks (session 28, history)
 
 Machine rule unchanged (session 16 below). CI runs on the public GitHub repository and is not a build on the VM.
 **OWNER** marks an owner action.

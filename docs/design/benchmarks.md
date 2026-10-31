@@ -1,10 +1,17 @@
 # Legacy EXP reader: benchmark baseline
 
 Architect session 16, 2026-10-21 (new file; arch 4.3, 4.4; ADR-62 item 8, ADR-66); session 20, 2026-10-24 (baseline 2,
-ADR-78); session 28, 2026-10-30 (Reviewer 6c's step 3b recorded). Sources: the T-15 note and Reviewer session 4 (baseline 1, now section 6); the T-15b and T-18b notes
+ADR-78); session 28, 2026-10-30 (Reviewer 6c's step 3b recorded); session 29, 2026-10-31 (the a4 `stream_memory.py` run). Sources: the T-15 note and Reviewer session 4 (baseline 1, now section 6); the T-15b and T-18b notes
 (`implementer-notes.md`) and Reviewer session 6a, section 3 (`docs/review/review-06a-t13j-t18b.md`), which repeated
 them (baseline 2, section 4). Nothing here is a promise to users (arch 4.3: "reported, not promised"); the README
 carries no performance figure.
+
+## Changes in session 29
+
+- `tools/stream_memory.py` on the a4 release wheel (a4 checklist step 8, on the VM; which venv is not
+  in the facts, the checklist names the 3.11 / pyarrow 15.0.2 one; the owner's statement, ADR-111): **PASS**, iterator RSS growth 0 kB, stream 20 kB, limit 10,240 kB. Within
+  rule 4 and within baseline 1's range (growth 0 to 12 kB; the stream figure 8 kB above it, far below the limit).
+  Added to 4.3. Baseline 2 unchanged.
 
 ## Changes in session 28
 
@@ -168,7 +175,9 @@ row** fails every run (Implementer 1.78, 1.90, 1.96; Reviewer 1.743, 1.930, 1.74
 (6.3). Since T-18b every file present is measured before the assertion and the message lists each.
 
 `tools/stream_memory.py` (Python iterator and `RecordBatchReader.from_stream`): not repeated for baseline 2; the
-baseline 1 figures (6.3: growth 0 to 12 kB, limit 10 MiB) stay the reference until a run.
+baseline 1 figures (6.3: growth 0 to 12 kB, limit 10 MiB) stay the reference until a run. **Session 29**: run once on
+the a4 release wheel (owner, VM; venv not named in the facts): PASS, iterator growth 0 kB, stream 20 kB, limit
+10,240 kB (ADR-111; the per-read VmRSS lines are not in the record).
 
 ## 5. Rules
 
