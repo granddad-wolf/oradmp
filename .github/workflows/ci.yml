@@ -793,7 +793,7 @@ jobs:
 
       - name: A clone of the commit to test from
         id: clone
-        if: ${{ !cancelled() && steps.build.conclusion == 'success' }}
+        if: ${{ !cancelled() }}
         run: |
           git clone --quiet --no-local "${GITHUB_WORKSPACE//\\//}" "$PT/clone"
           git -C "$PT/clone" -c advice.detachedHead=false checkout --quiet "$GITHUB_SHA"
@@ -801,7 +801,7 @@ jobs:
 
       - name: The wheel in three fresh venvs (--only-binary :all:), pytest against the installed package
         id: venvs
-        if: ${{ !cancelled() && steps.build.conclusion == 'success' }}
+        if: ${{ !cancelled() }}
         run: |
           WHEEL="$(ls "$PLAT_ROOT"/dist/oradmp-*.whl)"
           export WHEEL LOG_DIR="$PT/logs/venvs" VENV_DIR="$PT/venvs"

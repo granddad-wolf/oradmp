@@ -36,7 +36,10 @@ kernel="$(uname -s)"
 uv venv --quiet --python "$py" "$venv"
 if [ -d "$venv/Scripts" ]; then bin="$venv/Scripts"; else bin="$venv/bin"; fi
 # shellcheck disable=SC2086
-uv pip install --quiet --only-binary :all: --python "$bin/python" "$WHEEL" "$pin" $pkgs
+# a native uv checks that the file named by --python exists; on Windows that file is python.exe (bash alone adds the .exe)
+pyexe="$bin/python"
+if [ -f "$bin/python.exe" ]; then pyexe="$bin/python.exe"; fi
+uv pip install --quiet --only-binary :all: --python "$pyexe" "$WHEEL" "$pin" $pkgs
 
 "$bin/python" -c 'import importlib.util as u, sys, oradmp, pyarrow
 def ver(m):

@@ -3464,3 +3464,47 @@ Could not be checked here: all Windows behaviour past the build step (the maturi
 the three venvs, whether read-only-folder, mode-000 file and byte-file-name tests skip or fail on Windows; those categories are
 left as they were); macOS summary rendering of the new text.
 For the Architect: `.gitattributes` `*.sh text eol=lf` (110 CR bytes under `core.autocrlf=true`); no change made.
+
+### Dispatch 2 (commit `89b7857`; 2 of at most 3) and fix 2 (Implementer, 2026-10-31)
+
+Facts from the owner's log of the Windows leg: the maturin fix worked (`maturin (first line): /d/a/_temp/oradmp-platforms/venv/Scripts/maturin
+maturin 1.15.0`); `ci_platform_build` printed its header with this `RUSTFLAGS`: `--remap-path-prefix=/c/Users/runneradmin/.cargo=/cargo
+--remap-path-prefix=D:/a/_temp/oradmp-platforms=/build --remap-path-prefix=C:/Users/runneradmin/.cargo=/cargo
+--remap-path-prefix=C:\Users\runneradmin\.cargo=/cargo --remap-path-prefix=D:\a\_temp\oradmp-platforms=/build`. Then `cargo metadata` failed:
+`rustc.exe` got `'--remap-path-prefix=D;A:\_temp\oradmp-platforms=\build'` and `'--remap-path-prefix=C;C:\Program' 'Files\Git\Users\runneradmin\.cargo=\cargo'`, and
+`error: --remap-path-prefix must contain '=' between FROM and TO`. Reading (agrees with the script): Git Bash converts an environment variable that
+looks like a path list when it starts a native program (maturin.exe). The `:` inside the value was taken as a list separator, `/build` and `/cargo`
+as POSIX paths (expanded under `C:\Program Files\Git`), and the space then split the flag. The same variable was fine inside bash (the header shows it unmangled),
+so the damage is at the bash-to-maturin hand-over; maturin, cargo and rustc start each other natively, without MSYS.
+
+Fix 2 (`tools/ci_platform_build.sh`): on Windows only (the existing `cygpath` test) `export MSYS2_ENV_CONV_EXCL="RUSTFLAGS;CARGO_TARGET_DIR"` right after
+`RUSTFLAGS` is set, so both reach maturin, cargo and rustc unchanged. `CARGO_TARGET_DIR` is added as a precaution (it is a plain `D:/...` value; the nextest step
+shows that `TMPDIR=D:/...` survives, so it should not need it). No `MSYS_NO_PATHCONV` and no `MSYS2_ARG_CONV_EXCL`: no argument of any call starts with `/`
+(arguments are `D:/...` forms, flags, or names), so conversion stays on for everything else. macOS: the block is not run. The prefix set is unchanged (five
+entries); I did not drop any. Whether the forward-slash and the backslash variants trouble rustc on Windows: not known from any log; rustc compares prefixes by
+path component, so I expect the two spellings of one folder to be redundant, not harmful. Not tested on Windows. Not tested with MSYS here either: no Git Bash or
+MSYS shell exists on this VM, so the rule `MSYS2_ENV_CONV_EXCL` was not run anywhere by me; it is documented MSYS2 behaviour (a `;`-separated list of variable-name
+prefixes that are not converted).
+
+Other changes from the desk-check: (1) `ci.yml`, `platforms`, steps `clone` and `venvs`: `if: ${{ !cancelled() }}` instead of `... && steps.build.conclusion == 'success' }}`.
+Reason: item (3) below predicts `check_dist` to fail on Windows, which makes the build step red; the venvs would be skipped and dispatch 3 would not show the pytest
+result. If no wheel exists, `ls` in the venv step fails the step, honestly. (2) `tools/ci_platform_venvs.sh`: `uv pip install --python` gets `$bin/python.exe` when it
+exists (a native uv tests that the file exists; bash alone supplies the `.exe`). macOS/Linux unchanged.
+
+Desk-check, every place where Git Bash hands a path, path list or variable to a native program:
+- `git clone --no-local "$workspace" "$ROOT/src"`, `git -C ... checkout/log` (build script): `workspace` is `cygpath -m`, ROOT is `D:/...`; checked in code, fine (the first dispatch's probe step used the same forms and worked).
+- `python -m venv "$ROOT/venv"`, `"$bin/python" -m pip install maturin==1.15.0`: drive-letter paths are not converted; fine. `bin` is chosen by `[ -d venv/Scripts ]`; fine.
+- `PATH` with `cygpath -u "$bin"`: fixed in dispatch 1 and confirmed by the log.
+- `maturin build --release --locked --out "$1"`, `maturin sdist --out "$1"`, `cd "$ROOT/src"`: `D:/...` forms; fine. Variables: `RUSTFLAGS` fixed now; `CARGO_TARGET_DIR` excluded; `SOURCE_DATE_EPOCH` is a number; fine. `CARGO_HOME` is inherited, not set here.
+- `python -I "$report" sums|tags|compare|members` with `report` from `pwd -W` (`D:/...`): fine; `ls "$ROOT"/dist/oradmp-*.whl` is bash's own glob; fine.
+- `python -I "$ROOT/src/tests/check_dist.py" --build-root "$ROOT" WHEEL SDIST`: the arguments are `D:/...`; no conversion. Result of the rule: see next line.
+- `check_dist` `--build-root` rule with `D:/` paths: **cannot be right on Windows, will probably fail**. `build_root_hits` expects `<root>/src/` after `path+file://`; cargo writes a Windows path in a `file://` URL as `path+file:///D:/a/...`, so the regex group is `/D:/a/_temp/oradmp-platforms/src/...` and does not start with `D:/a/_temp/oradmp-platforms/src/`. This is a test-tool defect for the Architect (`tests/`, which I was told not to change). Proposed fix: in `build_root_hits`, strip one leading `/` when the next two characters are a drive letter and `:`, before the comparison; plus a unit test with a `path+file:///D:/...` line. The home-path rule (`C:\Users\`, also JSON-escaped, case-insensitive) is in place for the remaps; a PDB path (`D:\a\_temp\...\_core.pdb`) in the `.pyd` is not looked for by `check_dist` and I cannot tell whether rustc/link.exe writes one.
+- `.pyd` against `.so`: `check_dist` checks `.so`, `.pyd` and `.dylib` for the probe name (line 226); no filter or member list names `_core.abi3.so`; `ci_platform_report.py` lists all members; the wheel-name regex accepts `win_amd64`. Checked in code, fine.
+- `ci_platform_venvs.sh`: `uv venv --python 3.11 "$venv"` (version, no slash); `uv pip install --python <python.exe>` fixed above; `"$bin/pytest"`, `"$bin/oradmp"` are `Scripts/pytest.exe` and `oradmp.exe` without the extension: Git Bash finds `.exe` itself for a path without extension; I am fairly sure but cannot check here. `location` replaces `\` by `/` before the site-packages test: fine. `TMPDIR` and `WHEEL`, `LOG_DIR`, `VENV_DIR` are `D:/...`: fine like `TMPDIR` in nextest.
+- Python versions: `UV_PYTHON_DOWNLOADS=never`. `setup-python` with `3.11` and `3.x` puts both on the runner's toolcache; uv finds interpreters on `PATH` (and via the Windows registry). `NEWEST_PY` is read from the default `python`. Cannot check here whether uv sees 3.11 beside the default on Windows; if it does not, `uv venv` fails with "No interpreter found for Python 3.11" and the log says so, in which case the fix is to add the toolcache folder to `PATH` or to name the interpreter by path.
+- Windows nextest 487 against 488: the step ends red at its last command (`grep -q ... 488 passed, 4 skipped`), after its logs are written (`tee`, `diff` of the skips). Later steps do not depend on it: `build`, `clone`, `venvs` have `!cancelled()` (no `success()`), the summary has `always()`. So it does not stop the later steps. The check is unchanged, as told. (Only the first `diff` line would stop it earlier; the skips list is the same four names.)
+- Local checks: see the report; not tested on Windows.
+
+### Results
+
+pending: dispatch 3 (no verdict is proposed here)

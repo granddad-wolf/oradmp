@@ -60,6 +60,14 @@ if [ "$windows" = 1 ]; then
     flags="$flags --remap-path-prefix=$(cygpath -w "$ROOT")=/build"
 fi
 export RUSTFLAGS="$flags"
+if [ "$windows" = 1 ]; then
+    # Git Bash (MSYS) rewrites an environment variable that looks like a POSIX path or path list when it starts a native
+    # program. In the second dispatch it turned the entries `D:/a/...=/build` of RUSTFLAGS into `D;A:\...` and `/build` into
+    # `C:\Program Files\Git\build`, and rustc got a broken flag. The variables named here are passed unchanged to maturin
+    # and, through it, to cargo and rustc (they are native programs and start each other without MSYS). Nothing else is
+    # excluded: the other arguments and variables of this script are `D:/...` forms, which MSYS leaves alone.
+    export MSYS2_ENV_CONV_EXCL="RUSTFLAGS;CARGO_TARGET_DIR"
+fi
 export CARGO_TARGET_DIR="$ROOT/target"
 export SOURCE_DATE_EPOCH="$epoch"
 
