@@ -3290,3 +3290,131 @@ Differences between the brief figures and the repository: none found (names and 
   root aside and delete it.
 - **Next**: T-16b (plan, "Session 31" block). It is a test task; nothing of it is published. Whether its wheels ever
   ship is the owner's Q-15.
+
+## T-16b note (Implementer, 2026-10-31): other platforms, the `platforms` job (ADR-118; plan "Session 31" block)
+
+Verdicts per platform (ADR-118 item 1): **pending: first dispatch**. Nothing was run on macOS or Windows; this session
+could build and read, not dispatch.
+
+### (0a) Runner images (read on 2026-10-31 from the `actions/runner-images` README and the GitHub docs reusable "supported-github-runners", the table "Standard runners for public repositories")
+
+| Platform | Label used | Image README |
+|---|---|---|
+| macOS arm64 | `macos-15` | macos-15-arm64 |
+| macOS x86_64 | `macos-15-intel` | macos-15 (x64; also `macos-26-intel`, `macos-15-large`) |
+| Windows x86_64 | `windows-2025` | Windows2025 |
+
+macOS x86_64 **is** listed as a standard runner for public repositories (`macos-15-intel`, `macos-26-intel`); `macos-13`
+is not in the list any more. `macos-latest` is now macOS 26 arm64, so no label with `-latest` is used. macOS 14 is marked
+deprecated. Windows has `windows-2025`, `windows-2025-vs2026` and `windows-2022`; I took `windows-2025` (the one that
+`windows-latest` names, without the VS 2026 variant).
+
+### (0b) pyarrow per platform (scratch venv under the session scratch folder, pip 25.1.1; folders deleted)
+
+`pip download --no-deps --only-binary :all: --platform <p> --python-version <v> -d <scratch> <pkg>`. The platform tags are
+`macosx_15_0_arm64`, `macosx_15_0_x86_64`, `win_amd64`; every download succeeded, none printed "No matching distribution".
+
+| `<p>` | `<v>` | pyarrow>=15 | numpy | pandas |
+|---|---|---|---|---|
+| macosx_15_0_arm64 | 3.11 | pyarrow-26.0.0-cp311-cp311-macosx_12_0_arm64 | numpy-2.4.6-cp311-cp311-macosx_14_0_arm64 | pandas-3.1.0-cp311-cp311-macosx_11_0_arm64 |
+| macosx_15_0_arm64 | 3.14 | pyarrow-26.0.0-cp314-cp314-macosx_12_0_arm64 | numpy-2.5.4-cp314-cp314-macosx_14_0_arm64 | pandas-3.1.0-cp314-cp314-macosx_11_0_arm64 |
+| macosx_15_0_arm64 | 3.15 | pyarrow-26.0.0-cp315-cp315-macosx_12_0_arm64 | numpy-2.5.4-cp315-cp315-macosx_14_0_arm64 | pandas-3.1.0-cp315-cp315-macosx_11_0_arm64 |
+| macosx_15_0_x86_64 | 3.11 | pyarrow-26.0.0-cp311-cp311-macosx_12_0_x86_64 | numpy-2.4.6-cp311-cp311-macosx_14_0_x86_64 | pandas-3.1.0-cp311-cp311-macosx_10_9_x86_64 |
+| macosx_15_0_x86_64 | 3.14 | pyarrow-26.0.0-cp314-cp314-macosx_12_0_x86_64 | numpy-2.5.4-cp314-cp314-macosx_14_0_x86_64 | pandas-3.1.0-cp314-cp314-macosx_10_15_x86_64 |
+| macosx_15_0_x86_64 | 3.15 | pyarrow-26.0.0-cp315-cp315-macosx_12_0_x86_64 | numpy-2.5.4-cp315-cp315-macosx_14_0_x86_64 | pandas-3.1.0-cp315-cp315-macosx_10_15_x86_64 |
+| win_amd64 | 3.11 | pyarrow-26.0.0-cp311-cp311-win_amd64 | numpy-2.4.6-cp311-cp311-win_amd64 | pandas-3.1.0-cp311-cp311-win_amd64 |
+| win_amd64 | 3.14 | pyarrow-26.0.0-cp314-cp314-win_amd64 | numpy-2.5.4-cp314-cp314-win_amd64 | pandas-3.1.0-cp314-cp314-win_amd64 |
+| win_amd64 | 3.15 | pyarrow-26.0.0-cp315-cp315-win_amd64 | numpy-2.5.4-cp315-cp315-win_amd64 | pandas-3.1.0-cp315-cp315-win_amd64 |
+
+`pyarrow==15.0.2` for 3.11: `pyarrow-15.0.2-cp311-cp311-macosx_11_0_arm64`, `...-macosx_10_15_x86_64`, `...-win_amd64`.
+`pandas==2.2.3` for 3.11: `pandas-2.2.3-cp311-cp311-macosx_11_0_arm64`, `...-macosx_10_9_x86_64`, `...-win_amd64`.
+So no platform is "rejected: no pyarrow wheel" and no venv (i) substitute is needed. (The "newest CPython" of the runner is
+whatever `setup-python` `3.x` gives; 3.15 was checked as well, because the Linux wheel job ran on 3.15.)
+
+### What was built (files)
+
+Changed: `.github/workflows/ci.yml` (the new `platforms` job at the end and nothing else; the header comment is unchanged,
+the job has its own comment). New: `tools/ci_platform_build.sh`, `tools/ci_platform_venvs.sh`,
+`tools/ci_platform_report.py`. Not changed: `tools/release_build.sh`, `tools/ci_install_check.sh`, the two container scripts,
+`tests/`, `crates/`, `python/`, `fuzz/`. This note.
+
+The job `platforms` (matrix `macOS arm64` = `macos-15`, `macOS x86_64` = `macos-15-intel`, `Windows x86_64` =
+`windows-2025`; `fail-fast: false`; `workflow_dispatch` only; `timeout-minutes: 90`; `permissions: contents: read`;
+`persist-credentials: false`; no artifact, no upload, no secret). Steps, in order:
+
+1. (Windows) `git config --global core.autocrlf false` before the checkout, see "Deviations".
+2. `actions/checkout` (same SHA as the other jobs).
+3. Shell check: `set -o | grep pipefail` and `(false | true)` must fail. Covers ADR-108 on every platform.
+4. Environment: `PT` (the runner's temporary folder in a form that bash and native Python both read: `cygpath -m` on
+   Windows), `TMPDIR` (and `TEMP`, `TMP` on Windows), `PLAT_ROOT` (macOS `/private/var/tmp/oradmp-platforms`, because
+   `RUNNER_TEMP` is below `/Users/runner` and `check_dist` rejects `/Users/`; otherwise `$PT/oradmp-platforms`), job start.
+5. `actions/setup-python` (3.11 and 3.x, same SHA as the other jobs).
+6. Fixture checksums by `tools/ci_platform_report.py checksums` (Python; no `sha256sum` on macOS).
+7. (Windows) line-ending probe: a clone with `core.autocrlf=true`, prints the CR count of one script and whether the three
+   fixture checksum lists still verify. Informational; it prints a result either way and does not fail the job.
+8. Rust toolchain from `rust-toolchain.toml`; `uv==0.12.21` (pip); `NEWEST_PY`; the expected version.
+9. `taiki-e/install-action` `cargo-nextest@0.9.146` (same SHA as `checks`).
+10. `cargo nextest run -j 2`: skipped must equal the four named tests, the summary line must say `488 passed, 4 skipped`.
+11. `bash tools/ci_platform_build.sh` (`if: !cancelled()`): clone of the commit to `$PLAT_ROOT/src`, venv with
+    `maturin==1.15.0`, `maturin build --release --locked` and `maturin sdist` (no `--zig`, no `--compatibility`),
+    `RUSTFLAGS` with `--remap-path-prefix` for the cargo home (all spellings on Windows) and the root,
+    `SOURCE_DATE_EPOCH` from the commit time, `tests/check_dist.py --build-root $PLAT_ROOT WHEEL SDIST` (not weakened; a
+    failure is reported after the second build, then fails the step), then the second build (target folder removed first)
+    into `dist2` and `compare`: both SHA-256 values and `identical` or `differs: <members>` for the wheel and for the sdist.
+12. A clone of the commit to test from (`$PT/clone`).
+13. Three venvs by `tools/ci_platform_venvs.sh` (uv, `--only-binary :all:`, `pytest==9.1.1`): py311 with pyarrow 15.0.2 and
+    pandas 2.2.3; the newest Python with the newest pyarrow and pandas; py311 with pyarrow only. Each: location check
+    (site-packages), full `pytest -rs`, the skip filter, `oradmp --version`. A failing venv does not stop the other two.
+14. Job summary (`if: always()`): runner, image, tool versions, nextest, build, `check_dist` line, wheel name and tags, hashes,
+    the two-build comparison, member list, probe, per venv the versions (Python, pyarrow, numpy, pandas), counts, skips
+    with reasons, failures, duration.
+
+Allowed skips (plan (b)): probes (exactly 3); `tests/test_consumers.py` in the pyarrow-only venv; off Linux
+`tests/test_paths.py` ("POSIX byte file names"); on Windows the reason "POSIX permissions" (the two `tests/test_cli.py`
+tests). Anything else fails the venv. Root-only skips are not expected: the script refuses to run as root.
+
+### Checks on the VM
+
+Fixture checksums by the new Python helper ok (171 + 159 + 30 files); `bash -n tools/*.sh` ok; `ruff check`, `ruff format
+--check`, `mypy` ok; `pytest` 266 passed; `cargo fmt --check` ok; the workflow parses as YAML, every `run` block passes
+`bash -n`, every `uses:` is a full SHA (no new action: the five used are the ones the other jobs use). The helper
+`ci_platform_report.py` was run against two fake archive pairs (identical and differing members) and against a wrong
+checksum (exit 1). `tools/ci_platform_build.sh` was run once on this Linux VM against `HEAD` (root in the session scratch folder, 4 min 40 s): both builds worked, the wheel and the sdist were byte-identical across the two builds on Linux (wheel `7a3a61de...`), and `check_dist` failed only because my scratch path ended in a folder named `root` (`/root/` home-path rule), a test artefact. `tools/ci_platform_venvs.sh` was run on that wheel in a Python 3.14 pyarrow-only venv (256 passed, 4 skipped = 3 probes + pandas, `oradmp --version` ok) and with a wrong `VERSION` (exit 1). The scratch folders are deleted.
+
+### Deviations and judgement calls (for the Architect)
+
+1. **Prompt vs task text**: the prompt says `tools/check_dist.py`; the file is `tests/check_dist.py` (as in the plan). I used the plan.
+2. **Windows `core.autocrlf`**: Git for Windows may check out `.sh` files with CRLF, which bash cannot run, and
+   `.gitattributes` (owner's file) has no `*.sh` rule. The job turns `core.autocrlf` off before the checkout on Windows, so the
+   scripts and fixtures stay LF; the probe step measures what the default does to the fixtures. Proposal for the owner:
+   `*.sh text eol=lf` in `.gitattributes`. If the Architect wants the risk check under the default, remove step 1.
+3. **Windows `shell:`**: no step sets `shell:`. `defaults.run.shell: bash` is Git Bash with the same `-eo pipefail` template;
+   the Shell check step proves it per platform. No PowerShell step.
+4. **Own build script**: `release_build.sh` needs `--zig`, `realpath -m` and `bin/`; it is untouched and `ci_platform_build.sh`
+   is a separate script. It has no `--release`/canonical-root rule (the VM's release root is not used).
+5. **macOS build root** is `/private/var/tmp/oradmp-platforms`, not under `runner.temp` (task text: "root"), see step 4.
+6. **No cache action** in this job (cargo registry and `target` are cold each time); minutes are free on the public repository.
+7. The venv script is separate from `ci_install_check.sh` (Windows `Scripts/`, allowed non-Linux skips, no root-only branch).
+8. `tests/test_release_build.py` runs `bash tools/release_build.sh` with POSIX paths (`/var/tmp`, `realpath -m`, a symlink
+   test): I expect failures on macOS (BSD `realpath` has no `-m`) and on Windows. I did not change any test (prompt). Each
+   will be listed after the first dispatch as "defect in a test" if so.
+
+### Could not be checked here
+
+Everything on macOS and Windows: whether `maturin build` and `sdist` succeed natively; whether `check_dist` passes (its
+`BUILD_PATH` rule reads `path+file:///...` and `/var/tmp`, `/tmp`; on Windows the SBOM path will start with `/D:/...` or
+`D:\\...`, and the rule's prefix is `<root>/src/`, so it **may fail for a platform reason**, which the task text sends to the
+Architect before any change); the remaps of the Windows cargo home; the MSYS path conversion for `python -I` and `uv` calls;
+`uv` finding Python 3.11 beside the newest one; the 488 passed on Windows; the pytest suite there.
+
+### Dispatch plan
+
+One dispatch of `CI` on the T-16b commit (all dispatch-only jobs run: `extended`, `manylinux2014`, `platforms` with three
+legs). It is the risk check (ADR-118 item 4, first of at most three). Expect failures: they are the data. The owner pastes:
+the web address, the job summary of every `platforms` leg, and for a red step its log. A second dispatch is needed if the
+first one shows a test-only or workflow fix; the plan allows three. Billed minutes: free (public repository); the note is to
+record each leg's duration.
+
+### Results
+
+pending: first dispatch

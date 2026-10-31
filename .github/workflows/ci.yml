@@ -645,3 +645,214 @@ jobs:
             done
             echo "- duration: $(( $(date +%s) - JOB_START )) s (to this step)"
           } >> "$GITHUB_STEP_SUMMARY"
+
+  # workflow_dispatch only (T-16b, ADR-118). The wheel and the sdist are built natively on each platform, installed in
+  # fresh venvs and tested, and dropped: never shipped, never uploaded, not even as an artifact (hashes and the member list
+  # go to the summary). Whether a wheel of a platform ever ships is Q-15. The runner labels are named image versions
+  # (runner-images list read on 2026-10-31): macos-15 is arm64, macos-15-intel is x86_64 (listed as a standard runner for
+  # public repositories), windows-2025 is x86_64. `shell: bash` is the default of the file: on Windows that is Git Bash
+  # with the same `-eo pipefail` template, and the "Shell check" step proves pipefail is on, on every platform.
+  platforms:
+    name: platforms (${{ matrix.name }}; not shipped)
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: macOS arm64
+            os: macos-15
+          - name: macOS x86_64
+            os: macos-15-intel
+          - name: Windows x86_64
+            os: windows-2025
+    env:
+      PLATFORM_NAME: ${{ matrix.name }}
+      PLATFORM_LABEL: ${{ matrix.os }}
+      UV_VERSION: 0.12.21
+      # a missing interpreter must fail the venv step, never be downloaded
+      UV_PYTHON_DOWNLOADS: never
+    steps:
+      # Git for Windows may convert line endings of the checkout (core.autocrlf=true is its default): a CRLF .sh file does
+      # not run in bash. The probe step below measures what the default does to the fixtures (ADR-52).
+      - name: Windows only, before the checkout, core.autocrlf=false (the scripts and the fixtures stay LF)
+        if: runner.os == 'Windows'
+        run: |
+          git config --global core.autocrlf false
+          git config --global --get core.autocrlf
+
+      # actions/checkout v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Shell check (pipefail is on; this is how ADR-108 is covered on this platform)
+        run: |
+          echo "shell: $BASH_VERSION; kernel: $(uname -s)"
+          set -o | grep pipefail
+          if (false | true); then
+            echo "pipefail is off in this shell" >&2
+            exit 1
+          fi
+          echo "pipefail is on"
+
+      - name: Environment (PT is the runner's temporary folder in a form bash and native Python both read)
+        run: |
+          if command -v cygpath >/dev/null 2>&1; then
+            PT="$(cygpath -m "$RUNNER_TEMP")"
+          else
+            PT="$RUNNER_TEMP"
+          fi
+          mkdir -p "$PT/tmp" "$PT/logs/venvs" "$PT/venvs"
+          {
+            echo "PT=$PT"
+            echo "TMPDIR=$PT/tmp"
+            echo "JOB_START=$(date +%s)"
+          } >> "$GITHUB_ENV"
+          case "$RUNNER_OS" in
+            macOS)
+              # the runner's temporary folder is below /Users/runner, and check_dist rejects /Users/ paths
+              echo "PLAT_ROOT=/private/var/tmp/oradmp-platforms" >> "$GITHUB_ENV"
+              ;;
+            Windows)
+              echo "PLAT_ROOT=$PT/oradmp-platforms" >> "$GITHUB_ENV"
+              echo "TEMP=$PT/tmp" >> "$GITHUB_ENV"
+              echo "TMP=$PT/tmp" >> "$GITHUB_ENV"
+              ;;
+            *)
+              echo "PLAT_ROOT=$PT/oradmp-platforms" >> "$GITHUB_ENV"
+              ;;
+          esac
+
+      # actions/setup-python v7.1.0; the last version listed is the default `python` (the newest CPython)
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0
+        with:
+          python-version: |
+            3.11
+            3.x
+
+      - name: Fixture checksums (the three SHA256SUMS, by a Python step)
+        run: python -I tools/ci_platform_report.py checksums corpus/fixtures/18c corpus/fixtures/11g corpus/fixtures/11g-cp1251
+
+      - name: Windows only, line-ending probe (a clone with core.autocrlf=true; informational, ADR-52)
+        if: runner.os == 'Windows'
+        run: |
+          probe="$PT/crlf-probe"
+          git clone --quiet --no-local -c core.autocrlf=true "${GITHUB_WORKSPACE//\\//}" "$probe"
+          git -C "$probe" -c advice.detachedHead=false checkout --quiet "$GITHUB_SHA"
+          {
+            echo "core.autocrlf=true clone:"
+            echo "  CR bytes in tools/ci_platform_venvs.sh: $(tr -cd '\r' < "$probe/tools/ci_platform_venvs.sh" | wc -c)"
+            if python -I tools/ci_platform_report.py checksums "$probe/corpus/fixtures/18c" "$probe/corpus/fixtures/11g" "$probe/corpus/fixtures/11g-cp1251"; then
+              echo "  fixtures: unchanged (checksums ok)"
+            else
+              echo "  fixtures: CHANGED by the conversion (checksum mismatch)"
+            fi
+          } 2>&1 | tee "$PT/logs/crlf-probe.log"
+
+      - name: Rust toolchain from rust-toolchain.toml; uv; the expected version
+        run: |
+          rustup show active-toolchain || rustup toolchain install
+          rustc --version
+          cargo --version
+          python -m pip install --quiet "uv==$UV_VERSION"
+          uv --version
+          newest="$(python -c 'import sys; print("%d.%d" % sys.version_info[:2])')"
+          echo "NEWEST_PY=$newest" >> "$GITHUB_ENV"
+          raw="$(awk -F'"' '/^version *=/ { print $2; exit }' Cargo.toml)"
+          version="$(printf '%s' "$raw" | sed -e 's/-alpha\./a/' -e 's/-beta\./b/' -e 's/-rc\./rc/')"
+          echo "version at this commit: $raw -> $version"
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+
+      # taiki-e/install-action v2.87.31 (prebuilt binaries, checksums on)
+      - uses: taiki-e/install-action@1e29709c0ec63babbe8f266397a465f29a825f91
+        with:
+          tool: cargo-nextest@0.9.146
+
+      - name: cargo nextest (488 passed; skipped must be exactly the four named tests)
+        run: |
+          cargo nextest run -j 2 --status-level fail --final-status-level skip 2>&1 | tee "$PT/logs/nextest.log"
+          tr -d '\r' < "$PT/logs/nextest.log" > "$PT/logs/nextest.lf"
+          awk '$1 == "SKIP" { print $(NF-1), $NF }' "$PT/logs/nextest.lf" | sort > "$PT/logs/skipped.txt"
+          printf '%s\n' \
+            'oradmp-core::t15_memory peak_rss_of_eight_times_the_data_stays_within_ten_percent' \
+            'oradmp-core::t15_memory t15_child_read' \
+            'oradmp-core::t15_throughput throughput_of_scan_and_read' \
+            'oradmp-core::t17_synth write_fuzz_seeds' | sort > "$PT/logs/skipped-expected.txt"
+          diff "$PT/logs/skipped-expected.txt" "$PT/logs/skipped.txt"
+          grep -q 'Summary.* 488 passed, 4 skipped' "$PT/logs/nextest.lf"
+
+      - name: Build the wheel and the sdist natively (tools/ci_platform_build.sh); check_dist; the second build
+        id: build
+        if: ${{ !cancelled() }}
+        run: bash tools/ci_platform_build.sh 2>&1 | tee "$PT/logs/build.log"
+
+      - name: A clone of the commit to test from
+        if: ${{ !cancelled() && steps.build.conclusion == 'success' }}
+        run: |
+          git clone --quiet --no-local "${GITHUB_WORKSPACE//\\//}" "$PT/clone"
+          git -C "$PT/clone" -c advice.detachedHead=false checkout --quiet "$GITHUB_SHA"
+          git -C "$PT/clone" log -1 --format='clone at %H'
+
+      - name: The wheel in three fresh venvs (--only-binary :all:), pytest against the installed package
+        if: ${{ !cancelled() && steps.build.conclusion == 'success' }}
+        run: |
+          WHEEL="$(ls "$PLAT_ROOT"/dist/oradmp-*.whl)"
+          export WHEEL LOG_DIR="$PT/logs/venvs" VENV_DIR="$PT/venvs"
+          cd "$PT/clone"
+          rc=0
+          bash tools/ci_platform_venvs.sh py311-pa15-pd223 3.11 "pyarrow==15.0.2 pandas==2.2.3" "" || rc=1
+          bash tools/ci_platform_venvs.sh pynewest-latest "$NEWEST_PY" "pyarrow pandas" "" || rc=1
+          bash tools/ci_platform_venvs.sh py311-pyarrow-only 3.11 "pyarrow" "tests/test_consumers.py" || rc=1
+          exit "$rc"
+
+      - name: Job summary
+        if: always()
+        run: |
+          L="$PT/logs"
+          {
+            echo "## platforms: $PLATFORM_NAME (not shipped)"
+            echo
+            echo "- commit: \`$GITHUB_SHA\`; expected version: ${VERSION:-?}"
+            echo "- runner: $PLATFORM_LABEL; image: ${ImageOS:-?} ${ImageVersion:-?}; $RUNNER_OS $RUNNER_ARCH; user $(id -un) (uid $(id -u)); cpus $(python -c 'import os; print(os.cpu_count())' 2>&1 | tail -1)"
+            echo "- rustc: $(rustc --version 2>&1); cargo: $(cargo --version 2>&1); uv: $(uv --version 2>&1)"
+            echo "- default python: $(python -V 2>&1); bash $BASH_VERSION ($(uname -s))"
+            echo "- nextest: $(grep -h 'Summary' "$L/nextest.lf" 2>/dev/null | sed 's/^ *//' || true)"
+            echo "- nextest skipped (name): $(tr '\n' ';' < "$L/skipped.txt" 2>/dev/null)"
+            echo "- build: $(grep -E '^(rustc|maturin|python|epoch|root):' "$L/build.log" 2>/dev/null | tr -d '\r' | tr '\n' ';')"
+            echo "- check_dist: $(grep -E '^check_dist' "$L/build.log" 2>/dev/null | tr -d '\r' | tr '\n' ';')"
+            echo "- wheel and tags:"
+            echo '```'
+            grep -E '^(oradmp-.*\.whl|Tag:)' "$L/build.log" 2>/dev/null | tr -d '\r' | sort -u || true
+            echo '```'
+            echo "- SHA-256 of the built files (the wheel is not uploaded):"
+            echo '```'
+            tr -d '\r' < "$PLAT_ROOT/dist/SHA256SUMS" 2>/dev/null || true
+            echo '```'
+            echo "- two builds of the same commit (Q-15; recorded, not a gate):"
+            echo '```'
+            sed -n '/^--- two builds/,$p' "$L/build.log" 2>/dev/null | tr -d '\r' || true
+            echo '```'
+            echo "- members of the wheel and of the sdist (sha256 size member):"
+            echo '```'
+            python -I tools/ci_platform_report.py members "$PLAT_ROOT/dist" 2>&1 | tr -d '\r' || true
+            echo '```'
+            if [ -e "$L/crlf-probe.log" ]; then
+              echo "- line-ending probe:"
+              echo '```'
+              tr -d '\r' < "$L/crlf-probe.log"
+              echo '```'
+            fi
+            for f in "$L"/venvs/pytest-*.log; do
+              [ -e "$f" ] || continue
+              n="$(basename "$f" .log)"
+              echo "- $n: $(head -1 "$f.info" 2>/dev/null | tr -d '\r'); $(tail -1 "$f"); $(cat "$f.version" 2>/dev/null | tr -d '\r'); $(cat "$f.allowed" 2>/dev/null | tr -d '\r')"
+              grep '^SKIPPED' "$f" | sed 's/^/  - /' || true
+              grep -E '^(FAILED|ERROR)' "$f" | sed 's/^/  - /' || true
+            done
+            echo "- duration: $(( $(date +%s) - JOB_START )) s (to this step)"
+          } >> "$GITHUB_STEP_SUMMARY"
