@@ -3236,3 +3236,7 @@ The 2.17 image may lack `git` (then `git --version` fails and the step says so);
 then asks for the VM fallback); the `auditwheel show` text is matched by `manylinux_2_17|manylinux2014` (confirmed on the
 VM). The 2.17 venvs (ii) and (iii) install `pyarrow pandas` / `pyarrow` unpinned, so pip picks the newest wheel for
 glibc 2.17 (20.0.0, pandas 2.3.2 expected; printed in the summary).
+
+T-16c fix (Implementer, 2026-10-31), found by the first public run of the `wheel` job (a8da2cc): `tests/test_release_build.py::test_manylinux_good_values_get_past_the_option_checks` failed there with "the build root /var/tmp/oradmp-release exists already" instead of "no such commit".
+Cause: the job's release build had just created the canonical root, and `release_build.sh` checks the root (line 114) before the commit (line 116), as in a4; the test assumed the root was absent.
+Fix (test only, script unchanged): the `--release` call now expects exit 1 and "exists already" if the canonical root exists, else "no such commit"; no skip. Verified with the empty root present and absent, and by mutating each string.

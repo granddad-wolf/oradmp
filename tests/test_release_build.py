@@ -84,7 +84,11 @@ def test_manylinux_good_values_get_past_the_option_checks() -> None:
         r = run(BOGUS, "--manylinux", value, root=OTHER)
         assert r.returncode == 1 and "no such commit" in r.stderr, (value, r.returncode, r.stderr)
         r = run("--manylinux", value, BOGUS, "--release", root=None)
-        assert "release root: canonical" in r.stdout and "no such commit" in r.stderr, (value, r.stdout, r.stderr)
+        # The canonical root may exist (the wheel job has just built there); the script checks the root before the
+        # commit, so the run ends with one of the two documented reasons, both exit 1.
+        reason = "exists already" if Path(CANONICAL).exists() else "no such commit"
+        assert "release root: canonical" in r.stdout, (value, r.stdout, r.stderr)
+        assert r.returncode == 1 and reason in r.stderr, (value, r.returncode, r.stderr)
     assert not Path(OTHER).exists()
 
 
