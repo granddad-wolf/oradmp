@@ -5,3 +5,5 @@ corpus/fixtures/**/*.log               -text
 corpus/fixtures/**/SHA256SUMS          -text
 tests/golden/*.tsv                     -text
 crates/oradmp-core/tests/data/*.tsv   -text
+
+*.sh text eol=lf
