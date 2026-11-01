@@ -1,13 +1,24 @@
 # Legacy EXP reader: implementation plan
 
 Architect session 1, 2026-10-07; session 2, 2026-10-14; sessions 3 and 4, 2026-10-15; sessions 5 and
-6, 2026-10-16; sessions 7 to 13, 2026-10-17; sessions 14 and 15, 2026-10-18; sessions 16 and 17, 2026-10-21; session 18, 2026-10-22; sessions 19 to 23, 2026-10-24; sessions 24 and 25, 2026-10-25; sessions 26 and 27, 2026-10-29; session 28, 2026-10-30; sessions 29 to 31, 2026-10-31. Tasks for the
+6, 2026-10-16; sessions 7 to 13, 2026-10-17; sessions 14 and 15, 2026-10-18; sessions 16 and 17, 2026-10-21; session 18, 2026-10-22; sessions 19 to 23, 2026-10-24; sessions 24 and 25, 2026-10-25; sessions 26 and 27, 2026-10-29; session 28, 2026-10-30; sessions 29 to 32, 2026-10-31. Tasks for the
 Implementer, in order; each is meant for one session. "Rules" are those of
 `docs/formats/exp_reader_rules.md` (v3.4; v3.5 from session 8; v3.6 from session 17; v3.7 from session 24; v3.9 from session 25); "arch n" is a section of `exp-reader-architecture.md`. Every
 task ends with `cargo fmt`, `cargo clippy -- -D warnings` and `cargo nextest run` green (`CLAUDE.md`,
 definition of done; in the public repository the same checks are listed in `CONTRIBUTING.md`, "Development setup")
 and adds no `unsafe` to the core. Commit hashes cited before session 26 name commits of the private archive
 (`HISTORY.md`, ADR-105).
+
+## Changes in session 32
+
+- **T-16b: closed** (ADR-121). macOS arm64 and x86_64 **accepted** on `a726271`, subject to the dispatch-3 record;
+  Windows x86_64 **builds, not supported**. No further T-16b dispatch. "Session 32 record" at the end of T-16b.
+- New **T-16d** (the T-16b remainder: the `extended` sdist check, the 2014 pre-check, the dispatch-3 record; blocks a5)
+  and **T-16e** (Windows: two oradmp bugs, a file-lock diagnosis, `check_dist.py` and the skip gate, one
+  reproducibility attempt; does not block a5). ADR-123 to ADR-125.
+- **Reviewer 7**: after T-16d; new item (e) (ADR-119 as amended). **Release 0.1.0a5**: no Windows wheel; macOS only
+  under ADR-122 item 2.
+- New order table (session 32); the session 31 table becomes history.
 
 ## Changes in session 31
 
@@ -1983,7 +1994,7 @@ record with full hashes. The billed-minutes figure: O-23 (b).
   `CONTRIBUTING.md`, the note. Not `crates/`, `python/`, `corpus/`, the version. **Model: Sonnet.** One build at a
   time. Reviewed in **Reviewer 6c**.
 
-### T-16b Other platforms: macOS, Windows (session 22; ADR-53, ADR-87; made exact in session 31, ADR-118) - next (after the session 31 docs push); the "Session 31" block below wins
+### T-16b Other platforms: macOS, Windows (session 22; ADR-53, ADR-87; made exact in session 31, ADR-118) - DONE, **closed** in session 32 (`bdc507b` + `89b7857` + `a726271`; three dispatches; macOS arm64 and x86_64 **accepted**, Windows x86_64 **builds, not supported**; items (e), (i) and the dispatch-3 record moved to T-16d; ADR-121); the "Session 32 record" at the end wins
 
 - Goal: tested wheels for macOS arm64 and x86_64 and Windows x86_64 (Linux aarch64 optional); accepted ones ship in a5.
 - Needs from the owner: while the repository is private, he dispatches the macOS and Windows jobs when the note asks; at
@@ -2133,6 +2144,87 @@ record with full hashes. The billed-minutes figure: O-23 (b).
   - **Touches**: `.github/workflows/ci.yml` (the new `platforms` job and the `extended` sdist step only);
     `tests/check_dist.py` only for a proven platform reason; tests a platform proves wrong; the `target_os` /
     `sys.platform` gates; a shared `tools/` script if needed; the note. **Model: Sonnet.** Reviewed in Reviewer 7.
+- **Session 32 record** (ADR-121 to ADR-125). Facts of dispatch 3 are the owner's pasted logs.
+  - Push runs on all three commits green: nextest 488 + 4, pytest 266, `wheel` venvs 263 + 3, 256 + 4, 263 + 3.
+  - **macOS arm64 `macos-15`, macOS x86_64 `macos-15-intel`: accepted** (dispatch 3, `a726271`). Dispatch 1:
+    wheels `ec57e7b7...` (arm64) and `349ceb60...` (x86_64), sdist `9d32534c...`, identical in two builds in one job.
+    Expected pytest per venv: **246 + 20, 246 + 20, 239 + 21**; T-16d writes the dispatch-3 figures into the note;
+    a difference sends the verdict back (ADR-121 item 2).
+  - **Windows x86_64 `windows-2025`: builds, not supported** (dispatch 3). Wheel
+    `oradmp-0.1.0a4-cp311-abi3-win_amd64.whl` `d468caf1e9f25384cdfc9a6a2c020228de0d10196369474d33c919104e21f793`, sdist
+    `b1cd42aa058dc38809cec815c71d684e19a72f335d8acd77ee989057c0dea635`; maturin 1.15.0, rustc 1.99.0, Python 3.15.1, bash
+    5.3. nextest 487 + 4. In-job wheels differ in `_core.pyd` and `RECORD`. `check_dist`: six SBOM hits. pytest
+    238 + 6 failed + 22, 241 + 3 failed + 22, 233 + 4 failed + 23. Classification and fixes: ADR-123, T-16e.
+  - **Allowed skip added**: off Linux, the 9 tests of `tests/test_release_build.py` (ADR-121 item 1).
+  - **Not done**: (e) the `extended` sdist check (no step in `ci.yml` at `a726271`); (i) the 2014 pre-check (no result
+    in the note); the `extended` and `manylinux2014` results of the dispatches. All three go to T-16d.
+  - **For the record** (ADR-121 items 5, 6): the session 31 prompt's `tools/check_dist.py` is `tests/check_dist.py`;
+    the Windows skip gate was accepted without a path-separator check; the dispatch fix was pushed before the push jobs
+    were confirmed green (green afterwards); `a726271`'s message has its subject and no body; no rewrite.
+
+### T-16d The T-16b remainder: the `extended` sdist check, the 2014 pre-check, the dispatch-3 record (session 32; ADR-112 item 5, ADR-117 item 2, ADR-121) - next; blocks a5
+
+- **Goal**: finish what T-16b left, so that Reviewer 7 and a5 have their inputs. No platform work.
+- **Inputs**: plan T-16b "Session 31" items (e) and (i) (their text is unchanged and binding); ADR-121; the owner's pasted
+  dispatch-3 summaries of both macOS legs, of `extended` and of `manylinux2014`.
+- **Done when**:
+  1. **The record** (docs only, may be the first commit): the T-16b note's "Results" gets dispatch 3: per macOS leg the
+     nextest line, `check_dist`, the hashes, the two-build line, per venv the versions, counts and every skip with its
+     reason, the durations; the `extended` and `manylinux2014` conclusions of all three dispatches as far as the owner
+     has them (a missing one is written "not pasted"). The Windows figures of the "Session 32 record" are copied as
+     they stand. The macOS counts are compared with 246 + 20 / 246 + 20 / 239 + 21; any difference is a note line for
+     the Architect, not a change.
+  2. **T-16b (e)**: the `extended` sdist check exactly as written there; its sdist hash equals the `wheel` job's of the
+     same push.
+  3. **T-16b (i)**: the 2014 pre-check on the VM, alone on the machine, as written there (ADR-117 item 2), with its
+     `SHA256SUMS` in the note.
+  4. **Dispatches: at most two, on one commit** (T-16d's code commit). The first shows (2). The second, on the **same**
+     commit, is a measurement for Q-15: the summaries give the macOS wheel hashes of two separate dispatches;
+     `identical` or `differs` per leg is a note line (ADR-122 item 2). The Windows leg runs and stays red as known;
+     it is not fixed here.
+  5. Checks as T-16b (g); nothing else changes (T-16b (f)); the rule of ADR-119 item 2 for every new or changed test.
+- **Touches**: `ci.yml` (`extended` only), the note. **Model: Sonnet.** Reviewed in Reviewer 7.
+- **Needs from the owner**: commit, push, up to two dispatches on one commit, the pasted summaries; the machine alone
+  for (3).
+
+### T-16e Windows: the oradmp defects, the checker, the gate, one reproducibility attempt (session 32; ADR-123 to ADR-125) - after Reviewer 7; does not block a5
+
+- **Goal**: Windows x86_64 meets ADR-53 item 4, or the note says exactly what still fails.
+- **Inputs**: ADR-123 to ADR-125; Python's `OSError` documentation (`winerror`); pyarrow's installation page (Windows
+  time zone database); the rustc book (`-C link-arg`); the T-16b note.
+- **Done when**:
+  1. **Missing file** (ADR-123 item 1): on Windows the binding hands the raw OS code to `make_error` as `winerror`;
+     elsewhere unchanged. `test_a_missing_file_is_an_oserror` also asserts `errno == errno.ENOENT` (every platform)
+     and, on Windows, that `winerror` is 2 or 3. A CLI test checks the message of a missing file names the OS text
+     and the path.
+  2. **Closed stdout** (ADR-123 item 2): first a diagnostic on the Windows leg that prints the class, `errno` and
+     `winerror` of the failing write and flush (recorded in the note); then `_cli.py` recognises exactly that and
+     flushes inside `main`. The two closed-stdout tests are unchanged and pass on every platform (exit 0, exit 3).
+  3. **WinError 32** (ADR-123 item 3): the new contract test first; then the oradmp fix or the test change as that
+     item says; no retry loop.
+  4. **pyarrow 15 on Windows** (ADR-123 item 4): venv (i) on Windows installs the time zone database by pyarrow's
+     documented route before pytest; the summary says so; the three tests run.
+  5. **nextest** (ADR-123 item 5): the `platforms` step expects 488 + 4 on macOS and 487 + 4 on Windows, the absent
+     test named.
+  6. **`check_dist.py`** (ADR-125 item 1): first the six captured paths printed (escaped, cut at the root), then the
+     change and its three unit tests; the `wheel` job's `check_dist` output on the T-16e commit equals the previous one.
+  7. **The skip gate** (ADR-125 item 2) with its self-test.
+  8. **Reproducibility** (ADR-124): `/Brepro` on the Windows leg only; the two-build line and the `.pyd` string counts
+     in the summary. Either result is accepted as data.
+  9. **Line endings** (ADR-125 item 3): if the owner has added `*.sh text eol=lf`, the probe becomes a gate (0 CR in
+     every `*.sh`); otherwise it stays informational and the note says so.
+  10. **Expected counts after the fixes**: Windows pytest 244 + 22, 244 + 22, 237 + 23, plus the new tests; macOS
+      246 + 20, 246 + 20, 239 + 21 plus the new tests; Linux 266 plus the new tests, 0 skipped. A Windows-only test is
+      a skip elsewhere only if a record allows it.
+  11. **Verdict** for Windows in the note's first lines: "accepted" or "builds, not supported: <what still fails>".
+      Whether its wheel ships stays Q-15 and ADR-124 item 2.
+  12. Checks as T-16b (g) and (h). `crates/oradmp-core/src/` does not change.
+- **Dispatch budget**: at most **three** on T-16e commits; the first carries the diagnostics of items 2 and 6.
+- **Touches**: `crates/oradmp-py/src/errors.rs`, `python/oradmp/_cli.py` (and `_errors.py` if needed),
+  `tests/test_errors.py`, `tests/test_cli.py`, `tests/check_dist.py` and its tests, `tools/ci_platform_build.sh`,
+  `tools/ci_platform_venvs.sh`, `ci.yml` (`platforms` only), the note. **Model: Sonnet.** Starts after Reviewer 7 (rule 7;
+  a Reviewer 7 finding on the `platforms` job or the gate is folded in). Reviewed in **Reviewer 8**. It joins a5 only
+  under ADR-123 item 6.
 
 ### T-16c `manylinux2014` acceptance (session 23; ADR-53 items 4, 5; ADR-91; made exact in session 30, ADR-115) - DONE, **accepted** (2026-10-31, `a8da2cc` + `94b6368`, results `0bfa70d`; nextest 488 + 4, pytest 266; dispatch 1 of 3 green; ADR-116; to be reviewed in Reviewer 7)
 
@@ -2261,7 +2353,7 @@ record with full hashes. The billed-minutes figure: O-23 (b).
       `RECORD` sizes; the package versions of the container venvs.
     - The VM-against-CI identity of the 2014 wheel is ADR-117 item 2, done in T-16b (i).
 
-### Reviewer 7 on T-21, T-16c, T-16b (session 31; ADR-119) - after T-16b's results commit is pushed, before the a5 version commit
+### Reviewer 7 on T-21, T-16c, T-16b, T-16d (session 31; ADR-119; amended in session 32) - after T-16d's commit is pushed, before the a5 version commit
 
 - **Scope**: T-21 (`20bbc80`); T-16c (`a8da2cc`, `94b6368`, `0bfa70d`); T-16b (its commits). It reads the code, the
   tests, `ci.yml`, the `tools/ci_*.sh` scripts and the notes, together with the public run summaries the owner pastes.
@@ -2286,6 +2378,18 @@ record with full hashes. The billed-minutes figure: O-23 (b).
   The owner starts it.
 - If T-16b stalls, the owner may start it on T-21 and T-16c alone. T-16b is then read in the a5 closure review
   (ADR-119 item 1).
+- **Session 32 (ADR-119 as amended, ADR-121)**: it starts after **T-16d**'s commit is pushed and reads the tree at
+  that commit (named in `review-07.md`). Scope adds T-16d. (c) now reads: the `platforms` job at `a726271` and T-16d;
+  the verdicts of ADR-121 against ADR-53 item 4, including the allowed "Linux-only release tooling" skip; the macOS
+  counts of the dispatch-3 record against 246 + 20 / 246 + 20 / 239 + 21; the `extended` sdist check; the twice-built
+  measurement and T-16d's two-dispatch measurement; the 2014 pre-check. New **(e) record points**:
+  - the session 31 prompt named `tools/check_dist.py`; the file is `tests/check_dist.py`;
+  - the Windows skip gate was accepted without anyone checking path separators: the Reviewer checks every path match
+    in `tools/ci_*.sh` and `tools/ci_platform_report.py` for a separator assumption (a finding for T-16e if found);
+  - the first push of the dispatch fix ran before the push jobs were confirmed green; they were green afterwards;
+  - `a726271`'s message has its subject and no body (`!cancelled()` and history expansion); no rewrite; the Reviewer
+    states whether the T-16b note carries what the body would have said.
+  T-16e starts after Reviewer 7 and is read by **Reviewer 8**.
 
 ## T-19 The conventional LONG forms of R-040; the ten session 17 fixtures in the tests (session 24; ADR-94, ADR-95, ADR-97) - DONE (2026-10-25, `921971f`; nextest 463 passed + 4 skipped, pytest 250, CI green on `bbf921b`; deviations ruled by ADR-102; item (m) not run, now **T-19 (m)** after T-19b; to be reviewed in Reviewer 6c)
 
@@ -3904,9 +4008,12 @@ After the cut the budget lapses for standard runners; the dispatch rule for `ext
   - the sdist;
   - non-Linux wheels only if Q-15 is answered "yes" before the version commit and T-16b accepted the platform with
     identical twice-built wheels.
+  - **Session 32 (ADR-122)**: **no Windows wheel**. macOS arm64 and x86_64 wheels only if Q-15 is answered yes (rule 8
+    amended, ADR-87 item 6 and ADR-92 item 1 amended) and two separate dispatches on C give byte-identical macOS
+    wheels. Otherwise Linux-only. README "Other platforms" as ADR-122 item 3.
 - **Conditions**, in order (ADR-120):
-  1. T-16b done;
-  2. the 2014 pre-check passed (T-16b (i));
+  1. T-16b closed (ADR-121) and **T-16d** done;
+  2. the 2014 pre-check passed (T-16d item 3);
   3. Reviewer 7 with no blocking finding open;
   4. Q-15 answered, or a5 declared Linux-only;
   5. the version commit (version, locks, README "Wheels:" with both Linux wheels and ADR-115 item 5's claim,
@@ -3926,7 +4033,38 @@ After the cut the budget lapses for standard runners; the dispatch rule for `ext
 - **Also from earlier records**: ADR-110 as amended; ADR-111 item 6 (lessons of a4); ADR-114 item 6 (the token-history
   check).
 
-## Order of the next tasks (session 31)
+## Order of the next tasks (session 32)
+
+Machine rule unchanged (session 16 below). CI runs on the public GitHub repository; it is not a build on the VM.
+**OWNER** marks an owner action. Records: ADR-121 to ADR-125.
+
+| order | task | can start | runs in parallel with | touches | model | waits for a human? |
+|---|---|---|---|---|---|---|
+| done | **T-16b closed** (`bdc507b`, `89b7857`, `a726271`; macOS accepted, Windows builds, not supported; ADR-121); this session | - | - | - | - | - |
+| 1 | **OWNER**: commit and push this session's documents (docs only); optionally add `*.sh text eol=lf` to `.gitattributes` (ADR-125 item 3) | now | rows 6 to 10 | `docs/design/`, `.gitattributes` | - | yes |
+| 2 | **T-16d** (plan): the dispatch-3 record, the `extended` sdist check, the 2014 pre-check on the VM, at most two dispatches on one commit | after row 1 | rows 6 to 10 (its VM build alone on the machine) | `ci.yml` (`extended`), the note | Sonnet | **OWNER**: pastes dispatch-3 summaries (macOS, `extended`, `manylinux2014`), commit, push, two dispatches |
+| 3 | **Q-15** (owner), with the session 32 facts in its row | any time before row 5 | everything | `CLAUDE.md` (owner), then ADR amendments | - | yes |
+| 4 | **Reviewer 7** on T-21, T-16c, T-16b, T-16d (plan block, session 32 items) | after row 2 is pushed | rows 6 to 10 | `docs/review/` | Opus | **OWNER** starts it |
+| 4' | **T-16e** (plan): Windows fixes, checker, gate, `/Brepro` attempt; at most three dispatches | after row 4 (rule 7: the T-16b / T-16d group is reviewed first) | rows 6 to 10 | `crates/oradmp-py/src/`, `python/oradmp/`, `tests/`, `tools/ci_platform_*`, `ci.yml` (`platforms`) | Sonnet | **OWNER**: commits, pushes, dispatches, pastes |
+| 4'' | **Reviewer 8** on T-16e | after row 4' | - | `docs/review/` | Opus | **OWNER** starts it |
+| 5 | **a5** (ADR-120 as amended, ADR-122): an Architect session records Reviewer 7 and Q-15 (and Reviewer 8 if T-16e joins); version commit; closure review of C; checklist; release | after row 4 (and row 3, or Linux-only); row 4'' only if T-16e joins | - | as named | - / Sonnet / Opus | **OWNER**: all release steps |
+| 6 | **OWNER: Q-4**: the real-dump counts with `oradmp survey` from the a4 wheel, counts only | now | everything | nothing in the repository | - | yes |
+| 6' | **R-052** only if Q-4 shows a LONG of 65,522 to 65,524 bytes or a field starting `fb ff` / `fc ff` | after row 6 | everything | `corpus/` (owner), then a task | - | yes |
+| 7 | **R-046** (low) | any time | everything | `corpus/` (owner) | - | yes |
+| 8 | **OWNER: RHEL 8 host test** with the a4 wheel (not a gate) | any time | everything | nothing in the repository | - | yes |
+| 9 | **Data Pump** (phase 2): an Architect session plans it, scope with the owner | now | rows 2 to 8 | `docs/design/` | - | scope with the owner |
+| 10 | **Analyst 21** (documents only), if not done | any time | everything | `docs/formats/` | - | **OWNER** starts it |
+
+What the owner does, in order:
+1. Push these documents. If you agree, add `*.sh text eol=lf` to `.gitattributes`, then check `git status` is clean and
+   `git ls-files --eol '*.sh'` shows `attr/text eol=lf`.
+2. Check `git log -1 --format=%B a726271` (the Architect read it: subject intact, no body); nothing to rewrite.
+3. Start the Implementer on T-16d with the dispatch-3 summaries of both macOS legs, `extended` and `manylinux2014`.
+   Push, dispatch twice on the same commit, paste.
+4. Start Reviewer 7 after T-16d is pushed; start T-16e after Reviewer 7 (rule 7).
+5. Answer Q-15 whenever ready (facts in its row).
+
+## Order of the next tasks (session 31, history)
 
 Machine rule unchanged (session 16 below). CI runs on the public GitHub repository; it is not a build on the VM.
 **OWNER** marks an owner action. Records: ADR-116 to ADR-120.

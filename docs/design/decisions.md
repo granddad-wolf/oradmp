@@ -4,7 +4,7 @@
 `oradmp` (crates `oradmp-core`, `oradmp-py`, import `oradmp`, classes `OradmpError` / `OradmpWarning`).
 
 Architect session 1, 2026-10-07; session 2, 2026-10-14; sessions 3 and 4, 2026-10-15; sessions 5 and
-6, 2026-10-16; sessions 7 to 13, 2026-10-17; sessions 14 and 15, 2026-10-18; sessions 16 and 17, 2026-10-21; session 18, 2026-10-22; sessions 19 to 23, 2026-10-24; sessions 24 and 25, 2026-10-25; sessions 26 and 27, 2026-10-29; session 28, 2026-10-30; sessions 29 to 31, 2026-10-31. Each record:
+6, 2026-10-16; sessions 7 to 13, 2026-10-17; sessions 14 and 15, 2026-10-18; sessions 16 and 17, 2026-10-21; session 18, 2026-10-22; sessions 19 to 23, 2026-10-24; sessions 24 and 25, 2026-10-25; sessions 26 and 27, 2026-10-29; session 28, 2026-10-30; sessions 29 to 32, 2026-10-31. Each record:
 context, decision, consequences, rejected. Status is **decided** (the Implementer follows it; reopening
 needs a new record) or **needs the project owner** (question in `open-questions.md`). Rule numbers are
 those of `docs/formats/exp_reader_rules.md` (v3.4 from session 4 on, v3.5 from session 8 on, v3.7 from session 24 on, **v3.9 from session 25 on**); section
@@ -14,6 +14,21 @@ numbers without a file name are those of `exp-reader-architecture.md`.
 names a commit of the owner's private archive, not of this repository (`HISTORY.md`); the hashes are not rewritten.
 Cites of `docs/prompts/...`, `.claude/` and `CLAUDE.md` name files the owner keeps privately; nothing a contributor must
 do depends on them (the checks a contributor runs are in `CONTRIBUTING.md`).
+
+## Changes in session 32
+
+- Basis: the owner's facts of session 32 (T-16b's commits `bdc507b`, `89b7857`, `a726271`, their push runs, one
+  `platforms` dispatch on each; dispatch 3 from pasted logs only) and the T-16b note. Checked in this session (reading
+  only): `git show --stat` of the three commits; `git log -1 --format=%B a726271`; the job and step names of `ci.yml`
+  (no sdist step in `extended`); `tools/ci_platform_venvs.sh` (the probe match); `git ls-files --eol '*.sh'`;
+  `crates/oradmp-py/src/errors.rs`, `python/oradmp/_errors.py`, `python/oradmp/_cli.py` and the failing tests; Python's
+  `OSError` documentation and pyarrow's installation page (Windows time zone database). Nothing built, nothing run on CI.
+- New: **ADR-121** (T-16b closed: macOS arm64 and x86_64 **accepted**, Windows **builds, not supported**; the
+  remainder is T-16d), **ADR-122** (a5: no Windows wheel; macOS only through Q-15 and two dispatches), **ADR-123** (the
+  Windows defects classified; T-16e), **ADR-124** (Windows reproducibility: one `/Brepro` attempt, the same evidence
+  rule), **ADR-125** (`check_dist.py` and the skip gate on Windows paths; `*.sh text eol=lf` recommended to the owner).
+- Amended: ADR-53 item 4, ADR-118 item 5, ADR-119 item 1, ADR-120 item 1 (section "Amendments (session 32)" after
+  ADR-125).
 
 ## Changes in session 31
 
@@ -2476,6 +2491,8 @@ Session 3 text (history):
   one test run per wheel); T-16 before the alpha (the owner's hosts are RHEL 8+ x86_64).
 - Amendment (session 31, ADR-117): item 5 is replaced: the accepted `manylinux2014` wheel ships **next to**
   `manylinux_2_28`, it does not replace it. Item 4 stands; who builds a non-Linux release wheel is Q-15 (ADR-118).
+- Amendment (session 32, ADR-121 item 1, ADR-123 item 5): item 4's allowed platform skips include the 9
+  `tests/test_release_build.py` tests off Linux and the one `#[cfg(unix)]` nextest test on Windows.
 
 ## ADR-54 The project is renamed `oradmp` - decided (owner, Q-10 name part; session 13)
 - Context: the PyPI name `oradump` belongs to another project (owner, Q-10). The owner chose **`oradmp`** ("dmp"
@@ -5703,6 +5720,8 @@ Session 3 text (history):
   - Cross-building macOS or Windows wheels on the VM (ADR-53: nothing would test them there, and macOS needs Apple's SDK).
   - Making T-16b produce release artifacts before Q-15 is answered (that would build a release route that has not been
     decided).
+- Amendment (session 32, ADR-121): T-16b is closed. Item 5 gains the skip "Linux-only release tooling" and the Windows
+  nextest count 487 + 4. Verdicts: macOS arm64 and x86_64 accepted, Windows builds, not supported.
 
 ## ADR-119 Reviewer 7: scope and timing; tests that depend on machine state - decided (session 31)
 - Context: rule 7. T-21 (`20bbc80`), T-16c (`a8da2cc`, `94b6368`, `0bfa70d`) and T-16b form one group. T-16c's first
@@ -5759,6 +5778,9 @@ Session 3 text (history):
   - A risk entry: it duplicates the rule and names no harm to users.
   - Having the Reviewer create the VM's canonical root to test the second state: CI already shows both states, and the
     root is the owner's.
+- Amendment (session 32): item 1: Reviewer 7 runs after T-16d's commit is pushed and reads the tree at that commit;
+  T-16e starts after Reviewer 7 (rule 7) and is reviewed in Reviewer 8. Item 3 gains (e), the record points of ADR-121
+  items 5 and 6.
 
 ## ADR-120 When a5 is cut - decided (session 31)
 - Context: ADR-113 item 4 (as amended), ADR-116, ADR-117, ADR-118, ADR-119.
@@ -5789,3 +5811,199 @@ Session 3 text (history):
   - Cutting a5 now, with only the 2014 wheel: Reviewer 7 has not read T-16c, and T-16b also edits `ci.yml`, so the
     candidate would change twice.
   - Waiting for a non-Linux platform: Q-15 may take time, and a Linux-only a5 is a complete release.
+- Amendment (session 32, ADR-121, ADR-122): item 1 reads "T-16b closed (ADR-121) and T-16d done". Windows is not in
+  a5; macOS only under ADR-122 item 2. T-16e is not a condition.
+
+## ADR-121 T-16b closed: macOS accepted, Windows "builds, not supported"; the remainder becomes T-16d - decided (session 32)
+- Context:
+  - T-16b used its three dispatches (ADR-118 item 4) on three commits: `bdc507b`, `89b7857`, `a726271`. The push
+    jobs `checks`, `wheel`, `fuzz-check` were green on each (nextest 488 + 4, pytest 266, `wheel` venvs 263 + 3,
+    256 + 4, 263 + 3). Facts of dispatch 3 come from the owner's pasted logs (the session 32 prompt); the note records
+    dispatches 1 and 2.
+  - **macOS** arm64 (`macos-15`) and x86_64 (`macos-15-intel`): green in dispatches 2 and 3. In dispatch 1 the build,
+    `check_dist` and nextest 488 + 4 were green; the two builds in one job gave identical wheels and sdists on both
+    legs; the only failures were the five `tests/test_release_build.py` tests (GNU `realpath -m`). Since `89b7857`
+    the module skips off Linux (9 tests).
+  - **Windows** x86_64 (`windows-2025`), dispatch 3: build works (`_core.pyd`); nextest 487 + 4; the in-job wheels
+    differ in `_core.pyd` and `RECORD`; `check_dist` fails on six SBOM lines; pytest fails 6 / 3 / 4 tests in the
+    three venvs; the skip gate misreads backslashes (ADR-123 to ADR-125).
+  - **Not in the note, and not in `ci.yml` at `a726271`** (checked this session by reading): T-16b (e), the sdist
+    source-build check in `extended` (no such step in the `extended` job), and T-16b (i), the 2014 pre-check on the
+    VM (no result in the note). The session 32 prompt does not report either. The results of `extended` and
+    `manylinux2014` in the three dispatches are not reported either.
+  - The skip category "Linux-only release tooling" (9 tests of `tests/test_release_build.py` off Linux) was added
+    by the Implementer in `89b7857`; ADR-118 item 5 / plan T-16b (b) did not list it, so it needs this record.
+  - Expected macOS pytest counts, computed from the Linux totals (266 tests in a venv with pandas, 260 without) and
+    the allowed skips (3 probes + 8 "POSIX byte file names" + 9 "Linux-only release tooling" = 20, plus 1 pandas
+    module in the pyarrow-only venv): **246 + 20, 246 + 20, 239 + 21**.
+- Decision:
+  1. **The skip category is allowed**: off Linux, exactly the 9 tests of `tests/test_release_build.py`, reason
+     "release_build.sh is Linux-only (ADR-110)". It joins the allowed list of plan T-16b (b) and ADR-53 item 4.
+     Reason: `tools/release_build.sh` is Linux-only by design (ADR-110, ADR-118); the tests test that script, not
+     oradmp.
+  2. **macOS arm64: accepted. macOS x86_64: accepted** (ADR-53 item 4), on dispatch 3 (`a726271`). Condition: the
+     T-16d commit writes the dispatch-3 figures of both macOS legs into the T-16b note's "Results" (counts per venv,
+     every skip with its reason, the nextest line, `check_dist`, the hashes, the two-build line, the durations). If
+     a figure there differs from 246 + 20 / 246 + 20 / 239 + 21 or shows a skip outside the allowed list, the
+     verdict goes back to the Architect. "Accepted" means tested; whether the wheel ships is Q-15 (ADR-122).
+  3. **Windows x86_64: "builds, not supported"**, reasons: two oradmp defects (ADR-123 items 1, 2), one undiagnosed
+     file lock (ADR-123 item 3), the checker and the gate misread Windows paths (ADR-125), the wheel is not
+     reproducible in one job (ADR-124). The successor is **T-16e** (plan).
+  4. **T-16b is closed** with these verdicts. It gets **no further dispatch**. Its open items move to **T-16d** (plan):
+     (e) the `extended` sdist check, (i) the 2014 pre-check, and the dispatch-3 record of item 2, plus the
+     `extended` and `manylinux2014` results of dispatch 3.
+  5. The record is straight on three points (carried to Reviewer 7, ADR-119 as amended):
+     - the session 31 prompt named `tools/check_dist.py`; the file is `tests/check_dist.py` (the Implementer used the
+       plan, note "Deviations" item 1);
+     - the Windows skip gate was accepted without anyone checking path separators (`tests\test_internal.py`);
+     - the first push of the dispatch fix ran before the push jobs were confirmed green; they were green afterwards.
+  6. **The commit message of `a726271`** (read this session with `git log -1 --format=%B`): the subject line is
+     intact; there is no body, only the `Co-Authored-By` line. Whether a body was lost to history expansion is the
+     owner's check. No rewrite is planned (the commit is pushed); the note's dispatch-3 record carries what the body
+     would have said.
+- Consequences: plan T-16b heading DONE (closed); T-16d and T-16e new; ADR-118 item 5 and ADR-120 item 1 amended;
+  risk 17 updated.
+- Rejected:
+  - A fourth T-16b dispatch for Windows: the Windows fixes touch `crates/oradmp-py/src/` and `python/oradmp/`,
+    which T-16b may not change without the Architect (ADR-118 item 2); they need their own task and review.
+  - Holding the macOS verdict until Windows is done: the platforms are independent, and macOS met the rule.
+  - Calling T-16b done with (e) and (i) silently dropped: (i) is an a5 condition (ADR-120 item 2).
+
+## ADR-122 a5 and the platforms: no Windows wheel; macOS only through Q-15 with two dispatches - decided (session 32); Q-15 still needs the project owner
+- Context: ADR-118 item 9 (Q-15), ADR-120, ADR-121. macOS: in-job builds identical on both legs in dispatch 1
+  (dispatches 2 and 3 were on other commits, so no cross-dispatch comparison exists). Windows: not reproducible in
+  one job, and with known defects.
+- Decision:
+  1. **a5 ships no Windows wheel.** Windows is "builds, not supported" in a5. A Windows wheel becomes possible only
+     after T-16e is accepted **and** Q-15 is answered yes **and** the Windows wheel meets Q-15's two-dispatch rule.
+  2. **macOS wheels in a5 only if** all hold before a5's version commit:
+     - Q-15 answered yes, with `CLAUDE.md` rule 8 amended by the owner and ADR-87 item 6 / ADR-92 item 1 amended by
+       an Architect session;
+     - the two separate dispatches on the candidate C give byte-identical macOS wheels (ADR-118 item 9). The in-job
+       identity of dispatch 1 is a good sign, not this proof. T-16d's second dispatch on one commit measures it
+       beforehand (plan T-16d).
+     Otherwise a5 is Linux-only: two Linux wheels and the sdist (ADR-117).
+  3. **README in a5's version commit, "Other platforms"**:
+     - macOS: if its wheel ships, it is listed under "Wheels:"; if not, one line: "macOS arm64 and x86_64: the test
+       suite passed on GitHub's macOS 15 runners for this commit's predecessor; no wheel in this release; a source
+       build needs Rust" (exact words are the Implementer's, the facts are these);
+     - Windows: "not supported in 0.1.0a5", with the known defects of ADR-123 items 1 to 3 as one line each, unless
+       T-16e's fixes joined a5 (ADR-123 item 6), in which case only the items still open.
+     - The `Operating System` classifier only for shipped platforms (ADR-120 item 5, unchanged).
+- Consequences: the plan's "Release 0.1.0a5" conditions and the order table follow this; Q-15's row gets the facts.
+- Rejected:
+  - Waiting for Windows before a5: a5 is due through T-16c (ADR-120), and Windows needs code fixes plus a
+    reproducibility answer.
+  - Shipping a Windows wheel built once: it fails Q-15's own rule, and nobody could reproduce the file.
+  - "Windows unsupported, source install recommended" as the README text: a source build would carry the same
+    defects; the README names them instead.
+
+## ADR-123 The Windows defects: what is an oradmp bug, a test assumption, Windows behaviour; task T-16e - decided (session 32)
+- Context (dispatch 3 on `a726271`; the code read this session in `crates/oradmp-py/src/errors.rs`,
+  `python/oradmp/_errors.py`, `python/oradmp/_cli.py`, `tests/test_errors.py`, `tests/test_cli.py`):
+  - `errors.rs` passes `std::io::Error::raw_os_error()` as `errno` to `make_error`, which calls
+    `OSError(errno, message)`. Rust std (`std::io::Error::last_os_error`) documents the raw OS error as `errno` on
+    Unix and `GetLastError` on Windows. Python's documentation (built-in exceptions, `OSError`): "Under Windows, if
+    the winerror constructor argument is an integer, the errno attribute is determined from the Windows error code,
+    and the errno argument is ignored"; the subclass follows the final `errno` (`ESRCH` gives `ProcessLookupError`,
+    `ENOENT` `FileNotFoundError`). So Windows error 3 (path not found) became errno 3 = `ESRCH`.
+  - `_cli.py` treats a closed stdout as `BrokenPipeError`, `errno.EPIPE` or a remembered flag, and then points fd 1
+    at the null device. Exit 120 is CPython's code when flushing stdout fails at interpreter shutdown, so on Windows
+    the failing write or flush was not recognised before `main` returned. Which exception Windows raises for a write
+    to a closed pipe is **not known here** (hypothesis only: `OSError` with `EINVAL`).
+  - `test_export_parquet_and_csv_equal_the_api_table[11g]` (pyarrow-only venv only): `PermissionError [WinError 32]`
+    on `target.unlink()`. The test runs the tool in-process, so a handle left open by oradmp's writer, by
+    `pq.read_table`, or held briefly by the OS are all possible. Not diagnosed.
+  - The pyarrow 15 failures: pyarrow's installation documentation says that on Windows a pyarrow built with
+    Clang/libc++ needs a user-provided IANA database, found by default at `%USERPROFILE%\Downloads\tzdata`
+    (`pyarrow.util.download_tzdata_on_windows()`, deprecated). pyarrow 26 passed. Which version stopped needing it
+    is not known.
+  - The nextest gap: `x_a_replacement_with_the_same_size_and_time_is_told_by_its_inode` is `#[cfg(unix)]`; `dump.rs`
+    `file_id` returns `None` off Unix. So on Windows `E-FILE-CHANGED` cannot tell a replacement with the same size and
+    modification time.
+- Decision, classification:
+  1. **Missing file gives `ProcessLookupError`: an oradmp bug.** The API promises `OSError` subclasses by `errno`
+     (ADR-11, `E-IO`). Fix: on Windows the binding hands the raw code as `winerror` (Python computes `errno`); on
+     other platforms nothing changes. The CLI's message then names the OS text through `os.strerror(e.errno)` as
+     today (ADR-77 item 4).
+  2. **Closed stdout gives exit 120: an oradmp bug.** The CLI contract (ADR-72 item 8: `head` ends quietly with 0;
+     `export -o -` ends with 3 and `[E-IO]`) holds on every platform. Fix only after the Windows leg has recorded the
+     exception class, `errno` and `winerror` of the failing write and of the failing flush (a diagnostic step or a
+     test that prints them); recognise exactly that, and flush inside `main` so that nothing is left for shutdown.
+     No broad "any `OSError` on stdout means closed".
+  3. **WinError 32: undiagnosed; first a contract test.** New test (every platform): after the in-process
+     `main(["export", ..., "-o", target])` returns, `target` can be renamed and deleted at once, for Parquet and CSV,
+     on an 11g and an 18c table. If it fails on Windows: an oradmp bug (a writer not closed on some path), fixed in
+     T-16e. If it passes: the hold is outside oradmp, and the parametrised test stops unlinking between tables
+     (one file name per table in `tmp_path`, `got` released before the next table). Never a retry loop around
+     `unlink`, which would hide an oradmp hold.
+  4. **pyarrow 15's tz database: Windows behaviour of pyarrow, documented, not skipped.** On Windows venv (i), the
+     job installs the database by pyarrow's documented route before pytest and prints that it did; the three tests
+     stay. README (when Windows is supported): one line naming the requirement and pyarrow's documentation.
+     Rejected: a skip (it hides what a Windows user with pyarrow 15 meets); raising the Windows pyarrow minimum
+     (no evidence which version).
+  5. **nextest 487 + 4 on Windows: allowed.** The `platforms` job expects 488 + 4 on macOS and **487 + 4 on
+     Windows** with the absent test named. README (when Windows is supported): one line, "on Windows a dump file
+     replaced by another of the same size and modification time is not detected". Changing `dump.rs` is not part of
+     T-16e (a later record, if a user needs it).
+  6. **T-16e** (plan) carries items 1 to 5, ADR-124 and ADR-125. It **does not block a5**. It joins a5 only if its
+     commit is reviewed (Reviewer 8; T-16e starts after Reviewer 7, rule 7) with no blocking finding before a5's
+     version commit; otherwise a6. Items 1 and 2 change `crates/oradmp-py/src/` and
+     `python/oradmp/`; `crates/oradmp-core/src/` does not change.
+- Consequences: plan T-16e; ADR-53 item 4's allowed list gains item 5; README lines in ADR-122 item 3.
+- Rejected: calling items 1 and 2 "Windows behaviour to document": the API and the CLI promise one behaviour, and
+  the fix is small and local.
+
+## ADR-124 Windows reproducibility: one attempt in T-16e, the same evidence rule - decided (session 32)
+- Context: dispatch 3: two builds in one job, same commit, same `SOURCE_DATE_EPOCH`: identical sdists; wheels differ
+  only in `oradmp/_core.pyd` (`2795a1c6...` against `b858dd76...`, equal size 13,145,600) and `RECORD`. macOS was
+  identical in one job. A hypothesis, untested: the MSVC linker writes a time stamp unless given `/Brepro`. `/Brepro`
+  is not in the Microsoft linker documentation read so far; it is a lead. rustc passes linker arguments with
+  `-C link-arg=` (rustc book, codegen options).
+- Decision:
+  1. T-16e makes **one attempt**: on the Windows leg only, `ci_platform_build.sh` adds `-C link-arg=/Brepro` to
+     `RUSTFLAGS`, and the two-build line decides. The summary also prints whether `_core.pyd` contains the build-root
+     string (`D:/a/_temp`, `D:\a\_temp`, either case) or a `.pdb` path, as counts, not text.
+  2. **The evidence rule does not change for Windows**: a non-Linux wheel ships only under Q-15's rule (two separate
+     dispatches on the tagged commit, byte-identical). If the attempt fails, Windows wheels are "not reproducible";
+     Windows stays without a wheel, and the next step needs an Architect record with the differing byte ranges
+     (offsets only).
+  3. Linux and macOS flags do not change.
+- Rejected:
+  - A separate Windows rule (one build, its hash attested by the owner): no second party could check the file.
+  - Several flag experiments in one task: one hypothesis, one test; more needs evidence of where the bytes differ.
+
+## ADR-125 The checker and the gate on Windows paths; `.gitattributes` for scripts - decided (session 32; item 3 is the owner's file)
+- Context: `tests/check_dist.py` `build_root_hits` compares the captured `path+file://` path with `<root>/src/`;
+  Cargo writes a Windows path as `path+file:///D:/...`, so the captured text starts `/D:/` (the log showed byte
+  offsets, so the exact form is unconfirmed). `tools/ci_platform_venvs.sh` counts probe skips by matching
+  `tests/test_internal.py`, while Windows pytest prints `tests\test_internal.py`. The line-ending probe found 110 CR
+  bytes (dispatch 1) and 122 CR bytes (dispatch 3) in `tools/ci_platform_venvs.sh` under `core.autocrlf=true`; the
+  fixtures stayed byte-identical. `git ls-files --eol '*.sh'` (this session): all 33 scripts `i/lf w/lf`, no attribute.
+- Decision:
+  1. **`tests/check_dist.py`: approved**, Implementer, in T-16e. In `build_root_hits` only: strip exactly one leading
+     `/` when it is followed by an ASCII letter and `:`, then compare as today. Tests: a `path+file:///D:/...` line
+     below the root gives no hit; one outside the root gives a hit; a POSIX line gives the same result as before.
+     It is a release gate on Linux: the T-16e note shows that the `wheel` job's `check_dist` output on the T-16e commit
+     equals the one before, and `checks` runs the new unit tests. Before the change, the Windows leg prints the six
+     captured paths (escaped, truncated at the root) so that the exact form is confirmed.
+  2. **`tools/ci_platform_venvs.sh`: approved**, Implementer, in T-16e: the skip lines are matched after replacing
+     `\` by `/` in the test path; a self-test feeds the gate one Linux-form and one Windows-form `-rs` output and
+     checks the counts. Every category matches on the path or the reason consistently, as written in the script's
+     header.
+  3. **`.gitattributes` (owner's file): recommended** to add `*.sh text eol=lf`. ADR-52 rejected `eol=lf` for test
+     data because it normalises on commit; the scripts are not test data, all 33 are stored LF already, so no
+     renormalisation diff is expected (the owner checks `git status` and `git ls-files --eol '*.sh'`). The workflow's
+     `core.autocrlf=false` stays: it protects every other text file. After the owner's change, T-16e turns the
+     probe into a gate: 0 CR bytes in every `*.sh` of the `autocrlf=true` clone, fixtures byte-identical.
+- Rejected: weakening the SBOM rule on Windows (ADR-118 item 5 forbids it); matching skips on the reason text only
+  (the probes' reasons are not unique to them).
+
+## Amendments (session 32)
+- ADR-118 item 5: the allowed skips gain "Linux-only release tooling" (ADR-121 item 1); the Windows nextest count is
+  487 + 4 (ADR-123 item 5).
+- ADR-119 item 1: Reviewer 7 runs after T-16d's commit is pushed, reads the tree at that commit, and carries the
+  three record points of ADR-121 item 5 and the commit-message point of item 6.
+- ADR-120 item 1: "T-16b done" is replaced by "T-16b closed (ADR-121) and **T-16d** done". T-16e is not an a5
+  condition (ADR-123 item 6).
+- ADR-53 item 4: the decision records that allow a platform skip now include ADR-121 item 1 and ADR-123 item 5.

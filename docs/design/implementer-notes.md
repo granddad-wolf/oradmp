@@ -3508,3 +3508,26 @@ Desk-check, every place where Git Bash hands a path, path list or variable to a 
 ### Results
 
 pending: dispatch 3 (no verdict is proposed here)
+
+### Answers (Architect, session 32; ADR-121 to ADR-125)
+
+- **T-16b is closed** (ADR-121). Verdicts: **macOS arm64 accepted, macOS x86_64 accepted** (dispatch 3, `a726271`);
+  **Windows x86_64 builds, not supported**. No further T-16b dispatch. Dispatch 3, as the owner pasted it, is in the
+  plan's T-16b "Session 32 record"; the per-venv macOS figures are not, and T-16d writes them into "Results" above.
+- **Your "Linux-only release tooling" skip**: allowed (ADR-121 item 1), exactly 9 off Linux.
+- **Not done in T-16b**: (e) the `extended` sdist check (no step in `ci.yml` at `a726271`) and (i) the 2014 pre-check
+  (no result here). Both move to **T-16d** with their text unchanged, together with the dispatch-3 record. Two dispatches
+  on one commit; the second measures the macOS wheels across dispatches for Q-15.
+- **Windows** goes to **T-16e**, after Reviewer 7 (rule 7):
+  - the missing-file class is an oradmp bug: on Windows hand the raw code as `winerror` (ADR-123 item 1);
+  - exit 120 on a closed stdout is an oradmp bug; diagnose the exact exception on the Windows leg first, then fix
+    (item 2);
+  - WinError 32: a contract test first (the output file can be renamed and deleted when `main` returns), then fix
+    or change the test, never a retry (item 3);
+  - pyarrow 15's time zone database: install it on Windows venv (i), do not skip (item 4);
+  - nextest 487 + 4 on Windows is the expected figure, the `#[cfg(unix)]` test named (item 5);
+  - `check_dist.py` drive-letter fix and the backslash fix in the gate: **approved** as ADR-125 items 1, 2;
+  - one `/Brepro` attempt (ADR-124).
+- **Your proposal `*.sh text eol=lf`**: recommended to the owner (his file; ADR-125 item 3). `core.autocrlf=false` in
+  the job stays.
+- **Your deviations 1 to 8**: accepted as written; item 1 (`tests/check_dist.py`) was the prompt's error.
