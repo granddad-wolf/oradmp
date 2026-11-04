@@ -4,7 +4,8 @@
 #                  ruff, mypy, pytest
 #   wheel          every push and dispatch: tools/release_build.sh <commit>, then the wheel in three fresh venvs
 #   fuzz-check     every push and dispatch: cargo check --locked in fuzz/ with its pinned nightly (ADR-106 item 1)
-#   extended       workflow_dispatch only: fuzz seeds, three fuzz targets, long property runs, fuzz clippy, bench report
+#   extended       workflow_dispatch only: fuzz seeds, three fuzz targets, long property runs, fuzz clippy, bench report,
+#                  the sdist check (build, source install in a 3.11 venv, --version, survey; T-16d)
 #   manylinux2014  workflow_dispatch only: the 2014 wheel built by tools/release_build.sh --manylinux 2014, then installed
 #                  and tested on glibc 2.17 (PyPA image), glibc 2.28 (Rocky 8) and the runner (T-16c, ADR-115; not shipped)
 #
@@ -375,6 +376,13 @@ jobs:
             echo "checksums ok: $d"
           done
 
+      # actions/setup-python v7.1.0 (T-16d: the sdist check below needs uv and a Python 3.11)
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0
+        with:
+          python-version: |
+            3.11
+            3.x
+
       - name: Rust toolchains (root pin; the fuzz nightly with clippy) and cargo-fuzz
         run: |
           rustup show active-toolchain || rustup toolchain install
@@ -419,6 +427,53 @@ jobs:
       - name: Benchmark report (cargo bench --bench decode; a report only, never compared with benchmarks.md)
         run: cargo bench -p oradmp-core --bench decode 2>&1 | tee "$RUNNER_TEMP/logs/bench.log"
 
+      # T-16d, plan T-16b (e), ADR-112 item 5. The root is /var/tmp/oradmp-sdist and not below runner.temp: the script refuses a
+      # root inside the home directory or with the user name as a component, and RUNNER_TEMP is /home/runner/work/_temp.
+      # Without --release (any root is accepted). The sdist does not depend on the root; its hash must equal the `wheel` job's
+      # of the same commit (the job summary prints both; the comparison is made by the reader of the two summaries).
+      - name: uv for the sdist check (the version of the wheel job)
+        if: ${{ !cancelled() }}
+        run: |
+          python -m pip install --quiet uv==0.12.21
+          uv --version
+
+      - name: sdist check 1 of 2 - build the pushed commit (tools/release_build.sh, no --release); the sdist hash
+        if: ${{ !cancelled() }}
+        run: |
+          root=/var/tmp/oradmp-sdist
+          test ! -e "$root"
+          ORADMP_BUILD_ROOT="$root" bash tools/release_build.sh "$GITHUB_SHA" 2>&1 | tee "$RUNNER_TEMP/logs/sdist-build.log"
+          grep -q '^check_dist: ok' "$RUNNER_TEMP/logs/sdist-build.log"
+          test "$(ls "$root"/dist/oradmp-*.tar.gz | wc -l)" = 1
+          (cd "$root/dist" && sha256sum -- oradmp-*.tar.gz) | tee "$RUNNER_TEMP/logs/sdist-sha256.txt"
+          test "$(wc -l < "$RUNNER_TEMP/logs/sdist-sha256.txt")" = 1
+
+      - name: sdist check 2 of 2 - install the .tar.gz into a fresh Python 3.11 venv (a source build); --version; survey
+        if: ${{ !cancelled() }}
+        run: |
+          root=/var/tmp/oradmp-sdist
+          sdist="$(ls "$root"/dist/oradmp-*.tar.gz)"
+          raw="$(awk -F'"' '/^version *=/ { print $2; exit }' Cargo.toml)"
+          version="$(printf '%s' "$raw" | sed -e 's/-alpha\./a/' -e 's/-beta\./b/' -e 's/-rc\./rc/')"
+          echo "version at this commit: $raw -> $version"
+          venv="$RUNNER_TEMP/venv-sdist"
+          uv venv --quiet --python 3.11 "$venv"
+          uv pip install --python "$venv/bin/python" "$sdist" 2>&1 | tee "$RUNNER_TEMP/logs/sdist-install.log"
+          # run from a neutral folder: the package under test is the installed one
+          mkdir -p "$RUNNER_TEMP/sdist-survey"
+          cd "$RUNNER_TEMP/sdist-survey"
+          case "$("$venv/bin/python" -c 'import oradmp; print(oradmp.__file__)')" in
+            */site-packages/oradmp/*) ;;
+            *) echo "oradmp is not the installed package" >&2; exit 1 ;;
+          esac
+          out="$("$venv/bin/oradmp" --version)"
+          echo "$out" | tee "$RUNNER_TEMP/logs/sdist-version.txt"
+          test "$out" = "oradmp $version"
+          cp "$GITHUB_WORKSPACE/corpus/fixtures/18c/t_text_exp_18c.dmp" ./t_text_exp_18c.dmp
+          "$venv/bin/python" -m oradmp survey --no-names ./t_text_exp_18c.dmp > "$RUNNER_TEMP/logs/sdist-survey.log"
+          test -s "$RUNNER_TEMP/logs/sdist-survey.log"
+          echo "survey exit 0; $(wc -l < "$RUNNER_TEMP/logs/sdist-survey.log") lines"
+
       - name: Job summary
         if: always()
         run: |
@@ -437,6 +492,8 @@ jobs:
             echo "- t14_damage (PROPTEST_CASES=10000): $(grep -h 'Summary' "$L/t14.log" 2>/dev/null | sed 's/^ *//')"
             echo "- t17_synth (PROPTEST_CASES=2000): $(grep -h 'Summary' "$L/t17.log" 2>/dev/null | sed 's/^ *//')"
             echo "- fuzz clippy: $(tail -1 "$L/fuzz-clippy.log" 2>/dev/null)"
+            echo "- sdist check (T-16d): sha256 $(cat "$L/sdist-sha256.txt" 2>/dev/null || echo 'NOT BUILT'); must equal the wheel job's sdist hash of this commit"
+            echo "  - version of the sdist install: $(cat "$L/sdist-version.txt" 2>/dev/null || echo 'NOT RUN'); survey --no-names: $(test -s "$L/sdist-survey.log" && echo "ran, $(wc -l < "$L/sdist-survey.log") lines" || echo 'NOT RUN')"
             echo "- bench (report only):"
             echo '```'
             grep -E -B1 'time: ' "$L/bench.log" 2>/dev/null | head -80 || true

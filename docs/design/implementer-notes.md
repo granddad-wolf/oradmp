@@ -3531,3 +3531,79 @@ pending: dispatch 3 (no verdict is proposed here)
 - **Your proposal `*.sh text eol=lf`**: recommended to the owner (his file; ADR-125 item 3). `core.autocrlf=false` in
   the job stays.
 - **Your deviations 1 to 8**: accepted as written; item 1 (`tests/check_dist.py`) was the prompt's error.
+
+## T-16d note (Implementer): the `extended` sdist check, the 2014 pre-check, the dispatch-3 record (plan "T-16d"; ADR-121 to ADR-125)
+
+**Results: pending.** No verdict is proposed here. Nothing below was run on a runner or on the owner's VM; only the local checks of the report were run.
+
+### What changed
+
+- `.github/workflows/ci.yml`, job `extended` only (still `workflow_dispatch` only), plus two header comment lines:
+  - `actions/setup-python` at the SHA the other jobs use (v7.1.0, `6d4fd22b...`, versions `3.11` and `3.x`), placed before the Rust step;
+  - step "uv for the sdist check": `python -m pip install uv==0.12.21` (the pin of the `wheel` job; `release_build.sh` needs `uv`, the runner has none);
+  - step "sdist check 1 of 2": `ORADMP_BUILD_ROOT=/var/tmp/oradmp-sdist bash tools/release_build.sh "$GITHUB_SHA"` (no `--release`), through `tee`; then `grep -q '^check_dist: ok'`, exactly one `.tar.gz`, and its `sha256sum` line into `$RUNNER_TEMP/logs/sdist-sha256.txt` (the line count is tested to be 1);
+  - step "sdist check 2 of 2": `uv venv --python 3.11` (fresh), `uv pip install <the .tar.gz>` (a source build: no `--only-binary`, the sdist is the only candidate), a check that `oradmp.__file__` is below `site-packages`, `oradmp --version` equal to `oradmp <version of Cargo.toml>` (same sed rule as the `wheel` job), a copy of `corpus/fixtures/18c/t_text_exp_18c.dmp` into a neutral folder, and `python -m oradmp survey --no-names <copy>` with its output to a file that must be non-empty;
+  - both steps have `if: ${{ !cancelled() }}` so a failed fuzz or bench step does not hide them; they sit before "Job summary"; the summary gets two lines (sdist sha256, version, survey line count; "NOT BUILT" / "NOT RUN" when a file is absent).
+- How it fails visibly: the file default is `bash --noprofile --norc -eo pipefail` (no `shell:` on any step), so a failing `release_build.sh` in front of `| tee`, a failing `grep -q`/`test`, a non-zero `uv pip install`, `--version` mismatch, or a non-zero `survey` fails the step and the job red. The summary cannot show a hash that was not built (it says NOT BUILT). The comparison "sdist hash equals the `wheel` job's" is **not automatic**: the two jobs are separate and share no file, so the reader compares the `extended` summary line with the `wheel` job's `SHA256SUMS` block of the same push or dispatch commit. I did not add an artifact or a hard-coded hash for it (neither is allowed or stable).
+- **Deviation from plan T-16b (e)** ("at a root under `runner.temp`"): the root is `/var/tmp/oradmp-sdist`. `release_build.sh` refuses a root inside `$HOME` and a root with the user name as a path component; on a GitHub-hosted Linux runner `RUNNER_TEMP` is `/home/runner/work/_temp`, which is both. I did not change the script (told not to). Not run on a runner, so I cannot prove the refusal there, but it follows from the script's two `fail` branches. The Architect should confirm the root.
+- Not changed: `checks`, `wheel`, `fuzz-check`, `manylinux2014`, `platforms`, `tools/*`, `tests/*`, `crates/`, `python/`, `fuzz/`.
+- Could not check: the sdist source build on a runner (maturin's build isolation needs the network and `rustc` on `PATH`, both present in the `wheel` job; the sdist's `rust-toolchain.toml` handling in a source build is unknown to me); the install time and the 90 minute job limit with the added steps (a full release build of the wheel is part of step 1); that `t_text_exp_18c.dmp` survey output is non-empty (it is in the repository tests, not here).
+
+### Item 1: the macOS dispatch-3 record - input missing
+
+The owner's pasted job summaries of the two macOS legs (arm64, x86_64, commit `a726271`) were **not in this session's input**, and no `extended` or `manylinux2014` summary either. I did not invent figures. The record below is a template to fill; expected values come from the plan ("Session 32 record", `platforms` allowed skips).
+
+| per leg | macOS arm64 (`macos-15`) | macOS x86_64 (`macos-15-intel`) | expected |
+|---|---|---|---|
+| runner / image | not pasted | not pasted | |
+| wheel tag and name | not pasted | not pasted | `cp311-abi3-macosx_*` |
+| wheel SHA-256 | not pasted | not pasted | dispatch 1 had `ec57e7b7...` (arm64), `349ceb60...` (x86_64) |
+| sdist SHA-256 | not pasted | not pasted | dispatch 1 had `9d32534c...` |
+| two builds in the job | not pasted | not pasted | identical (dispatch 1) |
+| nextest | not pasted | not pasted | 488 passed, 4 skipped |
+| `check_dist` | not pasted | not pasted | `check_dist: ok` |
+| pytest py311-pa15-pd223 | not pasted | not pasted | 246 passed + 20 skipped |
+| pytest pynewest-latest | not pasted | not pasted | 246 passed + 20 skipped |
+| pytest py311-pyarrow-only | not pasted | not pasted | 239 passed + 21 skipped |
+| skips per venv | not pasted | not pasted | 9 "Linux-only release tooling"; 8 "POSIX byte file names"; 3 probes; in the last venv also the pandas file (`tests/test_consumers.py`); no failure |
+| durations | not pasted | not pasted | |
+
+Mismatches with the expected counts: cannot be stated (no input). Windows figures: as in the plan's "Session 32 record" (unchanged, not copied again here). `extended` and `manylinux2014` of the three dispatches: not pasted.
+
+### Item 3: the 2014 pre-check (owner's procedure; ADR-117 item 2; not run)
+
+Needs: the machine alone (no Oracle container, no other build), `/var/tmp/oradmp-release` absent. Which commit: the plan (T-16b (i)) names `94b6368`, with the expected wheel `4327e1a72817fdb7f807da800cf2b32eddc4f41d6e9fc3418b84b1494c7c5e44` and sdist `0e2dd8866e5fb2b83bdad54a51559c5a5e5ed753461d7dadfef55208c91f3755`. I cannot see where those two hashes came from (CI summary of `94b6368`, presumably). The release build depends on the commit's tree, so the VM and CI must use the same commit. Use `94b6368` if the owner has CI's 2014 hash for it; otherwise use the T-16d code commit `<C>`, whose dispatch also runs `manylinux2014`.
+
+1. Get CI's hash: in the Actions run of `workflow_dispatch` on commit `<C>`, open the `manylinux2014` job summary; copy its block "SHA-256 of the built files" and the block "members of the wheel and of the sdist" into `/var/tmp/oradmp-tmp/ci2014-sums.txt` and `/var/tmp/oradmp-tmp/ci2014-members.txt`. (If the commit has no dispatch yet, dispatch first. A push alone does not run the job.)
+2. `test ! -e /var/tmp/oradmp-release || echo "exists: stop"` (if it exists, stop and ask).
+3. `cd /home/max/p/oradmp && git status --short` (clean; the script builds only the commit, not the tree) and `git cat-file -t <C>` (must print `commit`).
+4. `CARGO_BUILD_JOBS=2 TMPDIR=/var/tmp/oradmp-tmp bash tools/release_build.sh <C> --twice --release --manylinux 2014 2>&1 | tee /var/tmp/oradmp-tmp/vm2014.log`
+5. `grep -E '^(check_dist|manylinux|release root|identical|DIFFERENT|reproducible|not reproducible)' /var/tmp/oradmp-tmp/vm2014.log` - expect `release root: canonical`, `manylinux: 2014`, `check_dist: ok` twice, two `identical:` lines.
+6. Compare: `cat /var/tmp/oradmp-release/dist/SHA256SUMS` against the wheel line of `ci2014-sums.txt` (the hash is the first field; the file names must be equal too): `grep '\.whl' /var/tmp/oradmp-release/dist/SHA256SUMS | cut -d' ' -f1` and the same for the CI file. Same for the `.tar.gz` (the sdist may also be compared with the `wheel` job's of the same commit).
+7. Members: `python3 -I - /var/tmp/oradmp-release/dist <<'PY' | sort > /var/tmp/oradmp-tmp/vm2014-members.txt` with the member loop of the `Job summary` step in `ci.yml` (it prints `sha256 size name`), then `sort /var/tmp/oradmp-tmp/ci2014-members.txt | diff - /var/tmp/oradmp-tmp/vm2014-members.txt`. (Do not use `tools/` code; the loop is in the workflow.)
+8. Pass: the two builds are identical, the wheel and sdist hashes equal CI's, `diff` is empty. Then `mv /var/tmp/oradmp-release /var/tmp/oradmp-release-t16d-2014`, put its `SHA256SUMS` in this note, delete the folder.
+9. A mismatch: the member listing (sha256, size, name) of both sides goes into this note, with the `diff`. What it means: the 2014 wheel is not reproducible between the VM and CI (the two toolchain stores or the zig/glibc setup differ), so a wheel built on the VM must not be released as "the CI-tested one" (ADR-117). Stop the 2014 part only; the owner and the Architect decide. Which member differs (the `.so`, the SBOM, `RECORD`) is the first thing to read. I propose no verdict.
+
+No helper script was written (the task text does not ask for one).
+
+### Item 4: the two dispatches of `platforms` (owner's procedure)
+
+- Commit: the T-16d code commit `<C>`, pushed. Both dispatches are on `<C>` (same ref, no new push between them). At most two dispatches. (The `extended`, `manylinux2014` and `platforms` jobs all run in each dispatch.)
+- Dispatch 1: Actions, workflow CI, "Run workflow", branch `master`. Wait for the jobs. Paste back, for each of `extended`, `manylinux2014`, `platforms` macOS arm64, `platforms` macOS x86_64, `platforms` Windows (as it is, red as known): the job summary text, and the conclusion of each job.
+- Dispatch 2: after dispatch 1 has finished, run the workflow again on the same commit. Paste the two macOS summaries (and Windows if wanted). It is a measurement for Q-15, not a re-test.
+- Compare per leg (wheel only; the sdist is also worth a line): save the "SHA-256 of the built files" block of each leg of each dispatch as `d1-arm64.txt`, `d1-x86_64.txt`, `d2-arm64.txt`, `d2-x86_64.txt`, then:
+
+```
+for leg in arm64 x86_64; do
+  a="$(grep '\.whl$' d1-$leg.txt)"; b="$(grep '\.whl$' d2-$leg.txt)"
+  if [ -n "$a" ] && [ "$a" = "$b" ]; then echo "$leg wheel: identical"; else echo "$leg wheel: differs (or missing)"; fi
+done
+```
+
+  The whole line (hash and file name) is compared, so a wheel with another tag counts as different. `identical` or `differs` per leg is the note line (ADR-122 item 2). If differs, the two member lists of the legs say which member (`_core` library, `RECORD`) differs; paste them.
+- Hashes of the two builds inside one job are separate (the "two builds" block); they are not the cross-dispatch comparison.
+
+### Files changed
+
+- `.github/workflows/ci.yml` (job `extended`; header comment)
+- `docs/design/implementer-notes.md` (this section)
