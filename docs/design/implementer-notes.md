@@ -3607,3 +3607,35 @@ done
 
 - `.github/workflows/ci.yml` (job `extended`; header comment)
 - `docs/design/implementer-notes.md` (this section)
+
+### T-16d results (owner's records, commit `9a9bc84`; supersedes the item 1 template above)
+
+Facts only, recorded by the owner's assistant from the job summaries the owner pasted. No verdict; that is for the Architect.
+
+**Dispatches.** Dispatch 1 and dispatch 2 on `9a9bc84` (`origin/master` was `9a9bc84` at the start of dispatch 2; nothing was pushed between them).
+
+| leg | dispatch 1 | dispatch 2 |
+|---|---|---|
+| `extended` (with the sdist check) | green, 824 s | green |
+| `manylinux2014` | green | green |
+| macOS x86_64 (`macos-15-intel`) | green, 930 s | green, 899 s |
+| macOS arm64 (`macos-15`) | cancelled, no summary (cause unknown) | no summary: "job was not acquired by Runner of type hosted even after multiple attempts", internal server error, notice "capacity constraints, jobs targeting macOS arm64 runners may experience longer queue times" |
+| Windows x86_64 | red, known failures | red, known failures |
+
+A "Re-run this job" of the dispatch 1 arm64 job was tried three times; each stayed at "Job is waiting for a hosted runner to come online".
+
+**macOS x86_64, both dispatches.** Runner `macos-15-intel`, image `macos15 20260824.0482.1`; rustc 1.99.0, maturin 1.15.0, uv 0.12.21, default Python 3.14.7; `SOURCE_DATE_EPOCH` 1793797029; build root `/private/var/tmp/oradmp-platforms`.
+- Wheel `oradmp-0.1.0a4-cp311-abi3-macosx_10_12_x86_64.whl` `d837ac772a6f811457c2cf7775fa040e205ca27fbb88741a49ba130bb106c92d`, identical in both dispatches. Sdist `bd274adc13e2e2ce2842a99a79351e9ce69bde353754582d7755834460f915a7`, identical in both dispatches and equal to the Linux and Windows sdists.
+- The summaries of the two dispatches are identical from the first line to the end of the member list (all 16 wheel members and all sdist members have the same hashes and sizes, `_core.abi3.so` `70edd528...` 14084728 bytes), apart from timings.
+- Two builds inside each job: wheel identical, sdist identical.
+- `check_dist`: ok. nextest: 488 passed, 4 skipped (dispatch 1 in 68.6 s, dispatch 2 in 70.2 s).
+- pytest: py311 pyarrow 15.0.2 + pandas 2.2.3: 246 passed, 20 skipped; py311 pyarrow-only (26.0.1): 239 passed, 21 skipped; py3.14.7 newest (pyarrow 26.0.1, pandas 3.1.0): 246 passed, 20 skipped.
+- Skips in every venv: 3 probes, 8 POSIX byte file names, 9 Linux-only release tooling (the pyarrow-only venv also skips the pandas consumer test). Expected counts matched. Mismatches: none.
+
+**macOS arm64.** No hash from either dispatch, so there is no arm64 cross-run comparison.
+
+**2014 pre-check (ADR-117), owner's VM (`debian137`), commit `9a9bc84`.** `tools/release_build.sh 9a9bc84 --manylinux 2014` with `/var/tmp/oradmp-release` absent beforehand: `check_dist: ok`; rustc 1.99.0, maturin 1.15.0, zig 0.17.0; epoch 1793797029.
+- Wheel `oradmp-0.1.0a4-cp311-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl` `f8517e34a576d0cb9538b7c179c876b84b7324e4c5a02d90edd63309d94bd623`.
+- Sdist `bd274adc13e2e2ce2842a99a79351e9ce69bde353754582d7755834460f915a7`.
+- Both equal the hashes printed by the CI `manylinux2014` job in dispatch 1 and dispatch 2. Log: the owner's `~/release-2014-9a9bc84.log`.
+- `manylinux2014` counts in dispatch 2: glibc 2.17 260+6, 260+6, 253+7; Rocky 8 260+6, 260+6, 253+7; runner 263+3, 263+3, 256+4.
