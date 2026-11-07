@@ -1,13 +1,29 @@
 # Legacy EXP reader: implementation plan
 
 Architect session 1, 2026-10-07; session 2, 2026-10-14; sessions 3 and 4, 2026-10-15; sessions 5 and
-6, 2026-10-16; sessions 7 to 13, 2026-10-17; sessions 14 and 15, 2026-10-18; sessions 16 and 17, 2026-10-21; session 18, 2026-10-22; sessions 19 to 23, 2026-10-24; sessions 24 and 25, 2026-10-25; sessions 26 and 27, 2026-10-29; session 28, 2026-10-30; sessions 29 to 32, 2026-10-31. Tasks for the
+6, 2026-10-16; sessions 7 to 13, 2026-10-17; sessions 14 and 15, 2026-10-18; sessions 16 and 17, 2026-10-21; session 18, 2026-10-22; sessions 19 to 23, 2026-10-24; sessions 24 and 25, 2026-10-25; sessions 26 and 27, 2026-10-29; session 28, 2026-10-30; sessions 29 to 32, 2026-10-31; session 33, 2026-11-04. Tasks for the
 Implementer, in order; each is meant for one session. "Rules" are those of
 `docs/formats/exp_reader_rules.md` (v3.4; v3.5 from session 8; v3.6 from session 17; v3.7 from session 24; v3.9 from session 25); "arch n" is a section of `exp-reader-architecture.md`. Every
 task ends with `cargo fmt`, `cargo clippy -- -D warnings` and `cargo nextest run` green (`CLAUDE.md`,
 definition of done; in the public repository the same checks are listed in `CONTRIBUTING.md`, "Development setup")
 and adds no `unsafe` to the core. Commit hashes cited before session 26 name commits of the private archive
 (`HISTORY.md`, ADR-105).
+
+## Changes in session 33
+
+- **T-16d: DONE, accepted** (`9a9bc84`, record `aae02c6`; ADR-126). "Session 33 record" under T-16d.
+- **The sdist root** `/var/tmp/oradmp-sdist` is accepted.
+- **The 2014 pre-check passed** (VM = CI in both dispatches).
+- **macOS x86_64**: identical across two dispatches.
+- **arm64**: no run acquired, so no record.
+- **New rule**: archive hashes are compared only within one commit (ADR-126 item 7).
+- **a5**: conditions restated (ADR-127 item 5). Session 33 block in "Release 0.1.0a5". New **T-16f** only if Q-15 is
+  answered "yes" (ADR-127 item 2).
+- **T-16e**: confirmed, plus item 13 (ADR-129).
+- **Reviewer 7**: starts now, with record points (f) to (i).
+- **New: the DuckDB line** (ADR-130, `duckdb-extension.md`): T-22 (a spike, any time), and after the a5 tag T-23 to
+  T-27 with Reviewer 9.
+- New order table (session 33); the session 32 table becomes history.
 
 ## Changes in session 32
 
@@ -2162,7 +2178,7 @@ record with full hashes. The billed-minutes figure: O-23 (b).
     the Windows skip gate was accepted without a path-separator check; the dispatch fix was pushed before the push jobs
     were confirmed green (green afterwards); `a726271`'s message has its subject and no body; no rewrite.
 
-### T-16d The T-16b remainder: the `extended` sdist check, the 2014 pre-check, the dispatch-3 record (session 32; ADR-112 item 5, ADR-117 item 2, ADR-121) - next; blocks a5
+### T-16d The T-16b remainder: the `extended` sdist check, the 2014 pre-check, the dispatch-3 record (session 32; ADR-112 item 5, ADR-117 item 2, ADR-121) - DONE, **accepted** (2026-11-04, `9a9bc84`, record `aae02c6`; two dispatches; ADR-126); "Session 33 record" at the end of this task
 
 - **Goal**: finish what T-16b left, so that Reviewer 7 and a5 have their inputs. No platform work.
 - **Inputs**: plan T-16b "Session 31" items (e) and (i) (their text is unchanged and binding); ADR-121; the owner's pasted
@@ -2186,6 +2202,36 @@ record with full hashes. The billed-minutes figure: O-23 (b).
 - **Touches**: `ci.yml` (`extended` only), the note. **Model: Sonnet.** Reviewed in Reviewer 7.
 - **Needs from the owner**: commit, push, up to two dispatches on one commit, the pasted summaries; the machine alone
   for (3).
+- **Session 33 record** (ADR-126). The facts are the owner's records in the T-16d note, "T-16d results".
+  - **Push jobs** on `9a9bc84` and `aae02c6`: green. nextest 488 + 4, pytest 266, `wheel` venvs 263 + 3, 256 + 4,
+    263 + 3.
+  - **(2) The `extended` sdist check: accepted.**
+    - Green in both dispatches (824 s in dispatch 1).
+    - The sdist hash equals the `wheel` job's.
+    - It installs as `oradmp 0.1.0a4`, and `survey --no-names` runs.
+    - Fuzz read, walk and values: 0 findings. `t14_damage` 5 passed. `t17_synth` 30 passed + 1 skipped.
+    - Root `/var/tmp/oradmp-sdist`: accepted; it amends T-16b (e).
+  - **(3) The 2014 pre-check: passed.**
+    - The VM (`debian137`) built `9a9bc84 --manylinux 2014` at the default (canonical) root.
+    - Wheel `f8517e34a576d0cb9538b7c179c876b84b7324e4c5a02d90edd63309d94bd623`, sdist
+      `bd274adc13e2e2ce2842a99a79351e9ce69bde353754582d7755834460f915a7`. Both equal the `manylinux2014` job's in both
+      dispatches.
+    - Deviations accepted (ADR-126 item 3): the commit was not `94b6368`; the build ran without `--twice --release`;
+      the root move and deletion are not recorded (owner action).
+  - **`manylinux2014`**: green in both dispatches, with identical hashes. glibc 2.17: 260 + 6, 260 + 6, 253 + 7.
+    Rocky 8: the same. Runner: 263 + 3, 263 + 3, 256 + 4.
+  - **(4) macOS x86_64 `macos-15-intel`: accepted, and identical across two dispatches.**
+    - Wheel `d837ac772a6f811457c2cf7775fa040e205ca27fbb88741a49ba130bb106c92d`. Every member is the same in both
+      dispatches, and the two builds in each job are identical.
+    - nextest 488 + 4. pytest 246 + 20 (py311, pyarrow 15.0.2, pandas 2.2.3), 239 + 21 (pyarrow-only 26.0.1),
+      246 + 20 (3.14.7, newest). Allowed skips only.
+  - **macOS arm64 `macos-15`: no run.** Dispatch 1 was cancelled. Dispatch 2 was "not acquired". Three re-run attempts
+    waited for a runner. No hash and no per-venv record exist; ADR-121 item 2 stays open for arm64 (ADR-126 item 5).
+  - **Windows**: red with the known failures. The sdist equals the Linux one; the in-job wheels differ in `_core.pyd`
+    and `RECORD`.
+  - **The sdist hash follows the commit.** At `aae02c6` the `wheel` job shows the same `_core.abi3.so` `d0efa2df...` but
+    another sdist and another 2_28 wheel. Cause: `SOURCE_DATE_EPOCH` is the commit time (`release_build.sh` lines 121,
+    130). Rule: ADR-126 item 7.
 
 ### T-16e Windows: the oradmp defects, the checker, the gate, one reproducibility attempt (session 32; ADR-123 to ADR-125) - after Reviewer 7; does not block a5
 
@@ -2219,12 +2265,47 @@ record with full hashes. The billed-minutes figure: O-23 (b).
   11. **Verdict** for Windows in the note's first lines: "accepted" or "builds, not supported: <what still fails>".
       Whether its wheel ships stays Q-15 and ADR-124 item 2.
   12. Checks as T-16b (g) and (h). `crates/oradmp-core/src/` does not change.
+  13. **Session 33 (ADR-129 item 2)**: "the `wheel` job's `check_dist` output equals the previous one" (item 6) compares
+      the output text and the member list (content hash and size per member). It never compares archive hashes, because
+      T-16e's commit has another commit time (ADR-126 item 7).
 - **Dispatch budget**: at most **three** on T-16e commits; the first carries the diagnostics of items 2 and 6.
 - **Touches**: `crates/oradmp-py/src/errors.rs`, `python/oradmp/_cli.py` (and `_errors.py` if needed),
   `tests/test_errors.py`, `tests/test_cli.py`, `tests/check_dist.py` and its tests, `tools/ci_platform_build.sh`,
   `tools/ci_platform_venvs.sh`, `ci.yml` (`platforms` only), the note. **Model: Sonnet.** Starts after Reviewer 7 (rule 7;
   a Reviewer 7 finding on the `platforms` job or the gate is folded in). Reviewed in **Reviewer 8**. It joins a5 only
   under ADR-123 item 6.
+
+### T-16f macOS release wheels: the artifact step and the two-run measurement (session 33; ADR-127 item 2, ADR-128) - **only if Q-15 is answered "yes"**; before a5's version commit
+
+- **Goal**: a macOS wheel can reach the owner as a release file under Q-15's rule, and each macOS leg has its two-run
+  evidence before the README of a5 is written.
+- **Precondition**: the owner has amended `CLAUDE.md` rule 8, and an Architect session has amended ADR-87 item 6 and
+  ADR-92 item 1 (the artifact exception).
+- **Done when**:
+  1. The `platforms` job uploads, on the two macOS legs only:
+     - the wheel of the first build as a workflow artifact, kept **7 days**;
+     - nothing else: no sdist, no Windows file, no log.
+
+     Pinned `actions/upload-artifact` by SHA, `if-no-files-found: error`.
+  2. The job summary prints the artifact name and the wheel SHA-256.
+  3. **Two separate runs on T-16f's commit** (dispatches or re-run attempts, ADR-126 item 6). Budget per leg: two
+     dispatches plus at most two re-run attempts. Each run is recorded with its run id and attempt.
+  4. Pass per leg:
+     - both runs green;
+     - wheel SHA-256 and member lists identical;
+     - in-job double build identical;
+     - nextest 488 + 4;
+     - `check_dist: ok`;
+     - pytest 246 + 20, 246 + 20, 239 + 21 with the allowed skips only.
+  5. The owner downloads one artifact per passing leg, and its SHA-256 equals both summaries (a note line, not a
+     release).
+  6. The arm64 per-venv record of ADR-121 item 2 is written from these runs.
+  7. A leg that does not pass within the budget gets the note line "not shipped in a5: <reason>".
+  8. Nothing else changes: `checks`, `wheel`, `extended`, `manylinux2014` and the Windows leg are untouched. The checks
+     are those of T-16b (g).
+- **Touches**: `ci.yml` (`platforms`, macOS legs only), the note. **Model: Sonnet.**
+- **Review**: Reviewer 8 if it has not run yet, otherwise the a5 closure review (no corpus test changes, so rule 7 needs
+  no separate group).
 
 ### T-16c `manylinux2014` acceptance (session 23; ADR-53 items 4, 5; ADR-91; made exact in session 30, ADR-115) - DONE, **accepted** (2026-10-31, `a8da2cc` + `94b6368`, results `0bfa70d`; nextest 488 + 4, pytest 266; dispatch 1 of 3 green; ADR-116; to be reviewed in Reviewer 7)
 
@@ -2390,6 +2471,18 @@ record with full hashes. The billed-minutes figure: O-23 (b).
   - `a726271`'s message has its subject and no body (`!cancelled()` and history expansion); no rewrite; the Reviewer
     states whether the T-16b note carries what the body would have said.
   T-16e starts after Reviewer 7 and is read by **Reviewer 8**.
+- **Session 33 (ADR-129 item 4)**: starts **now**.
+  - It reads the code at `9a9bc84` and the documents at the commit that pushes session 33's documents (named in
+    `review-07.md`).
+  - New record points:
+    - **(f)** the sdist root `/var/tmp/oradmp-sdist` (ADR-126 item 2): `test ! -e`, no `--release`, the hash comparison
+      made by the reader of the two summaries;
+    - **(g)** the 2014 pre-check deviations (a) to (c) of ADR-126 item 3, and the VM hash against both dispatches;
+    - **(h)** the time-stamp rule (ADR-126 item 7): every "unchanged" check in `ci.yml`, the plan and the notes
+      compares member lists across commits, never archive hashes. A finding if one does not;
+    - **(i)** the macOS x86_64 figures of `9a9bc84` against 246 + 20 / 246 + 20 / 239 + 21, and the arm64 record gap
+      (ADR-126 item 5).
+  - `review-07.md` fixes the expected figures for the a5 dispatch from the T-16d record (ADR-129 item 4).
 
 ## T-19 The conventional LONG forms of R-040; the ten session 17 fixtures in the tests (session 24; ADR-94, ADR-95, ADR-97) - DONE (2026-10-25, `921971f`; nextest 463 passed + 4 skipped, pytest 250, CI green on `bbf921b`; deviations ruled by ADR-102; item (m) not run, now **T-19 (m)** after T-19b; to be reviewed in Reviewer 6c)
 
@@ -3975,6 +4068,150 @@ nothing is uploaded or tagged; paste the output to the Architect.
     the `git ls-remote` lines of step 14; the release page's URL. The Architect writes "Release 0.1.0a4 record" here.
     `HISTORY.md` is not changed; there is no changelog file (ADR-110 item 6).
 
+## DuckDB line (session 33; ADR-130; design `duckdb-extension.md`) - T-22 any time; T-23 to T-27 after the a5 tag; none blocks a5
+
+### T-22 Spike: the Rust extension toolchain against DuckDB 2.0.x (scratch only; no commit except the note)
+
+- **Goal**: the facts that `duckdb-extension.md` section 10 leaves open, before any code enters the repository.
+- **Where**: a scratch folder under `/var/tmp` (deleted afterwards). Nothing under `crates/`, `ci.yml` or `tools/`.
+  Alone on the machine, `CARGO_BUILD_JOBS=2`.
+- **Done when**: the note "T-22 note" records, each with its source (crate documentation, DuckDB documentation, or
+  the command output):
+  1. The `duckdb` crate version used for DuckDB 2.0.0, and the arrow major it resolves (`cargo tree -i arrow-array`)
+     against the core's 59.
+  2. A minimal loadable extension built from `oradmp-core` (path dependency on the repository) with the
+     `loadable-extension` and `vtab` features. Its table function lists `tables()` of `corpus/fixtures/18c/
+     t_text_exp_18c.dmp` (a copy).
+  3. Which footer the build writes (`C_STRUCT` or `C_STRUCT_UNSTABLE`) and how the build appends it (the template's
+     script or the crate's own route, named).
+  4. Whether that one binary loads into the Python `duckdb` packages 2.0.0 and 2.0.1 (if 2.0.1 is out), each in a
+     fresh venv with `allow_unsigned_extensions`. The note gives the exact error text if it does not load.
+  5. Whether the crate's `VTab` exposes projection pushdown, `max_threads`, local init and cardinality (names from the
+     crate documentation).
+  6. `cargo deny check` (the root `deny.toml` rules) over the spike's dependency tree: the licences and any finding.
+  7. Build time (cold, two jobs) and binary size.
+- **Model: Sonnet.** No review needed: no code, test or tool is committed.
+
+### T-23 Core: `SharedDump`, `read_split`, split points (after the a5 tag)
+
+- **Goal**: ADR-130 items 1 and 2 in `crates/oradmp-core`.
+- **Done when**:
+  1. `Dump::into_shared`, `SharedDump` (`Send + Sync`, with a compile-time assertion), `SharedDump::read_table`,
+     `SharedDump::read_split`, `Options.split_bytes` (default 8 MiB, 0 = none), and split points in `PartInfo` as
+     `(offset, first row ordinal)`. The first split is `rows_offset`.
+  2. **Equality gate**: for every fixture and every table, `read_split` over all splits with `split_bytes = 1`,
+     concatenated, equals `read_table` (values, nulls, warnings with their offsets and rows).
+  3. Errors inside a split carry the same `row` as in a sequential read: a test with a damaged fixture copy, as in
+     `t14_damage`.
+  4. The `walk` fuzz target asserts that every split lies inside its part's row area and that ordinals are increasing.
+     Run 600 s, 0 findings.
+  5. **Benchmarks** (step 3b rules, `benchmarks.md`): the walk with the default `split_bytes` against baseline 2 is
+     within the "watch" band (10 %). Target under 2 %; the note gives the figure. The full read is unchanged within
+     rule 3. Memory test unchanged.
+  6. `oradmp-py` and the Python API: behaviour unchanged, pytest count unchanged. The wheel's `_core.abi3.so` changes
+     (core code), which is expected and stated.
+  7. The rule for tests that depend on machine state (ADR-119 item 2). The definition of done.
+- **Touches**: `crates/oradmp-core/src/` (`dump.rs`, the walk, `reader.rs`), its tests, `fuzz/` (walk), the note.
+  **Model: Sonnet.** Reviewed in Reviewer 9.
+
+### T-24 The extension: `read_oradmp`, `oradmp_tables`, `oradmp_columns`; the `duckdb` CI job (after T-23)
+
+- **Goal**: ADR-130 items 3 to 8 at one thread per table (`parallel` accepted but only `false` implemented; `true` is
+  `E-CONFIG` until T-26).
+- **Done when**:
+  1. `crates/oradmp-duckdb/` is its own workspace with its own `Cargo.lock` and a path dependency on `oradmp-core`.
+     Lints as the root, except `unsafe_code = "deny"`, with one `#[allow(unsafe_code)]` module. Every callback runs in a
+     panic guard. `cargo deny check` is clean under the root rules.
+  2. The SQL surface of `duckdb-extension.md` section 4 and the errors and warnings of section 5. Each warning code the
+     extension accepts because of an option is listed in the crate with that option.
+  3. Section 6's table is filled. Each row is checked on a fixture of that type. A type that is not lossless is a bind
+     error naming the column and the option.
+  4. **Tests** in `tests/duckdb/` (outside the default pytest collection; the existing counts do not change), run with
+     the pinned Python `duckdb` package and the built extension:
+     - every fixture table read through `read_oradmp` equals the same table read through the Python API of the same
+       commit, after the type mapping;
+     - the `truth_*.txt` aggregates that the existing tests check, for at least one table per type;
+     - projection: selecting one column decodes only that column (the core's counter or a value error in an unselected
+       column that does not fire);
+     - `table` / `table_ordinal`: missing, ambiguous, both, neither;
+     - `oradmp_tables` and `oradmp_columns` on a multi-table and a partitioned fixture;
+     - a changed file gives `E-FILE-CHANGED`;
+     - a URL path gives `E-CONFIG`;
+     - warnings: one that fails the query, the same one allowed by `allow_warnings`, one implied by an option.
+  5. **CI**: a new job `duckdb` on push (Linux). It runs:
+     - fmt, clippy `-D warnings` and `cargo deny` of the extension workspace;
+     - a release build;
+     - the tests, with 0 skipped.
+
+     `checks` gains `cargo tree -p oradmp-core` contains neither `duckdb` nor `pyo3`. `pipefail` and the substitution
+     rule apply as for every job.
+  6. **Nothing shipped changes**: the `wheel` job's member list of the T-24 commit equals T-23's (ADR-126 item 7). The
+     sdist holds nothing from `crates/oradmp-duckdb/`.
+  7. README: a short "DuckDB" section with the no-extension route (DuckDB's Python client over `read_table(...)`'s
+     `RecordBatchReader`, tested in item 4 on one fixture) and a note that the extension is not released yet.
+- **Touches**: `crates/oradmp-duckdb/`, `tests/duckdb/`, `ci.yml` (`duckdb`, one line in `checks`), README, the note.
+  **Model: Sonnet** (Opus if T-22 shows that the crate's extension API needs workarounds). Reviewed in Reviewer 9.
+
+### Reviewer 9 on T-23 and T-24 (rule 7)
+
+- Reads:
+  - the split-point equality gate and its coverage;
+  - the `unsafe` module and the panic guard;
+  - the warning policy against ADR-130 item 5;
+  - the type table against the fixtures;
+  - the `duckdb` job (pins, `permissions`, no artifact, no secret);
+  - the sdist and wheel member lists (nothing shipped changed apart from `_core.abi3.so`);
+  - the machine-state rule for `tests/duckdb/`.
+- Output: `docs/review/review-09.md`. **Model: Opus.** The owner starts it.
+
+### T-25 Memory and throughput on the 1 GB dump (after Reviewer 9 and O-25)
+
+- **Done when** (VM, alone, no Oracle container; `T_HUGE` from O-25 under `ORADMP_WORK`):
+  1. `oradmp_tables` gives `T_HUGE` 12,000,000 rows and `T_TAIL` 10 rows.
+  2. `SELECT count(*), sum("ID"), count("NOTE"), min("CREATED"), max("CREATED") FROM read_oradmp(..., table :=
+     'T_HUGE')` gives 12000000, 72000006000000, 10800000, 2020-01-01, 2024-02-08 (O-25's arithmetic).
+  3. `read_oradmp(..., table := 'T_TAIL')` gives 10 rows with `sum("ID")` = 55.
+  4. **Memory gate** (`duckdb-extension.md` section 8.3), with `SET threads = 1`:
+     - peak RSS at most the baseline + 64 MiB;
+     - within 1.10 of the same figure on `T_BIG`;
+     - three runs.
+  5. **Throughput** (reported; gate only as a floor): bind time (the walk) and query time, three runs each, cold and
+     warm page cache. The query rate is at least 50 % of `t15_throughput`'s full-read rate on `T_BIG` in the same
+     session.
+  6. Figures go into `benchmarks.md` as a new section (Architect) from the note.
+- **Model: Sonnet.** No review group (no test over the corpus is added; the figures are read by the next review).
+
+### T-26 Parallel reads within one table (after T-25)
+
+- **Done when**:
+  1. `parallel := true`:
+     - work units are the split points;
+     - `max_threads` = the number of splits, capped;
+     - one file handle per local state;
+     - exact rows in errors.
+  2. The row order: the note quotes DuckDB's documentation on whether a C API table function can keep insertion order.
+     If it can, it is implemented and tested. If not, the README says that the order is undefined with `parallel :=
+     true`. In either case an Architect record decides the default.
+  3. Equality: the multiset of rows with `parallel := true` equals the sequential result on every fixture and on
+     `T_HUGE` (aggregates of item 2 of T-25 and a hash aggregate over all columns).
+  4. On `T_HUGE`, 4 threads:
+     - speed-up at least 2.5x over 1 thread (query time, warm cache, three runs);
+     - peak RSS at most the baseline + 4 x 64 MiB.
+- **Model: Sonnet.** Reviewed in Reviewer 10 (with T-27 if it runs by then).
+
+### T-27 The release route of the extension (after Q-16 is answered)
+
+- **Done when**, if Q-16 is answered as recommended:
+  - `tools/release_build.sh <commit> --duckdb <duckdb version>` builds the extension at the canonical root (Linux,
+    `--zig`, glibc 2.28), with path remaps and `SOURCE_DATE_EPOCH`, as for the wheel;
+  - `--twice` gives identical files;
+  - the file equals the `duckdb` job's build of the same commit (member and footer bytes);
+  - a `check_dist`-style check finds no build-root or home path in the binary;
+  - the release notes name the DuckDB version, the platform, the SHA-256 and the `allow_unsigned_extensions` step.
+
+  Otherwise, an Architect record first.
+- **Model: Sonnet.** Reviewed in Reviewer 10.
+
 ## CI minutes budget (session 23; ADR-92 item 4)
 
 **Session 26**: the repository is public; standard hosted runners are free there and this budget lapses (O-23 (b)
@@ -3998,6 +4235,13 @@ After the cut the budget lapses for standard runners; the dispatch rule for `ext
 - **T-16b**: at most three before the Architect is asked. Each dispatch runs `extended`, `manylinux2014` and the new
   `platforms` job; runner minutes are free on the public repository, and the cap saves the owner's time.
 - **a5**: one dispatch on the version commit (ADR-120 item 5).
+
+**Session 33** (ADR-126, ADR-127):
+- **T-16d**: used 2 of 2 on `9a9bc84`; closed.
+- **T-16f** (only if Q-15 is "yes"): two runs per macOS leg plus at most two re-run attempts. A job never acquired
+  counts as no run.
+- **a5**: one dispatch on C, or two separate runs if macOS ships.
+- **The DuckDB line**: the `duckdb` job runs on push, Linux only, about 10 minutes (T-24 measures it).
 
 ## Release 0.1.0a5 (session 31; ADR-117, ADR-118, ADR-120) - conditions only; the checklist is written when they hold
 
@@ -4032,8 +4276,60 @@ After the cut the budget lapses for standard runners; the dispatch rule for `ext
   - `SHA256SUMS` with three lines; one upload, nothing added later.
 - **Also from earlier records**: ADR-110 as amended; ADR-111 item 6 (lessons of a4); ADR-114 item 6 (the token-history
   check).
+- **Session 33 (ADR-127 item 5; it replaces the condition list above)**:
+  1. T-16b closed and T-16d done. **Met.**
+  2. 2014 pre-check passed. **Met** on `9a9bc84`. Open: `/var/tmp/oradmp-release` absent before the a5 build
+     [**OWNER**].
+  3. Reviewer 7 with no blocking finding open. **Open** [**OWNER** starts; Opus]. Fixes in a task before the version
+     commit [Implementer].
+  4. Q-15 answered, or a5 Linux-only. **Open** [**OWNER**].
+     - If "yes": rule 8 amended [owner], ADR-87 item 6 and ADR-92 item 1 amended [Architect], T-16f passed per
+       shipping leg and reviewed.
+     - If "no" or no answer when the version commit starts: Linux-only.
+  5. The version commit [Implementer, Sonnet]:
+     - its push run green;
+     - on C one dispatch green, or **two separate runs** when macOS ships, with each shipping macOS wheel identical
+       across them [owner];
+     - every count stated against Reviewer 7's figures.
+  6. Closure review of C [owner starts; Opus]. Step 3b only if `crates/oradmp-core/src/` changed since a4 (it has
+     not).
+  7. The Architect session writes the checklist. New gate (ADR-126 item 7): archive hashes are compared only between
+     builds of C. Across commits, member lists are compared.
 
-## Order of the next tasks (session 32)
+  Not conditions: T-16e, Reviewer 8 (unless T-16e joins), the DuckDB line.
+
+## Order of the next tasks (session 33)
+
+Machine rule unchanged (session 16 below). CI runs on the public GitHub repository; it is not a build on the VM.
+**OWNER** marks an owner action. Records: ADR-126 to ADR-130.
+
+| order | task | can start | runs in parallel with | touches | model | waits for a human? |
+|---|---|---|---|---|---|---|
+| done | **T-16d** (`9a9bc84`, `aae02c6`; accepted, ADR-126); this session | - | - | - | - | - |
+| 1 | **OWNER**: commit and push this session's documents; move `/var/tmp/oradmp-release` to `/var/tmp/oradmp-release-t16d-2014`, keep its `SHA256SUMS` with the log, delete it (ADR-126 item 3 (c)) | now | rows 6 to 12 | `docs/design/` | - | yes |
+| 2 | **Reviewer 7** on T-21, T-16c, T-16b, T-16d (plan block, sessions 31 to 33) | after row 1 | rows 6 to 12 | `docs/review/` | Opus | **OWNER** starts it |
+| 3 | **Q-15** (owner; one line, ADR-128) | now, before row 5 | everything | `CLAUDE.md` (owner), then ADR amendments | - | yes |
+| 3' | **T-16f** (only if Q-15 is "yes"): the macOS artifact step and two runs per leg | after row 3's amendments | row 4 | `ci.yml` (`platforms` macOS legs) | Sonnet | **OWNER**: commit, push, two runs, download, paste |
+| 4 | **T-16e** (Windows) | after row 2 (rule 7) | rows 6 to 12 | as its block | Sonnet | **OWNER**: commits, pushes, dispatches, pastes |
+| 4' | **Reviewer 8** on T-16e (and T-16f if it is done by then) | after row 4 | - | `docs/review/` | Opus | **OWNER** starts it |
+| 5 | **a5** (ADR-127 item 5): an Architect session records Reviewer 7 and Q-15; version commit; one dispatch on C (two runs if macOS ships); closure review; checklist; release | after rows 2 and 3 (and 3' if "yes"); 4' only if T-16e joins | - | as named | - / Sonnet / Opus | **OWNER**: all release steps |
+| 6 | **T-22** DuckDB spike (scratch only, note) | now | everything except a VM build | the note only | Sonnet | no (the owner starts it) |
+| 7 | **O-25** (owner): export `T_HUGE` + `T_TAIL` (about 1.09 GB) | any time | everything (the Oracle container: not while a benchmark runs) | `corpus/sql/` (owner), `ORADMP_WORK` | - | yes |
+| 8 | **Q-16** (owner): the extension's release channel | before row 12 | everything | - | - | yes |
+| 9 | **T-23** core API and split points; then **T-24** extension and `duckdb` job; then **Reviewer 9** | after the a5 tag (and row 6 for T-24) | rows 10 to 12 | `crates/`, `tests/duckdb/`, `ci.yml`, `fuzz/` | Sonnet / Opus | **OWNER**: commits, pushes |
+| 10 | **T-25** memory and throughput on `T_HUGE` | after Reviewer 9 and row 7 | - (alone) | the note | Sonnet | **OWNER** starts it |
+| 11 | **T-26** parallel reads in one table; **T-27** release route (after row 8); **Reviewer 10** | after row 10 | - | `crates/oradmp-duckdb/`, `tools/` | Sonnet / Opus | **OWNER** |
+| 12 | Unchanged owner items: **Q-4** (survey counts), **R-052** on Q-4's condition, **R-046** (low), the **RHEL 8 host test**, **Data Pump** planning (phase 2), **Analyst 21** if not done | any time | everything | as before | - | yes |
+
+What the owner does, in order:
+1. Push these documents. Move the canonical root aside (row 1).
+2. Start Reviewer 7.
+3. Answer Q-15 in one line (ADR-128). If "yes", amend rule 8 with the proposed wording, then ask for an Architect
+   session for the ADR-87 and ADR-92 amendments and T-16f.
+4. After Reviewer 7: T-16e.
+5. Whenever convenient: start T-22, export O-25, answer Q-16.
+
+## Order of the next tasks (session 32, history)
 
 Machine rule unchanged (session 16 below). CI runs on the public GitHub repository; it is not a build on the VM.
 **OWNER** marks an owner action. Records: ADR-121 to ADR-125.

@@ -4,7 +4,7 @@
 `oradmp` (crates `oradmp-core`, `oradmp-py`, import `oradmp`, classes `OradmpError` / `OradmpWarning`).
 
 Architect session 1, 2026-10-07; session 2, 2026-10-14; sessions 3 and 4, 2026-10-15; sessions 5 and
-6, 2026-10-16; sessions 7 to 13, 2026-10-17; sessions 14 and 15, 2026-10-18; sessions 16 and 17, 2026-10-21; session 18, 2026-10-22; sessions 19 to 23, 2026-10-24; sessions 24 and 25, 2026-10-25; sessions 26 and 27, 2026-10-29; session 28, 2026-10-30; sessions 29 to 32, 2026-10-31. Each record:
+6, 2026-10-16; sessions 7 to 13, 2026-10-17; sessions 14 and 15, 2026-10-18; sessions 16 and 17, 2026-10-21; session 18, 2026-10-22; sessions 19 to 23, 2026-10-24; sessions 24 and 25, 2026-10-25; sessions 26 and 27, 2026-10-29; session 28, 2026-10-30; sessions 29 to 32, 2026-10-31; session 33, 2026-11-04. Each record:
 context, decision, consequences, rejected. Status is **decided** (the Implementer follows it; reopening
 needs a new record) or **needs the project owner** (question in `open-questions.md`). Rule numbers are
 those of `docs/formats/exp_reader_rules.md` (v3.4 from session 4 on, v3.5 from session 8 on, v3.7 from session 24 on, **v3.9 from session 25 on**); section
@@ -14,6 +14,24 @@ numbers without a file name are those of `exp-reader-architecture.md`.
 names a commit of the owner's private archive, not of this repository (`HISTORY.md`); the hashes are not rewritten.
 Cites of `docs/prompts/...`, `.claude/` and `CLAUDE.md` name files the owner keeps privately; nothing a contributor must
 do depends on them (the checks a contributor runs are in `CONTRIBUTING.md`).
+
+## Changes in session 33
+
+- Basis: the owner's records of T-16d (commit `9a9bc84`, two dispatches; the record commit `aae02c6`) and the session
+  33 prompt. Checked this session by reading only: `tools/release_build.sh` (epoch and root lines), the `extended` job
+  of `ci.yml`, `git log -1 --format=%ct` of both commits, `crates/oradmp-core/src/dump.rs` and `reader.rs` (the public
+  read API), rules R1, R6, T1 to T10 and E1 to E3; DuckDB's documentation (release calendar, C API table functions,
+  Rust client functions, versioning of extensions, SQL on Arrow), the `duckdb` crate page on docs.rs and the README of
+  `duckdb/extension-template-rs`. Nothing built, nothing run.
+- New:
+  - **ADR-126**: T-16d accepted. Covers the sdist root, the 2014 pre-check, macOS x86_64 across two dispatches, arm64
+    without a record, and the time-stamp rule for archives.
+  - **ADR-127**: arm64 and the macOS wheels in a5; the a5 conditions restated; T-16f only if Q-15 is "yes".
+  - **ADR-128**: Q-15 as a one-line question, needs the owner.
+  - **ADR-129**: T-16e confirmed; Reviewer 7 starts now; Reviewer 8.
+  - **ADR-130**: the DuckDB extension. Covers the streaming core API, split points, table selection, crate, CI and the
+    task order. Its release channel is Q-16, which needs the owner.
+- Amended: see "Amendments (session 33)" after ADR-130.
 
 ## Changes in session 32
 
@@ -6007,3 +6025,425 @@ Session 3 text (history):
 - ADR-120 item 1: "T-16b done" is replaced by "T-16b closed (ADR-121) and **T-16d** done". T-16e is not an a5
   condition (ADR-123 item 6).
 - ADR-53 item 4: the decision records that allow a platform skip now include ADR-121 item 1 and ADR-123 item 5.
+
+## ADR-126 T-16d accepted: the `extended` sdist check, the 2014 pre-check, macOS x86_64 across two dispatches; arm64 has no record; the time stamps of the archives - decided (session 33)
+- Context: the owner's records of commit `9a9bc84` (two `workflow_dispatch` runs; implementer notes, "T-16d results",
+  commit `aae02c6`) and the session 33 prompt. Checked this session by reading only: `tools/release_build.sh` (line
+  121: `epoch="$(git ... log -1 --format=%ct "$full")"`, line 130: `export SOURCE_DATE_EPOCH="$epoch"`; line 78: the
+  default root is `/var/tmp/oradmp-release`; lines 95 to 98: `--release` only checks that the root is the canonical one);
+  the `extended` job of `ci.yml` at `9a9bc84`; `git log -1 --format=%ct`: `9a9bc84` = 1793797029 (the epoch every
+  summary printed), `aae02c6` = 1793807001. Nothing built, nothing run.
+- Decision:
+  1. **The `extended` sdist check: accepted.** Green in both dispatches. The sdist hash it computes equals the `wheel`
+     job's. The installed sdist reports `oradmp 0.1.0a4`, and `survey --no-names` ran. This closes ADR-112 item 5 and
+     ADR-118 item 6.
+  2. **Its build root `/var/tmp/oradmp-sdist`: accepted.** It replaces "a root under `runner.temp`" in plan T-16b (e).
+     The script refuses `RUNNER_TEMP` (`/home/runner/work/_temp`: inside `$HOME` and with the user name as a
+     component). The step builds without `--release`. It makes sure the root is absent (`test ! -e`). It runs on a fresh
+     runner, so no shared path is touched. The sdist does not depend on the root: this check's sdist equals the `wheel`
+     job's, which was built at the canonical root on the same commit. The wheel this step builds is not compared and
+     not used; its SBOM names the other root.
+  3. **The 2014 pre-check (ADR-117 item 2): passed.** ADR-120 item 2 is met. The VM wheel `f8517e34...` and the sdist
+     `bd274adc...` are byte-identical to the `manylinux2014` job's in both dispatches. That is three independent builds
+     with one result, and `check_dist: ok`. Three deviations from the written procedure, all accepted:
+     - (a) The commit was `9a9bc84`, not `94b6368`. The Implementer's procedure allowed this; what matters is that VM
+       and CI build the same commit.
+     - (b) The build ran without `--twice --release`. With `ORADMP_BUILD_ROOT` unset, the root is the canonical one
+       (line 78), and `--release` adds only the root check. The bytes are therefore what `--release` would have built.
+       The `--twice` identity is replaced by the stronger cross-machine identity. **The a5 build itself keeps
+       `--twice --release`** (ADR-117 item 3 (a)).
+     - (c) The move and deletion of the root and its `SHA256SUMS` in the note are not recorded. **Owner action**: before
+       a5, `/var/tmp/oradmp-release` must be absent (move it to `/var/tmp/oradmp-release-t16d-2014`, keep its
+       `SHA256SUMS` with the log `~/release-2014-9a9bc84.log`, delete the folder).
+  4. **macOS x86_64: verdict "accepted" confirmed on `9a9bc84`.** Per venv: 246 + 20, 239 + 21, 246 + 20. Only allowed
+     skips. nextest 488 + 4, `check_dist` ok. This record replaces the dispatch-3 record that ADR-121 item 2 asked for
+     on this leg. **Cross-run reproducibility: met for x86_64.** The wheel `d837ac77...` and every member are identical
+     in two separate dispatches, and identical in two builds within each job. This is the pre-measurement that ADR-122
+     item 2 wanted. It is not the a5 proof, which must come from runs on C.
+  5. **macOS arm64: no evidence from T-16d.** The runner was not acquired, so this is not a defect of oradmp. The test
+     verdict "accepted" (ADR-121, from the green dispatch 3 on `a726271`) stands. **ADR-121 item 2's condition is
+     still unmet for arm64**: no per-venv figures have ever been written into a note. They are written from the first
+     green arm64 summary recorded later (ADR-127). There is no arm64 cross-run comparison.
+  6. **Dispatch protocol: accepted.** Two dispatches on one commit, with nothing pushed between them (the owner checked
+     `origin/master`). The x86_64 summaries were assigned to dispatch 1 and 2 by their timings; the content is
+     identical, so the assignment changes no figure. **New, from now on**: a "Re-run this job" attempt counts as a
+     separate run for the cross-run rule. It gets a fresh hosted runner on the same commit. The record names the run id
+     and the attempt number. A run whose job was never acquired counts as no run and uses none of the budget.
+  7. **The archives follow the commit, not the build root.** The owner's reading is **confirmed in its cause**.
+     - `release_build.sh` sets `SOURCE_DATE_EPOCH` to the commit time (lines 121, 130). `aae02c6` has another commit
+       time than `9a9bc84`. All sdist members have the same content hashes in both. The `_core.abi3.so` is the same
+       (`d0efa2df...`). So the time stamps are the only input that changed, and the sdist and both wheels follow them.
+     - Which header fields carry the time (the tar member mtimes, the gzip header, the ZIP entry times of the wheel) was
+       not checked byte by byte. It changes nothing below.
+     - **Rule for every release gate and every "unchanged" check**:
+       - An archive (sdist or wheel) is independent of the build root (sdist), but **not of the commit**.
+       - Archive hashes are compared only between builds of **one** commit.
+       - Across commits, "nothing shipped changed" is shown by the member list (content hash and size per member), never
+         by the archive hash. The SBOM and `RECORD` may differ only as ADR-114 allows.
+  8. **The Implementer's note**: items 1 ("input missing") and 3 ("not run") stay as written. The owner's "T-16d results"
+     section says it supersedes them, and the answer below it says so again. Rewriting history in a note helps nobody.
+- Consequences:
+  - Plan T-16d: DONE.
+  - ADR-120 items 1 and 2: met.
+  - Plan T-16b (e): the root is amended.
+  - The a5 checklist gains item 7's rule.
+  - Reviewer 7 gets items 2, 3, 5 and 7 as record points.
+- Rejected:
+  - **Repeating the 2014 pre-check with `--twice --release`**: three identical builds on two kinds of machine already
+    show what `--twice` would show, and a5 runs `--twice --release` anyway.
+  - **Holding T-16d open for arm64**: the missing runner is GitHub's capacity, not a task defect. arm64 matters only if
+    Q-15 is "yes" (ADR-127).
+
+## ADR-127 macOS arm64 and the macOS wheels in a5; the a5 conditions restated - decided (session 33)
+- Context:
+  - ADR-122 item 2: macOS wheels ship in a5 only if Q-15 is "yes" and two separate runs on C give byte-identical
+    wheels.
+  - x86_64 has that pre-measurement (ADR-126 item 4). arm64 has only T-16b's in-job double build (dispatch 1,
+    `bdc507b`) and a green dispatch 3 with no per-venv record.
+  - The README "Wheels:" line is written in the version commit, before C's runs exist. So whether a platform ships
+    must be known with good confidence before C.
+  - A CI artifact step does not exist yet (ADR-92 item 1 forbids one), so even with "yes", a macOS wheel cannot reach
+    the owner today.
+- Decision:
+  1. Options (a), (b) and (c) of the session 33 prompt are resolved as follows:
+     - **(b) is rejected.** An in-job double build runs on one runner image with one toolchain cache. It cannot show
+       drift between runners, and that drift is what the cross-run rule exists to catch. ADR-122 already calls the
+       in-job identity "a good sign, not this proof".
+     - **(a) applies only if Q-15 is answered "yes"**, and it rides on the task that a "yes" needs anyway (item 2).
+     - **Otherwise (c)**: no macOS wheel in a5.
+  2. **If Q-15 is "yes"**: new task **T-16f** (plan) before a5's version commit:
+     - Add the artifact step (macOS legs only, kept 7 days, wheel only) as Q-15's rule needs.
+     - Then **two dispatches on T-16f's commit**. Each leg has a budget of two dispatches plus at most two re-run
+       attempts per leg (ADR-126 item 6).
+     - Pass per leg:
+       - two green runs;
+       - byte-identical wheels and member lists;
+       - per-venv counts 246 + 20 / 246 + 20 / 239 + 21 with the allowed skips only;
+       - nextest 488 + 4;
+       - `check_dist` ok.
+     - The arm64 per-venv record of ADR-121 item 2 is written from these runs.
+     - A leg that does not pass within the budget does not ship in a5. The README names it under "Other platforms"
+       (ADR-122 item 3). a5 does not wait for it.
+     - T-16f is read by Reviewer 8 if it runs, otherwise by the a5 closure review. It changes no corpus test, so rule 7
+       does not need a separate group.
+  3. **If Q-15 is "no" or still unanswered when the version commit starts**: a5 is Linux-only (two wheels and the
+     sdist). No arm64 dispatch is made for a5.
+  4. **On C**, if macOS wheels ship: two separate runs on C (dispatches or re-run attempts). Each shipping leg's wheel is
+     identical across them, and the owner uploads the artifact of one of them after comparing its SHA-256 with both
+     summaries. If they differ on C, that leg is dropped from a5. The README is then corrected in a new candidate, so
+     a5 waits for the Architect (as ADR-117 item 5 for the 2014 wheel).
+  5. **The a5 conditions** (replace ADR-120 items 1 to 7 as amended; who does each in brackets):
+     1. T-16b closed and T-16d done. **Met** (ADR-121, ADR-126).
+     2. 2014 pre-check passed. **Met** (ADR-126 item 3). Open part: the canonical root `/var/tmp/oradmp-release` is
+        absent [owner].
+     3. Reviewer 7 has no blocking finding left open. **Open** [owner starts it; Opus]. Fixes go into a task before the
+        version commit [Implementer].
+     4. Q-15 answered, or a5 declared Linux-only. **Open** [owner]. If "yes": `CLAUDE.md` rule 8 amended [owner];
+        ADR-87 item 6 and ADR-92 item 1 amended [Architect]; T-16f passed for each shipping leg [Implementer, owner
+        dispatches]; T-16f reviewed [Reviewer 8 or closure].
+     5. The version commit [Implementer, Sonnet]:
+        - version `0.1.0a5`, the locks, the README "Wheels:" and "Other platforms", the classifiers (ADR-120 item 5,
+          ADR-122 item 3);
+        - push run green;
+        - on C, one dispatch green, or two when macOS ships (item 4) [owner];
+        - every count stated against the expected figures.
+     6. A closure review of C with no blocking finding [owner starts it; Opus]. Step 3b only if
+        `crates/oradmp-core/src/` changed since a4. It has not so far.
+     7. An Architect session writes the checklist:
+        - ADR-110 as amended;
+        - ADR-111 item 6;
+        - ADR-114 item 6;
+        - ADR-117 item 3;
+        - ADR-126 item 7 (archive hashes compared within C only);
+        - with macOS: the artifact download and hash checks of item 4.
+
+     Not conditions:
+     - T-16e and Reviewer 8, unless T-16e joins under ADR-123 item 6;
+     - the DuckDB line (ADR-130), which does not touch the a5 tree.
+- Consequences:
+  - The plan's "Release 0.1.0a5" section gets a session 33 block.
+  - The order table follows.
+  - The Q-15 row is restated (ADR-128).
+- Rejected:
+  - **An arm64-only dispatch now, before Q-15**: it costs the owner time for a measurement that matters only after a
+    "yes". The run on T-16f's commit measures the same thing and also tests the artifact step.
+  - **Waiting for arm64 capacity before a5**: a Linux-only or x86_64-only a5 is complete.
+
+## ADR-128 Q-15 restated for a one-line answer - needs the project owner (session 33)
+- Context: ADR-118 item 9, ADR-122, ADR-124, ADR-126, ADR-127. The facts as of session 33:
+  - **Linux 2_28 and 2014**: built by `release_build.sh` and reproducible. 2_28: VM = CI since a2 (ADR-98 item 1,
+    ADR-111). 2014: VM = CI on `9a9bc84` (ADR-126 item 3).
+  - **macOS x86_64**: two builds in one job identical, and two dispatches on one commit identical, every member (ADR-126
+    item 4).
+  - **macOS arm64**: in-job double builds identical (T-16b dispatch 1). No cross-run evidence; the runner was not
+    acquired in T-16d.
+  - **Windows**: not reproducible (`_core.pyd` differs within one job), with known defects (T-16e, ADR-124).
+- The question (one line): **"Q-15: May a release include macOS wheels that CI built (not `release_build.sh`), when
+  two separate CI runs on the tagged commit produce byte-identical wheels and you upload the CI artifact after checking
+  its SHA-256 against both run summaries? yes / no."**
+- **Recommendation: yes, for macOS only.**
+  - Why: the evidence rule is as strict as the Linux one (two independent builds, one result). x86_64 already met it.
+    The cost is one CI step and a few checklist lines.
+  - Windows stays out until T-16e and ADR-124 give a reproducible wheel. That would be a separate record, not this
+    answer.
+- **If yes**:
+  - **`CLAUDE.md` rule 8** (owner's text; proposed wording for its second sentence): "A Linux release file is built
+    only from a committed tree with `tools/release_build.sh <commit>`. A macOS wheel is released only if the CI
+    `platforms` job built it on the tagged commit in two separate runs with byte-identical wheels; only the human
+    downloads it from that run's artifact, checks its SHA-256 against both run summaries, and uploads it with the other
+    files. No other platform's wheel is released."
+  - **Evidence a non-Linux wheel must carry** (the a5 checklist):
+    - two run summaries on C, each with its run id and attempt;
+    - identical wheel SHA-256 and member lists in both;
+    - in-job double build identical in each run;
+    - nextest 488 + 4;
+    - `check_dist: ok`;
+    - three venvs at the expected counts with the allowed skips only;
+    - the sdist of those runs equal to the Linux sdist;
+    - the downloaded artifact's SHA-256 equal to both summaries;
+    - the tag `cp311-abi3-macosx_*`;
+    - one upload with the Linux files (ADR-117 item 3 (h)).
+  - The Architect then amends ADR-87 item 6 and ADR-92 item 1 (an artifact exception for macOS release wheels: 7
+    days, wheel only), and T-16f runs (ADR-127 item 2).
+- **If no**: no non-Linux wheel. The README names macOS as "tested, no wheel; a source build needs Rust".
+- Consequences: the Q-15 row in `open-questions.md` is replaced by this text.
+
+## ADR-129 T-16e confirmed; what blocks a5; Reviewer 7 and Reviewer 8 - decided (session 33)
+- Context: ADR-123 to ADR-125, ADR-119 as amended, ADR-126. T-16d shows the Windows leg unchanged (red with the known
+  failures). The Windows sdist equals the Linux sdist; the two Windows wheels in one job differ in `_core.pyd` and
+  `RECORD` only.
+- Decision:
+  1. **T-16e scope and acceptance: unchanged** (plan T-16e, items 1 to 12). Confirmed one by one:
+     - **Errno 3** (ADR-123 item 1): on Windows the raw code goes in as `winerror`. Accepted when
+       `test_a_missing_file_is_an_oserror` asserts `FileNotFoundError` with `errno == ENOENT` on every platform and
+       `winerror` 2 or 3 on Windows.
+     - **Exit 120** (item 2): first diagnose the exception, then the fix. Accepted when the two closed-stdout tests
+       pass unchanged on every platform.
+     - **WinError 32** (item 3): the contract test first, never a retry loop.
+     - **pyarrow 15 time zone database** (item 4): installed by pyarrow's documented route on Windows venv (i), no skip.
+     - **nextest 487 + 4 on Windows** (item 5), with the absent `#[cfg(unix)]` test named.
+     - **`check_dist.py` drive-letter paths** (ADR-125 item 1): the six captured paths printed first.
+     - **Backslashes in `tools/ci_platform_venvs.sh`** (ADR-125 item 2), with a self-test.
+     - **`/Brepro`** (ADR-124): one attempt; either result is data.
+  2. **One addition**: T-16e's check that "the `wheel` job's `check_dist` output equals the previous one" compares the
+     output text and the member list. It never compares the archive hash (ADR-126 item 7: T-16e's commit has another
+     time).
+  3. **What blocks a5**: nothing of T-16e. Windows is not in a5 (ADR-122 item 1). T-16e joins a5 only under ADR-123
+     item 6 (Reviewer 8 with no blocking finding before the version commit). The `/Brepro` result decides nothing for
+     a5.
+  4. **Reviewer 7: starts now.** T-16d's code commit `9a9bc84` and its record `aae02c6` are pushed.
+     - What it reads: the code at `9a9bc84`, and the documents at the commit that pushes this session's documents
+       (named in `review-07.md`).
+     - Scope: unchanged (plan block, sessions 31 and 32), plus four record points:
+       - (f) ADR-126 item 2: the sdist root;
+       - (g) ADR-126 item 3: the 2014 pre-check deviations (a) to (c), and that the VM hash equals both dispatches;
+       - (h) ADR-126 item 7: the time-stamp rule. Verify that every "unchanged" check in `ci.yml`, the plan and the
+         notes compares member lists across commits, not archive hashes. A finding if one does not.
+       - (i) the macOS figures of `9a9bc84` against 246 + 20 / 239 + 21 / 246 + 20, and the arm64 record gap (ADR-126
+         item 5).
+     - The expected figures Reviewer 7 fixes for the a5 dispatch, from the T-16d record (`9a9bc84`):
+       - nextest 488 + 4;
+       - pytest 266;
+       - `wheel` venvs 263 + 3, 256 + 4, 263 + 3;
+       - `manylinux2014`: glibc 2.17 260 + 6, 260 + 6, 253 + 7; Rocky 8 the same; runner 263 + 3, 263 + 3, 256 + 4;
+       - macOS 246 + 20, 246 + 20, 239 + 21.
+  5. **Reviewer 8**: reads T-16e after T-16e's results commit, and T-16f if T-16f exists by then. If T-16f lands after
+     Reviewer 8, the a5 closure review reads it.
+     - Reviewer 8 blocks a5 only if T-16e joins a5.
+     - T-16e starts after Reviewer 7 (rule 7), as decided.
+- Rejected:
+  - Starting T-16e before Reviewer 7: rule 7. The group T-16b / T-16d changed tests over the corpus.
+  - Folding T-16f into T-16e: they have different platforms, risks and owner decisions.
+
+## ADR-130 The DuckDB extension: streaming core API, split points, table selection, crate and CI - decided (session 33; the distribution channel needs the project owner, Q-16)
+- Context:
+  - **The requirement** (owner, session 33): a DuckDB table function `read_oradmp(file, table := ...)` for dump files
+    above 1 GB, so that DuckDB's engine processes the dump directly. It replaces Q-13's "not planned"; Q-13's checklist
+    is answered below and in `duckdb-extension.md`.
+  - **Format facts** (rules v3.9):
+    - A row has no header, length or number (R1).
+    - No row count is stored (R6).
+    - A table's `TABLE` / `CREATE TABLE` / `INSERT INTO` lines and descriptors come after the rows of every earlier
+      table (T1 to T6, E1).
+    - So **the schema of table k cannot be found without walking the rows of tables 1 to k-1**. "Schema from the header
+      scan without a full read" is impossible for `exp` files: the header [H1 to H5] holds no table list. The cheapest
+      true form is the existing catalog walk (`Dump::scan`: every field skipped by its length, nothing decoded).
+  - **Measured on the VM** (`benchmarks.md` 4.2, `T_BIG`, 453 MB, page cache): walk 779 MB/s; full decode 199 MB/s of
+    row area, single thread. So a 1 GB file costs about 1.3 s to walk (cached) and about 5 s to decode on one thread.
+  - **The core today** (read this session): `TableBatches` is a `RecordBatchReader` that owns its file handle, with
+    `ReadOptions.columns` (projection: an unselected column is skipped by length, never decoded), `batch_rows` and
+    `batch_bytes`. `Dump::read_table` and `Dump::scan` take `&mut self`. `PartInfo` has `rows_offset` and `num_rows`
+    per part.
+  - **DuckDB** (read this session from duckdb.org and docs.rs only):
+    - The release calendar lists 2.0.0 LTS, released 2026-10-21, end of life 2027-10-22; 2.0.1 is planned for
+      2026-11-18.
+    - The `duckdb` crate 1.20000.1 (2026-10-28; its version encodes DuckDB 2.0.0) has the features `vtab`, `vtab-arrow`
+      and `loadable-extension` ("experimental"), and binds the v1 C API (`capi-v1` default). It says the v2 C API is
+      "in rapid development".
+    - DuckDB's C API has `duckdb_table_function_supports_projection_pushdown`, `duckdb_init_get_column_count` /
+      `_index`, `duckdb_init_set_max_threads` ("default: 1"), `duckdb_table_function_set_local_init` and
+      `duckdb_bind_set_cardinality` (C API "Table Functions" page, 2.0).
+    - `duckdb/extension-template-rs` (README) is "experimental": "The extension must be loaded into the exact DuckDB
+      version it was built for". It is tested with SQLLogicTest; a local build loads with `-unsigned`.
+    - DuckDB's "Versioning of Extensions" page (2.0): extensions "are tied to a specific version of DuckDB".
+    - Third-party crate documentation claims that a stable-ABI build (`C_STRUCT` footer) loads across versions. This is
+      a lead only.
+    - DuckDB's Python client queries a pyarrow `RecordBatchReader` directly; it "can be scanned only once" (guide
+      "SQL on Arrow", 2.0).
+  - The workspace forbids `unsafe_code` (root `Cargo.toml`). A loadable extension needs an `extern "C"` entry point.
+- Decision:
+  1. **(a) The streaming core API** (task T-23; `crates/oradmp-core` only; `oradmp-py` keeps its behaviour):
+     - `Dump::into_shared(self) -> Result<SharedDump>` runs the scan if needed. `SharedDump` is `Send + Sync`
+       (compile-time assertion) and holds the header info, the `Arc<Catalog>`, the options and the file identity.
+     - `SharedDump::read_table(&self, which, &ReadOptions) -> Result<TableBatches>`, as today but through `&self`.
+       Every reader opens its own file handle and checks the identity (`E-FILE-CHANGED` as today).
+     - `SharedDump::read_split(&self, which, part, split, &ReadOptions) -> Result<TableBatches>` (item 2).
+     - Bounded memory is the existing contract: one batch at a time, `batch_rows` and `batch_bytes` from the caller. The
+       extension passes DuckDB's vector size (`duckdb_vector_size()`) as `batch_rows`. Per-value caps stay
+       `max_lob_bytes`. The memory bound is stated per thread: one batch, plus the read buffer, plus the catalog.
+     - The schema comes from the catalog, before any row is decoded (as today). The catalog costs one walk (context).
+       There is no "schema without a walk" API, because the format has none.
+     - Projection stays `ReadOptions.columns`.
+     - No global state and no cache in the core. A cache is the binding's (item 4).
+  2. **(b) Split points: yes, recorded by the walk, at almost no cost.**
+     - The walk already passes every row start. It records one `(offset, first row ordinal)` per part about every
+       `split_bytes` of row area. The new `Options.split_bytes` defaults to 8 MiB, and 0 means none. The first split
+       of a part is its `rows_offset`.
+     - Cost:
+       - one comparison per row in the walk; the gate is a walk slowdown within the benchmark "watch" band (10 %,
+         `benchmarks.md` rule 3), target under 2 %;
+       - 16 bytes per split: 1 GB / 8 MiB = 128 splits = 2 KiB.
+     - Why it is sound: a row depends on nothing before it except the part's descriptors and path flag (R1, R4, R7). A
+       LONG chain or a LOB area belongs to its row (R2, R4).
+     - E1 / E2 (empty table) are decided at the part's start only, and a split after it always starts at a row.
+     - The row ordinal of the split keeps every error's and warning's `row` exact.
+     - Correctness gate: for every fixture with `split_bytes = 1` (every row a split), the concatenation of
+       `read_split` over all splits equals `read_table`, batch for batch after concatenation. The `walk` fuzz target
+       checks that every recorded split lies inside its part's row area.
+     - Within-table parallelism (task T-26) and across-table / across-part parallelism (from T-24) use these splits.
+     - **Row order**: file order is kept only when one thread reads the table. Whether DuckDB's C API lets a table
+       function keep insertion order under parallel reads is **unknown here**. T-26 finds out from DuckDB's
+       documentation. Until a record decides otherwise, `read_oradmp` sets `max_threads` to 1 per table unless the
+       caller sets `parallel := true`. `exp` rows have no order anyway (R6), but tests and users expect file order.
+  3. **(c) Table selection and listing** (task T-24):
+     - `read_oradmp(file VARCHAR, table := VARCHAR, table_ordinal := INTEGER, <options>)`:
+       - Give exactly one of `table` / `table_ordinal`; neither is needed if the file has exactly one table with data.
+       - The name is matched exactly as decoded (`TableInfo.name`, the client set; ADR-24).
+       - An ambiguous name is a bind error `E-AMBIGUOUS-TABLE-NAME` that suggests `table_ordinal`. A missing name is
+         `E-NO-SUCH-TABLE`. The codes are the core's `ErrorCode::as_str`.
+       - The options take the Python `open` / `read_table` names, types and defaults: `strict`, `on_value_error`,
+         `db_charset`, `client_charset`, `number_default`, `on_number_overflow`, `timestamp_unit`, `interval_as`,
+         `trim_char`, `max_lob_bytes`, `unconfirmed_lob`. `number_types` comes later (it needs a MAP argument).
+     - `oradmp_tables(file VARCHAR)` returns one row per table with data: `ordinal`, `name`, `name_possibly_damaged`,
+       `columns`, `parts`, `partitioned`, `path`, `rows` (counted by the walk), `ddl_fallback`, and `warnings` (a list
+       of codes).
+     - `oradmp_columns(file VARCHAR)` returns per column: `table_ordinal`, `table_name`, `position`, `name`,
+       `oracle_type`, `declared_text`, `duckdb_type`.
+     - Cardinality is exact: the walk counts rows per part, so `duckdb_bind_set_cardinality` is exact.
+     - Projection pushdown is on.
+     - The file is a local path only. A path with a URL scheme is a bind error `E-CONFIG`. Neither DuckDB's file system
+       nor globs are supported in the first version.
+  4. **Bind cost and the catalog cache** (extension crate):
+     - Bind runs the walk once per file identity (path, size, modification time, file id: the core's
+       `check_unchanged`).
+     - It keeps the `SharedDump` in a process-wide cache of at most 16 entries (least recently used out).
+     - A changed file gets a new walk. A read that finds the file changed fails with `E-FILE-CHANGED` (no silent
+       re-read).
+     - Rejected: a sidecar index file next to the dump (it writes beside the owner's dumps and can go stale); a partial
+       walk "up to the first table with this name" (it cannot see a later table with the same name, so the ambiguity
+       check would be lost).
+  5. **Errors and warnings in DuckDB**:
+     - An error becomes the DuckDB error text `[<code>] <message>` with offset, table, part, column and row, as the CLI
+       prints it. The text holds no value.
+     - **No warning is dropped silently.** A catalog warning shows in `oradmp_tables().warnings`. A read-time warning
+       fails the query with its code and offset, unless one of two things holds:
+       - its code is in `allow_warnings := ['W-...', ...]`;
+       - the warning is one the caller asked for with an option. The extension crate keeps that list per warning code,
+         and every entry names its option; for example, `W-VALUE-NULLED` follows from `on_value_error := 'null'`.
+     - With `strict := true` every warning is an error, as in the core.
+     - Rejected: printing warnings to stderr, which nobody sees inside an ETL job; dropping them, which goes against
+       the clean-room rule "it does not guess" and the project's warning policy (ADR-11).
+  6. **Types**:
+     - Every Arrow type the core emits is mapped to a DuckDB type without loss, or the bind fails. The error names the
+       column and the option that avoids the loss (for example `number_types`, `interval_as := 'string'`).
+     - No rounding or truncation is added by the extension. A value that the DuckDB type cannot hold (for example
+       sub-microsecond digits in a type with microseconds) is a value error under `on_value_error`.
+     - T-24 writes the table (Arrow type -> DuckDB type -> lossless or not) into `duckdb-extension.md`, checked on the
+       fixtures of each type (arch 5.1).
+  7. **(d) Target and versions**:
+     - The extension uses the `duckdb` crate with `loadable-extension` and `vtab`, on DuckDB's C extension API. It is
+       built for **DuckDB 2.0.x LTS** only, on **Linux x86_64** only, with a glibc floor of 2.28 (as the 2_28 wheel).
+     - One binary per exact DuckDB version, until the spike T-22 shows that one binary loads into two DuckDB patch
+       versions. A new record may then move to one binary per C API floor.
+     - DuckDB 2.1 or later and other platforms each need a decision record.
+     - Arrow: the extension uses the core's arrow major (59 today). If the `duckdb` crate pins another arrow major, T-22
+       reports it, and the move follows ADR-3's bump rule in the core: one arrow version for both bindings. Two arrow
+       versions in one binary are rejected.
+  8. **(e) Crate, CI, release**:
+     - **Crate**: `crates/oradmp-duckdb/` as its **own Cargo workspace** (its own `[workspace]` table and `Cargo.lock`),
+       with a path dependency on `oradmp-core`. The root workspace, `pyproject.toml`, the wheel and the sdist do not
+       change. T-24 shows that the sdist member list is unchanged.
+     - **Lints**: the root lints, except `unsafe_code = "deny"`, with `#[allow(unsafe_code)]` in exactly one module,
+       the entry point. Every callback runs inside a panic guard, and a panic becomes a DuckDB error (unwinding across
+       `extern "C"` is not allowed). `cargo deny check` runs with the root `deny.toml` rules: the licences must be
+       compatible with `MIT OR Apache-2.0`.
+     - **CI**: a new job `duckdb` on every push, Linux only, about 10 minutes. It runs:
+       - fmt, clippy `-D warnings` and `cargo deny` of the extension workspace;
+       - a release build for the pinned DuckDB version;
+       - the SQL tests with the Python `duckdb==<pinned>` package, loading the extension unsigned.
+
+       The tests live in `tests/duckdb/`. The default pytest collection does not collect them, so the existing counts
+       do not change. In this job they run with 0 skipped.
+
+       The `checks` job adds `cargo tree -p oradmp-core` contains no `duckdb` and no `pyo3`.
+     - **Release**: the extension is not in the wheel. Its route needs **Q-16** (owner).
+       - Recommendation: a release asset `oradmp-<version>-duckdb-v2.0.x-linux_amd64.duckdb_extension` on the
+         GitHub release page, built by `tools/release_build.sh <commit> --duckdb <duckdb version>` at the canonical
+         root. It must be byte-identical in `--twice` and equal to the `duckdb` job's build on C. The owner uploads
+         it. That keeps `CLAUDE.md` rule 8 unchanged.
+       - Users load it with `allow_unsigned_extensions` and check its SHA-256.
+       - DuckDB's community repository (signed, `INSTALL ... FROM community`) is the later alternative. It means
+         DuckDB's CI builds the binary, which rule 8 does not allow today.
+  9. **(f) Task order** (plan, "DuckDB line"):
+     - **T-22** spike (scratch only, any time).
+     - After the a5 tag:
+       - **T-23** core API;
+       - **T-24** extension MVP with CI;
+       - **Reviewer 9** on T-23 and T-24;
+       - **T-25** memory and throughput on the 1 GB dump (O-25);
+       - **T-26** within-table parallelism;
+       - **T-27** the release route (after Q-16).
+
+     The **memory limit** for the 1 GB test dump: on the VM, alone, `SET threads = 1`, peak RSS of the DuckDB process
+     reading `T_HUGE` at most **baseline + 64 MiB**. The baseline is the same process with the extension loaded,
+     running the same aggregate over `range(12000000)`. The figure must also be within 1.10 of the same measurement on
+     `T_BIG` (independent of file size). With `parallel := true` and n threads: at most baseline + n x 64 MiB.
+  10. **The no-extension route stays documented**: DuckDB's Python client over the reader's pyarrow
+     `RecordBatchReader` already works for Python users. T-24 adds a README example after one test (Q-13's "cheap
+     alternative").
+- Consequences:
+  - Q-13 is closed.
+  - New: Q-16, O-25, risks 34 and 35.
+  - New tasks T-22 to T-27 in the plan.
+  - New design file `duckdb-extension.md`.
+  - The core's Q-13 conditions stay and gain one: no cache and no global state in the core.
+- Rejected:
+  - **Building the extension in the Python wheel**: the owner wants it separate. It would also tie DuckDB's version
+    cadence to the wheel's.
+  - **A C++ extension**: a second language, and a second toolchain on the VM and in CI.
+  - **A member of the root workspace**: `Cargo.lock` and possibly the sdist would change with every DuckDB bump, and
+    the wheel's reproducibility gates would follow.
+  - **A separate index pass** for split points: a second full read of a 1 GB file, when the walk already visits every
+    row.
+  - **Parallel by default from the first version**: the row order under parallel reads is not established (item 2).
+
+## Amendments (session 33)
+- Plan T-16b (e): the root of the `extended` sdist check is `/var/tmp/oradmp-sdist` (ADR-126 item 2).
+- ADR-117 item 2: met on `9a9bc84` instead of `94b6368`, without `--twice --release`; accepted (ADR-126 item 3). Item 3
+  (a) is unchanged: the a5 builds use `--twice --release`.
+- ADR-118 item 9 and ADR-122 item 2: "two separate dispatches" reads "two separate runs" (a dispatch or a re-run
+  attempt on a fresh runner, ADR-126 item 6).
+- ADR-120: items 1 to 7 are replaced by ADR-127 item 5.
+- ADR-121 item 2: met for x86_64 by the `9a9bc84` record; open for arm64 until a green arm64 run is recorded.
+- ADR-119 item 3: gains the record points (f) to (i) of ADR-129 item 4.
+- Q-13 (session 18): closed by ADR-130.

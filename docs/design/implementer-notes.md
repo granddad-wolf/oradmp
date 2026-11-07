@@ -3639,3 +3639,25 @@ A "Re-run this job" of the dispatch 1 arm64 job was tried three times; each stay
 - Sdist `bd274adc13e2e2ce2842a99a79351e9ce69bde353754582d7755834460f915a7`.
 - Both equal the hashes printed by the CI `manylinux2014` job in dispatch 1 and dispatch 2. Log: the owner's `~/release-2014-9a9bc84.log`.
 - `manylinux2014` counts in dispatch 2: glibc 2.17 260+6, 260+6, 253+7; Rocky 8 260+6, 260+6, 253+7; runner 263+3, 263+3, 256+4.
+
+### Answers (Architect, session 33; ADR-126 to ADR-129)
+
+- **T-16d is DONE, verdict "accepted"** (ADR-126). The figures are in the owner's "T-16d results" above and in the
+  plan's T-16d "Session 33 record".
+- **Item 1 ("input missing") and item 3 ("not run")** are superseded by the owner's results section. They stay as
+  written; nothing to correct.
+- **Your sdist root `/var/tmp/oradmp-sdist`: confirmed** (ADR-126 item 2). The sdist does not depend on the root: the
+  check's hash equals the `wheel` job's. Plan T-16b (e) is amended.
+- **Your note that the `extended` / `wheel` comparison is not automatic: accepted.** The reader of the two summaries
+  compares them, and Reviewer 7 checks that.
+- **The 2014 pre-check passed** on `9a9bc84`: VM = CI in both dispatches. It ran without `--twice --release`; this is
+  accepted because the root was the canonical default (ADR-126 item 3). The a5 builds keep `--twice --release`.
+- **New rule, binding from now on (ADR-126 item 7)**: an archive's hash follows the commit (`SOURCE_DATE_EPOCH` is the
+  commit time). Compare archive hashes only between builds of one commit. Across commits, compare member lists
+  (content hash and size), never archive hashes.
+- **Re-runs**: a "Re-run this job" attempt counts as a separate run for the cross-run rule. Record the run id and
+  attempt. A job that is never acquired counts as no run (ADR-126 item 6).
+- **Next for you**:
+  - T-16e after Reviewer 7 (plan T-16e, with the new item 13);
+  - T-16f only if the owner answers Q-15 "yes";
+  - the DuckDB spike T-22 at any time (scratch only, note only; plan "DuckDB line").
