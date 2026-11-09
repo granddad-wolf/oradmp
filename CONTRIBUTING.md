@@ -106,9 +106,11 @@ pandas; Python 3.11 with pyarrow only), `pytest` from the checkout against the i
 each, `PROPTEST_CASES=10000` for `t14_damage` and `2000` for `t17_synth`, nightly clippy of `fuzz/`, a benchmark
 report that is never compared with `benchmarks.md`) and `manylinux2014` (a `--zig` wheel, `auditwheel show` and the
 abi3 tag; the wheel is not shipped). CI never publishes, never uses a secret, never touches `corpus/work/` and never
-runs the memory and throughput tests (they stay `#[ignore]`). The one upload is the `fuzz-artifacts` artifact of the
-`extended` job when it fails: the files of `fuzz/artifacts/` (crash inputs made from the fixtures and the synthetic
-generator), kept 14 days. The `wheel` job calls the release script with `--release`.
+runs the memory and throughput tests (they stay `#[ignore]`). CI makes two kinds of artifact and nothing else. The
+`fuzz-artifacts` artifact of the `extended` job when it fails: the files of `fuzz/artifacts/` (crash inputs made from the
+fixtures and the synthetic generator), kept 14 days. And the wheel of the first build of each macOS leg of the `platforms`
+job (dispatch only), when the leg is green, kept 7 days: CI never publishes it; the project owner downloads it through the
+run's web page and compares its SHA-256 with the job summaries. The `wheel` job calls the release script with `--release`.
 
 To read a run, open its page, then the page of each job and its **Summary**: it lists the commit, the runner image,
 the toolchain, Python and pyarrow versions, the nextest and pytest counts with every skipped name and reason, the

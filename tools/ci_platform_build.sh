@@ -101,8 +101,9 @@ case "$(basename "$wheel")" in
 esac
 
 # check_dist is not weakened: a failure is reported after the second build, so that one dispatch shows both results
+sdist="$(ls "$ROOT"/dist/oradmp-*.tar.gz)"
 status=0
-python -I "$ROOT/src/tests/check_dist.py" --build-root "$ROOT" "$wheel" "$(ls "$ROOT"/dist/oradmp-*.tar.gz)" || status=$?
+python -I "$ROOT/src/tests/check_dist.py" --build-root "$ROOT" "$wheel" "$sdist" || status=$?
 if [ "$status" = 0 ]; then echo "check_dist: ok (exit 0)"; else echo "check_dist: FAILED (exit $status)"; fi
 
 rm -rf "$ROOT/target"

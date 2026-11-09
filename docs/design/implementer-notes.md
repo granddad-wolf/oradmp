@@ -3678,3 +3678,97 @@ A "Re-run this job" of the dispatch 1 arm64 job was tried three times; each stay
 - **Until the a5 tag** only documents, T-16f and the a5 version commit go to `master` (ADR-132). **T-16e waits for the
   tag.** Its item 7 shrinks to the backslash normalisation, and item 9 also fails on a missing file.
 - **T-22** (the DuckDB spike) may run at any time: scratch only, the note as a docs commit.
+
+## T-16f note (Implementer): Reviewer 7 fixes, the macOS artifact step (plan T-16f "Session 34"; ADR-131, ADR-133)
+
+Status: code written, not committed, **no run yet**. Results: pending. No verdict is proposed here.
+
+### What changed
+
+- **SF-1** (`ci.yml`, `platforms` "Environment" step): `job_start="$(date +%s)"` as its own line, then `echo "JOB_START=$job_start"`.
+  Case with `date` made to fail, run under `bash --noprofile --norc -eo pipefail`: before, the step went on and wrote
+  `JOB_START=` (empty); after, exit 1 and nothing written. `grep -nE 'echo "[A-Z_]+=\$\('` over `ci.yml` finds nothing.
+- **N-5** (`tools/ci_platform_build.sh`): `sdist="$(ls "$ROOT"/dist/oradmp-*.tar.gz)"`, then `check_dist.py ... "$wheel" "$sdist"`.
+  Case with `ls` failing: before, the command ran with an empty argument (status 0 in the stand-in); after, the script stops at the assignment (`set -e`).
+- **SF-2** (`tools/ci_platform_venvs.sh`): the gate is now the function `skip_gate`. Every category matches path **and** reason
+  (probes `tests/test_internal.py`; byte file names `tests/test_paths.py`; release tooling `tests/test_release_build.py`;
+  "POSIX permissions" `tests/test_cli.py`, Windows only; `EXTRA_SKIP_FILE` by path). Off Linux exactly 8 byte-file-name skips and 9
+  release-tooling skips; exactly 3 probes everywhere; exactly one skip line from `EXTRA_SKIP_FILE`. The constants
+  `PROBE_SKIPS`, `PATHS_SKIPS`, `RELEASE_SKIPS`, `EXTRA_SKIPS` each name their module in a comment. Header lines rewritten.
+  `bash tools/ci_platform_venvs.sh --self-test` runs 13 cases (the 11 of the plan, a Linux-form case that must pass, and a Windows-kernel
+  case with "POSIX permissions" that must pass). It stubs `uname` (a shell function); `uv` is not stubbed because the gate does not call it
+  (the self-test calls `skip_gate`, the same function the real run calls, not the whole script).
+  Fail-before case: the gate with the byte-file-name count and path match removed (a mutated copy) gives exit 0 for "0 of 8",
+  "7 of 8" and "from `tests/test_truth.py`", and the self-test reports those three as FAIL; the real script passes all 13.
+  The self-test is a step in `checks` (after checkout) and in each `platforms` leg (after "Environment", so that `TMPDIR` is set).
+- **N-4** (`ci.yml` header and `platforms` comment): rewritten; the header lists `platforms` and the two kinds of upload. The job
+  name and summary heading lost "not shipped" (a macOS wheel of the tagged commit can ship).
+- **Upload** (`platforms`, two new steps before "Job summary"), both `if: ${{ success() && runner.os == 'macOS' }}`:
+  1. "macOS, the wheel for the artifact": exactly one `oradmp-*.whl` in `$PLAT_ROOT/dist` (the first build; `dist2` is the second), else exit 1;
+     its SHA-256 (python `hashlib`) must equal the line in `dist/SHA256SUMS` (else the `grep -q` fails the step); the platform tag must match
+     `macosx_<major>_<minor>_<arch>` (else exit 1); writes `UPLOAD_WHEEL`, `UPLOAD_NAME`, `UPLOAD_FILE`, `UPLOAD_SHA256`, `UPLOAD_TAG`,
+     `UPLOAD_MIN_MACOS` to `GITHUB_ENV`. Name: `oradmp-wheel-macos-<RUNNER_ARCH>-<run_id>-<run_attempt>` (`runner.arch` is `X64` or `ARM64`).
+     Stand-in cases run: one wheel passes; two wheels, none, a manylinux tag, a hash not in `SHA256SUMS`: each exit 1.
+  2. `actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9` (v7.0.2) with `name: ${{ env.UPLOAD_NAME }}`,
+     `path: ${{ env.UPLOAD_WHEEL }}` (the one file), `retention-days: 7`, `if-no-files-found: error`. Default `success()`, so no upload from a
+     red leg; a missing file or an upload error fails the step and the leg. `permissions` stay `contents: read` (the action needs no more
+     token scope; it uses the runner's own artifact service token; I did not find a requirement otherwise, but I could not read the README
+     offline, only `git ls-remote`; the Architect's text says to stop if it differs, so the first run will show it). Windows runs neither step.
+  - **Summary** (macOS legs): artifact name, wheel file, wheel SHA-256 (of the file as it goes into the ZIP, not of the ZIP), platform tag and
+    minimum macOS version from the tag, `GITHUB_RUN_ID`, `GITHUB_RUN_ATTEMPT`. If the pick step did not succeed, the summary says "NOT PREPARED".
+    The summary step still has `if: always()`; its step list in the YAML shows the upload before it, so on a green leg the summary is the last step.
+- **CONTRIBUTING.md**: the "one upload" paragraph names both artifacts (plan item 3; the session prompt did not list it, the plan does).
+- **The a5 gate of ADR-133 item 8 (`SHA256SUMS` 3 + n lines, selection check per macOS file)**: this lives in ADR-117 item 3 / ADR-133 item 8
+  (Architect documents), not in a script. `tools/release_build.sh` writes the Linux `SHA256SUMS` and was not touched. No file of mine
+  changes for it; nothing to weaken.
+
+### Pin check
+
+`git ls-remote https://github.com/actions/upload-artifact 'refs/tags/v7*'` shows `cf430e030ddbb5b0abf93d22962f4752f3646cd9` for `v7` and `v7.0.2`
+(same SHA as `extended`). The action's README was not read (no web access to it here); inputs `name`, `path`, `retention-days`, `if-no-files-found`
+are those the existing `extended` step already uses.
+
+### Not checked
+
+- Anything that needs a macOS runner: the real `runner.arch` value, the real wheel names, `sed` on BSD (the expression is plain BRE with
+  `\(`, `\)`), bash 3.2 (the pick step uses `shopt -s nullglob` and an array, both in 3.2), the artifact's inner file layout.
+- That a single-file `path` puts only that file at the ZIP root (the dry-run download shows it).
+- The Windows leg (unchanged except the self-test step and the two renamed texts; it stays red with its known failures).
+- No YAML linter beyond `yaml.safe_load` and `bash -n` of every `run` block; no `actionlint`, no shellcheck.
+
+### Files changed
+
+`.github/workflows/ci.yml`, `tools/ci_platform_venvs.sh`, `tools/ci_platform_build.sh`, `CONTRIBUTING.md`, `docs/design/implementer-notes.md`.
+Local checks: `bash -n tools/*.sh`, `ruff check`, `ruff format --check`, `mypy`, `cargo fmt --check` clean; pytest 266 passed, 0 skipped
+(no pytest test was added: the self-test is a script mode, ADR-133 item 3). Cargo clippy, nextest and deny were not run (no Rust change).
+
+### The owner's procedure (numbered)
+
+Precondition: `CLAUDE.md` rule 8 carries ADR-134's text. Budget per macOS leg: two dispatches plus at most two re-run attempts; a job never acquired is no run.
+Arm64 only if GitHub's arm64 runner (`macos-15`) is acquired.
+
+1. Review and commit the files above (first commit content: item 0 and the upload; one fix commit at most; then a docs-only results commit). `git push origin master`.
+   The `checks` run on the push must be green, including its "Skip gate self-test" step.
+2. Dispatch the workflow (Actions, CI, Run workflow, branch `master`) on that commit. Note the run id. Wait for the `platforms` legs.
+3. For each macOS leg of that run, open the job summary and note: run id, attempt, artifact name, wheel SHA-256, platform tag and minimum macOS, nextest
+   line, `check_dist`, the three venv lines with counts and skips, the in-job two-build comparison, the runner image line.
+4. Second run on the **same commit**: dispatch again (a separate run), or "Re-run failed jobs"/"Re-run all jobs" (attempt 2). Note the same items.
+   If a leg was not acquired, it is no run; try again within the budget.
+5. Pass per leg: both runs green; wheel SHA-256 and member lists identical; in-job builds identical; nextest 488 + 4; `check_dist: ok`;
+   pytest py311-pa15-pd223 246 + 20, py311-pyarrow-only 239 + 21, pynewest-latest 246 + 20, allowed skips only; tags `macosx_10_12_x86_64` / `macosx_11_0_arm64`.
+6. Dry-run download, in a browser while signed in (no token): the run's page, "Artifacts", click `oradmp-wheel-macos-<arch>-<run_id>-<attempt>`.
+   Then:
+   ```
+   mkdir -p /var/tmp/oradmp-t16f-dryrun/<arch> && cd /var/tmp/oradmp-t16f-dryrun/<arch>
+   unzip ~/Downloads/oradmp-wheel-macos-*.zip
+   ls -l
+   sha256sum oradmp-*.whl
+   ```
+   The `sha256sum` of the wheel **inside** the ZIP must equal the "wheel SHA-256" line of both run summaries (never hash the ZIP).
+   Then `rm -rf /var/tmp/oradmp-t16f-dryrun`: this commit is not C, the wheel is not a release file.
+7. Paste back: per leg the two run ids with attempts, the two summaries (or the items in step 3), the `ls -l` and `sha256sum` output of step 6, and the
+   failing step log of any red leg. Say which leg was not acquired.
+
+### T-16f results
+
+Pending. Run ids, attempts, hashes, per-venv figures, the dry-run line and the arm64 per-venv record: to be filled by the owner's pastes.

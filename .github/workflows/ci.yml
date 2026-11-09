@@ -1,4 +1,5 @@
-# CI of oradmp (T-16a; ADR-79, ADR-83, ADR-87). Linux only. Nothing here names the repository, the account or a host.
+# CI of oradmp (T-16a; ADR-79, ADR-83, ADR-87). Linux jobs, except `platforms`, which runs on macOS and Windows.
+# Nothing here names the repository, the account or a host.
 #
 #   checks         every push to master and workflow_dispatch: checksums, fmt, clippy, nextest, deny, probes build,
 #                  ruff, mypy, pytest
@@ -8,12 +9,20 @@
 #                  the sdist check (build, source install in a 3.11 venv, --version, survey; T-16d)
 #   manylinux2014  workflow_dispatch only: the 2014 wheel built by tools/release_build.sh --manylinux 2014, then installed
 #                  and tested on glibc 2.17 (PyPA image), glibc 2.28 (Rocky 8) and the runner (T-16c, ADR-115; not shipped)
+#   platforms      workflow_dispatch only: macOS arm64, macOS x86_64 and Windows x86_64 (T-16b, ADR-118): wheel and sdist built
+#                  natively, installed in three fresh venvs and tested. Only the two macOS legs upload their wheel (below)
 #
 # Every `run` step runs `bash --noprofile --norc -eo pipefail {0}` (defaults.run.shell below; T-20b, ADR-108): a failing
 # command in front of `| tee` fails its step. A new step needs nothing; never set `shell:` on a step.
 #
-# Never in this file: a publish step, an upload except the fuzz crash artifact of `extended` (ADR-92 item 1), a secret,
-# a file of corpus/work/, the memory or throughput tests (they stay #[ignore]), a benchmark gate. Every job ends with a step that writes a job summary (ADR-87 item 4).
+# Uploads (ADR-87 item 6 and ADR-92 item 1 as amended by ADR-133 item 2): exactly two kinds of workflow artifact, never a
+# release and never a publish. (1) The fuzz crash files of `extended`, on failure, kept 14 days. (2) The wheel of the first
+# build of each macOS leg of `platforms`, on success, kept 7 days: the owner downloads it through the run's web page and
+# compares the SHA-256 of the wheel inside the ZIP with the job summaries of two runs (CLAUDE.md rule 8, ADR-133 item 4).
+# No other file is uploaded: no sdist, no log, no Windows file, no Linux wheel.
+#
+# Never in this file: a publish step, an upload other than those two, a secret, a file of corpus/work/, the memory or
+# throughput tests (they stay #[ignore]), a benchmark gate. Every job ends with a step that writes a job summary (ADR-87 item 4).
 name: CI
 
 on:
@@ -58,6 +67,9 @@ jobs:
           echo "TMPDIR=$RUNNER_TEMP/tmp" >> "$GITHUB_ENV"
           job_start="$(date +%s)"
           echo "JOB_START=$job_start" >> "$GITHUB_ENV"
+
+      - name: Skip gate self-test (tools/ci_platform_venvs.sh --self-test; a wrong exit status of any case fails the step)
+        run: bash tools/ci_platform_venvs.sh --self-test
 
       - name: Fixture checksums (the three SHA256SUMS)
         run: |
@@ -703,14 +715,18 @@ jobs:
             echo "- duration: $(( $(date +%s) - JOB_START )) s (to this step)"
           } >> "$GITHUB_STEP_SUMMARY"
 
-  # workflow_dispatch only (T-16b, ADR-118). The wheel and the sdist are built natively on each platform, installed in
-  # fresh venvs and tested, and dropped: never shipped, never uploaded, not even as an artifact (hashes and the member list
-  # go to the summary). Whether a wheel of a platform ever ships is Q-15. The runner labels are named image versions
+  # workflow_dispatch only (T-16b, ADR-118; the upload T-16f, ADR-133). The wheel and the sdist are built natively on each
+  # platform, installed in fresh venvs and tested. Windows: nothing leaves the job (hashes and the member list go to the
+  # summary). macOS: the wheel of the first build is uploaded as a workflow artifact, kept 7 days, as the last step
+  # before the summary and only when every step before it succeeded (`success()`); the sdist, the second build and the
+  # logs are not. The artifact is never published by CI. The owner downloads it through the run's web page and compares the
+  # SHA-256 of the wheel inside the ZIP with the summaries of two runs (CLAUDE.md rule 8, ADR-133 item 4). A wheel of any
+  # commit but the tagged one is only a dry run. The runner labels are named image versions
   # (runner-images list read on 2026-10-31): macos-15 is arm64, macos-15-intel is x86_64 (listed as a standard runner for
   # public repositories), windows-2025 is x86_64. `shell: bash` is the default of the file: on Windows that is Git Bash
   # with the same `-eo pipefail` template, and the "Shell check" step proves pipefail is on, on every platform.
   platforms:
-    name: platforms (${{ matrix.name }}; not shipped)
+    name: platforms (${{ matrix.name }})
     if: github.event_name == 'workflow_dispatch'
     runs-on: ${{ matrix.os }}
     timeout-minutes: 90
@@ -765,10 +781,11 @@ jobs:
             PT="$RUNNER_TEMP"
           fi
           mkdir -p "$PT/tmp" "$PT/logs/venvs" "$PT/venvs"
+          job_start="$(date +%s)"
           {
             echo "PT=$PT"
             echo "TMPDIR=$PT/tmp"
-            echo "JOB_START=$(date +%s)"
+            echo "JOB_START=$job_start"
           } >> "$GITHUB_ENV"
           case "$RUNNER_OS" in
             macOS)
@@ -784,6 +801,9 @@ jobs:
               echo "PLAT_ROOT=$PT/oradmp-platforms" >> "$GITHUB_ENV"
               ;;
           esac
+
+      - name: Skip gate self-test (tools/ci_platform_venvs.sh --self-test; a wrong exit status of any case fails the step)
+        run: bash tools/ci_platform_venvs.sh --self-test
 
       # actions/setup-python v7.1.0; the last version listed is the default `python` (the newest CPython)
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0
@@ -869,10 +889,59 @@ jobs:
           bash tools/ci_platform_venvs.sh py311-pyarrow-only 3.11 "pyarrow" "tests/test_consumers.py" || rc=1
           exit "$rc"
 
+      # macOS only. The wheel of the FIRST build ($PLAT_ROOT/dist; dist2 is the second build) must be the only oradmp-*.whl
+      # there. Its hash is taken here, so that the summary prints the hash of the file that goes into the artifact.
+      - name: macOS, the wheel for the artifact (exactly one; SHA-256; tag; the artifact name)
+        id: pick
+        if: ${{ success() && runner.os == 'macOS' }}
+        env:
+          RUN_ARCH: ${{ runner.arch }}
+        run: |
+          shopt -s nullglob
+          wheels=("$PLAT_ROOT"/dist/oradmp-*.whl)
+          if [ "${#wheels[@]}" != 1 ]; then
+            echo "expected exactly one oradmp-*.whl in $PLAT_ROOT/dist, found ${#wheels[@]}" >&2
+            exit 1
+          fi
+          wheel="${wheels[0]}"
+          file="$(basename "$wheel")"
+          sha="$(python -I -c 'import hashlib, sys; print(hashlib.sha256(open(sys.argv[1], "rb").read()).hexdigest())' "$wheel")"
+          grep -q "^$sha  $file\$" "$PLAT_ROOT/dist/SHA256SUMS"
+          tag="${file%.whl}"
+          tag="${tag##*-}"
+          minos="$(printf '%s\n' "$tag" | sed -n 's/^macosx_\([0-9][0-9]*\)_\([0-9][0-9]*\)_.*$/\1.\2/p')"
+          if [ -z "$minos" ]; then
+            echo "the platform tag '$tag' of $file is not macosx_<major>_<minor>_<arch>" >&2
+            exit 1
+          fi
+          name="oradmp-wheel-macos-${RUN_ARCH}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          {
+            echo "UPLOAD_WHEEL=$wheel"
+            echo "UPLOAD_NAME=$name"
+            echo "UPLOAD_FILE=$file"
+            echo "UPLOAD_SHA256=$sha"
+            echo "UPLOAD_TAG=$tag"
+            echo "UPLOAD_MIN_MACOS=$minos"
+          } >> "$GITHUB_ENV"
+          echo "artifact $name: $file sha256 $sha tag $tag (minimum macOS $minos)"
+
+      # actions/upload-artifact v7.0.2, the pin of `extended` (ADR-133 item 3). The default success() condition on purpose
+      # (never always() or !cancelled(): the build, clone and venvs steps run after a failure, and a red leg must not upload).
+      # One file, the wheel; nothing on Windows. The job has no more permissions than before (contents: read).
+      - name: macOS, upload the wheel of the first build (7 days; not a release)
+        if: ${{ success() && runner.os == 'macOS' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: ${{ env.UPLOAD_NAME }}
+          path: ${{ env.UPLOAD_WHEEL }}
+          retention-days: 7
+          if-no-files-found: error
+
       - name: Job summary
         if: always()
         env:
           BUILD_OUTCOME: ${{ steps.build.outcome }}
+          PICK_OUTCOME: ${{ steps.pick.outcome }}
           CLONE_OUTCOME: ${{ steps.clone.outcome }}
           VENVS_OUTCOME: ${{ steps.venvs.outcome }}
         run: |
@@ -891,7 +960,7 @@ jobs:
             fi
           }
           {
-            echo "## platforms: $PLATFORM_NAME (not shipped)"
+            echo "## platforms: $PLATFORM_NAME"
             echo
             echo "- commit: \`$GITHUB_SHA\`; expected version: ${VERSION:-?}"
             echo "- runner: $PLATFORM_LABEL; image: ${ImageOS:-?} ${ImageVersion:-?}; $RUNNER_OS $RUNNER_ARCH; user $(id -un) (uid $(id -u)); cpus $(python -c 'import os; print(os.cpu_count())' 2>&1 | tail -1)"
@@ -912,7 +981,7 @@ jobs:
               echo "- check_dist: FAILED or not reached, see the step log"
             fi
             { grep -E '^(oradmp-.*\.whl|Tag:)' "$L/build.log" 2>/dev/null | sort -u || true; } | section "wheel and tags:" "wheel and tags"
-            { cat "$PLAT_ROOT/dist/SHA256SUMS" 2>/dev/null || true; } | section "SHA-256 of the built files (the wheel is not uploaded):" "hashes"
+            { cat "$PLAT_ROOT/dist/SHA256SUMS" 2>/dev/null || true; } | section "SHA-256 of the built files (first build):" "hashes"
             { sed -n '/^--- two builds/,$p' "$L/build.log" 2>/dev/null || true; } | section "two builds of the same commit (Q-15; recorded, not a gate):" "two-build comparison"
             { python -I tools/ci_platform_report.py members "$PLAT_ROOT/dist" 2>/dev/null || true; } | section "members of the wheel and of the sdist (sha256 size member):" "member list"
             if [ -e "$L/crlf-probe.log" ]; then
@@ -931,5 +1000,17 @@ jobs:
               grep '^SKIPPED' "$f" | sed 's/^/  - /' || true
               grep -E '^(FAILED|ERROR)' "$f" | sed 's/^/  - /' || true
             done
+            if [ "$RUNNER_OS" = macOS ]; then
+              if [ "$PICK_OUTCOME" = success ]; then
+                echo "- artifact (macOS wheel of the first build; uploaded by the step after the wheel pick, only if all steps before it are green):"
+                echo "  - artifact name: \`$UPLOAD_NAME\`"
+                echo "  - wheel file: \`$UPLOAD_FILE\`"
+                echo "  - wheel SHA-256 (the file inside the artifact; compare this, never the ZIP): \`$UPLOAD_SHA256\`"
+                echo "  - platform tag: \`$UPLOAD_TAG\`; minimum macOS version from the tag: $UPLOAD_MIN_MACOS"
+                echo "  - run id: $GITHUB_RUN_ID; run attempt: $GITHUB_RUN_ATTEMPT"
+              else
+                echo "- artifact: NOT PREPARED (wheel-pick step: $PICK_OUTCOME); nothing was uploaded"
+              fi
+            fi
             echo "- duration: $(( $(date +%s) - JOB_START )) s (to this step)"
           } >> "$GITHUB_STEP_SUMMARY"
