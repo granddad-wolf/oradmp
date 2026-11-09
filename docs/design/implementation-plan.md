@@ -1,13 +1,26 @@
 # Legacy EXP reader: implementation plan
 
 Architect session 1, 2026-10-07; session 2, 2026-10-14; sessions 3 and 4, 2026-10-15; sessions 5 and
-6, 2026-10-16; sessions 7 to 13, 2026-10-17; sessions 14 and 15, 2026-10-18; sessions 16 and 17, 2026-10-21; session 18, 2026-10-22; sessions 19 to 23, 2026-10-24; sessions 24 and 25, 2026-10-25; sessions 26 and 27, 2026-10-29; session 28, 2026-10-30; sessions 29 to 32, 2026-10-31; session 33, 2026-11-04. Tasks for the
+6, 2026-10-16; sessions 7 to 13, 2026-10-17; sessions 14 and 15, 2026-10-18; sessions 16 and 17, 2026-10-21; session 18, 2026-10-22; sessions 19 to 23, 2026-10-24; sessions 24 and 25, 2026-10-25; sessions 26 and 27, 2026-10-29; session 28, 2026-10-30; sessions 29 to 32, 2026-10-31; session 33, 2026-11-04; session 34, 2026-11-08. Tasks for the
 Implementer, in order; each is meant for one session. "Rules" are those of
 `docs/formats/exp_reader_rules.md` (v3.4; v3.5 from session 8; v3.6 from session 17; v3.7 from session 24; v3.9 from session 25); "arch n" is a section of `exp-reader-architecture.md`. Every
 task ends with `cargo fmt`, `cargo clippy -- -D warnings` and `cargo nextest run` green (`CLAUDE.md`,
 definition of done; in the public repository the same checks are listed in `CONTRIBUTING.md`, "Development setup")
 and adds no `unsafe` to the core. Commit hashes cited before session 26 name commits of the private archive
 (`HISTORY.md`, ADR-105).
+
+## Changes in session 34
+
+- **Reviewer 7: DONE, accepted** (`docs/review/review-07.md`, no blocking finding; ADR-131). 6c SF-1 closed. SF-1, SF-2,
+  N-4 and N-5 go into **T-16f item 0**; N-7 into T-16e item 9; N-3 and N-6 when those files are next touched.
+- **Q-15 = yes** and **Q-16 = yes** (owner, 2026-11-08; ADR-133, ADR-135). The rule 8 text for the owner is ADR-134.
+- **T-16f restated** ("Session 34" block): the Reviewer 7 fixes first, then the macOS upload step, two runs per leg and
+  a dry-run download. x86_64 may ship alone.
+- **SF-3** (ADR-132): until the a5 tag only documents, T-16f and the a5 version commit go to `master`. **T-16e starts
+  after the a5 tag.** **Reviewer 8 is the a5 closure review**; T-16e's review is **Reviewer 8b**.
+- **Release 0.1.0a5**: "Session 34" block, the conditions as one ordered list (ADR-136).
+- DuckDB: T-22 any time; T-23 after the a5 tag and Reviewer 8b; T-27 no longer waits for Q-16.
+- New order table (session 34); the session 33 table becomes history.
 
 ## Changes in session 33
 
@@ -2233,7 +2246,7 @@ record with full hashes. The billed-minutes figure: O-23 (b).
     another sdist and another 2_28 wheel. Cause: `SOURCE_DATE_EPOCH` is the commit time (`release_build.sh` lines 121,
     130). Rule: ADR-126 item 7.
 
-### T-16e Windows: the oradmp defects, the checker, the gate, one reproducibility attempt (session 32; ADR-123 to ADR-125) - after Reviewer 7; does not block a5
+### T-16e Windows: the oradmp defects, the checker, the gate, one reproducibility attempt (session 32; ADR-123 to ADR-125) - **after the a5 tag** (session 34, ADR-132); never in a5; reviewed in Reviewer 8b
 
 - **Goal**: Windows x86_64 meets ADR-53 item 4, or the note says exactly what still fails.
 - **Inputs**: ADR-123 to ADR-125; Python's `OSError` documentation (`winerror`); pyarrow's installation page (Windows
@@ -2274,8 +2287,19 @@ record with full hashes. The billed-minutes figure: O-23 (b).
   `tools/ci_platform_venvs.sh`, `ci.yml` (`platforms` only), the note. **Model: Sonnet.** Starts after Reviewer 7 (rule 7;
   a Reviewer 7 finding on the `platforms` job or the gate is folded in). Reviewed in **Reviewer 8**. It joins a5 only
   under ADR-123 item 6.
+- **Session 34 (ADR-131, ADR-132; wins over the text above)**:
+  - **Starts after the tag `v0.1.0a5` is pushed**, on top of T-16f. It never joins a5. Reviewed in **Reviewer 8b**
+    (`review-08b.md`), before T-23 starts (rule 7).
+  - **Item 7** shrinks to the backslash normalisation (ADR-125 item 2) and a Windows-form case in the self-test that
+    T-16f adds (`tools/ci_platform_venvs.sh --self-test`). T-16f already makes the counts exact and the matches path
+    and reason.
+  - **Item 9**: the line-ending gate also fails when a `*.sh` file it expects is missing (review-07 N-7).
+  - **When touched**: `tests/test_release_build.py` gets a root under `tmp_path` that is never created instead of the
+    fixed `OTHER` path (N-3); `tools/ci_container_2_17.sh:45` separates the venv creation from the pyarrow probe (N-6).
+  - **Expected counts**: the item 10 figures plus whatever T-16f and T-16e add; the a5 figures are review-07's table,
+    by venv name.
 
-### T-16f macOS release wheels: the artifact step and the two-run measurement (session 33; ADR-127 item 2, ADR-128) - **only if Q-15 is answered "yes"**; before a5's version commit
+### T-16f macOS release wheels: the Reviewer 7 fixes, the artifact step and the two-run measurement (session 33; ADR-127 item 2, ADR-128; **restated in session 34, ADR-133**; Q-15 = yes) - next; before a5's version commit
 
 - **Goal**: a macOS wheel can reach the owner as a release file under Q-15's rule, and each macOS leg has its two-run
   evidence before the README of a5 is written.
@@ -2306,6 +2330,90 @@ record with full hashes. The billed-minutes figure: O-23 (b).
 - **Touches**: `ci.yml` (`platforms`, macOS legs only), the note. **Model: Sonnet.**
 - **Review**: Reviewer 8 if it has not run yet, otherwise the a5 closure review (no corpus test changes, so rule 7 needs
   no separate group).
+- **Session 34 (ADR-131, ADR-133; this block wins over the text above)**.
+  - **Precondition**: the owner has replaced `CLAUDE.md` rule 8 with ADR-134's text. ADR-87 item 6 and ADR-92 item 1
+    are amended (session 34).
+  - **Inputs**: review-07 (SF-1, SF-2 with its case table, N-4, N-5, item 7); ADR-131, ADR-133; the README of
+    `actions/upload-artifact` at the pinned version (inputs `name`, `path`, `retention-days`, `if-no-files-found`, and
+    the permissions it needs); GitHub's documentation of the `github` and `runner` contexts (`run_id`, `run_attempt`,
+    `arch`).
+  - **Done when**:
+    0. **Reviewer 7 fixes, first commit content**:
+       - **SF-1**: `ci.yml` `platforms` "Environment" step: `job_start="$(date +%s)"` and then `echo
+         "JOB_START=$job_start"`. Afterwards the grep `echo "[A-Z_]+=\$\(` over `ci.yml` finds nothing outside summary
+         steps.
+       - **N-5**: `tools/ci_platform_build.sh`: `sdist="$(ls "$ROOT"/dist/oradmp-*.tar.gz)"` as its own assignment, then
+         `check_dist.py ... "$wheel" "$sdist"`.
+       - **SF-2**: `tools/ci_platform_venvs.sh`:
+         - every allowed category matches on test path **and** reason: probes `tests/test_internal.py`; "POSIX byte
+           file names" `tests/test_paths.py`; Linux-only release tooling `tests/test_release_build.py`; "POSIX
+           permissions"; `EXTRA_SKIP_FILE`;
+         - off Linux exactly **8** "POSIX byte file names" skips;
+         - exactly one skip line from `EXTRA_SKIP_FILE` where it is set;
+         - the existing exact 3 and 9;
+         - each constant with a comment naming its module;
+         - the header lines 17 to 20 say exactly this.
+       - **`--self-test`**: stubbed `uv` and `uname`, synthetic `pytest -rs` outputs. Expected exits:
+         - the recorded macOS output (3 + 8 + 9): 0;
+         - the pyarrow-only form with its pandas line: 0;
+         - one unknown skip: 1;
+         - probes missing: 1;
+         - release tooling 8: 1;
+         - "POSIX permissions" on macOS: 1;
+         - "POSIX byte file names" 0 of 8: 1;
+         - the same 7 of 8: 1;
+         - that reason from `tests/test_truth.py`: 1;
+         - the pyarrow-only venv without its pandas line: 1;
+         - a Linux-form output with a "POSIX byte file names" skip: 1.
+
+         It runs as a step in `checks` (Linux) and at the start of each `platforms` leg; a wrong exit fails the step.
+         It is not a pytest file, so no pytest count changes.
+       - **N-4**: the `ci.yml` header (line 1 "Linux only", the job list without `platforms`, line 15 "an upload except
+         the fuzz crash artifact") and the `platforms` comment (lines 706 to 708) are rewritten to say what runs where
+         and what is uploaded.
+    1. **The upload step** (ADR-133 item 3):
+       - last step before the `platforms` summary;
+       - `if: ${{ success() && runner.os == 'macOS' }}`;
+       - the pinned `actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9` (version comment as in
+         `extended`);
+       - `path`: the first build's wheel only, after a check that exactly one `oradmp-*.whl` is there;
+       - `name: oradmp-wheel-macos-${{ runner.arch }}-${{ github.run_id }}-${{ github.run_attempt }}`;
+       - `retention-days: 7`, `if-no-files-found: error`;
+       - nothing on Windows, no sdist, no log;
+       - `permissions` unchanged, unless the action's README says otherwise; then stop and ask the Architect.
+    2. **The summary** prints the artifact name, the wheel file name, its SHA-256, the platform tag, the run id and
+       the attempt.
+    3. **`CONTRIBUTING.md`**: the paragraph "The one upload is ..." names both artifacts: the fuzz crash files on
+       failure and the macOS wheel, kept 7 days, never published by CI.
+    4. **Runs**: two separate runs per macOS leg on T-16f's commit (budget: two dispatches plus at most two re-run
+       attempts per leg; a job never acquired is no run).
+       - Pass per leg:
+         - the self-test green;
+         - both runs green;
+         - wheel SHA-256 and member lists identical;
+         - in-job builds identical;
+         - nextest 488 + 4;
+         - `check_dist: ok`;
+         - py311-pa15-pd223 246 + 20, py311-pyarrow-only 239 + 21, pynewest-latest 246 + 20, with the allowed skips
+           only;
+         - the platform tag `macosx_10_12_x86_64` resp. `macosx_11_0_arm64`.
+       - The Windows leg stays red with the known failures. `checks`, `wheel`, `extended` and `manylinux2014` are green
+         with unchanged counts.
+    5. **Dry-run download** [owner]: one artifact per passing leg, by the route of ADR-133 item 4, into a scratch
+       folder. The SHA-256 of the **wheel inside the ZIP** equals both summaries. The folder is deleted afterwards (not a
+       release file).
+    6. **The note** "T-16f note": the run ids and attempts, the per-venv figures by name, every skip with its reason,
+       the hashes, the tags, the dry-run line, and the verdict per leg: "ships in a5 if C's runs agree" or "not shipped
+       in a5: <reason>". The **arm64 per-venv record** of ADR-121 item 2 comes from these runs. If arm64 is never
+       acquired, the note says so.
+    7. **Checks** as T-16b (g): fmt, clippy, nextest, `cargo deny`, ruff, mypy, pytest 266 with 0 skipped, YAML parse
+       and `bash -n` of every `run` block, `bash -n` of the changed scripts. The machine-state rule (ADR-119 item 2).
+  - **Touches**: `ci.yml` (`platforms`, the header, one self-test step in `checks`), `tools/ci_platform_venvs.sh`,
+    `tools/ci_platform_build.sh`, `CONTRIBUTING.md`, the note. Not `crates/`, `python/`, `tests/`, `README.md` (the
+    README changes in the version commit), the `wheel`, `extended` or `manylinux2014` jobs. **Model: Sonnet.**
+  - **Commits** (ADR-132): the code commit with the note's first part, at most one fix commit within the budget, and a
+    docs-only results commit. Nothing else goes to `master` before C.
+  - **Review**: Reviewer 8 (the a5 closure review) reads T-16f with C.
 
 ### T-16c `manylinux2014` acceptance (session 23; ADR-53 items 4, 5; ADR-91; made exact in session 30, ADR-115) - DONE, **accepted** (2026-10-31, `a8da2cc` + `94b6368`, results `0bfa70d`; nextest 488 + 4, pytest 266; dispatch 1 of 3 green; ADR-116; to be reviewed in Reviewer 7)
 
@@ -2434,7 +2542,7 @@ record with full hashes. The billed-minutes figure: O-23 (b).
       `RECORD` sizes; the package versions of the container venvs.
     - The VM-against-CI identity of the 2014 wheel is ADR-117 item 2, done in T-16b (i).
 
-### Reviewer 7 on T-21, T-16c, T-16b, T-16d (session 31; ADR-119; amended in session 32) - after T-16d's commit is pushed, before the a5 version commit
+### Reviewer 7 on T-21, T-16c, T-16b, T-16d (session 31; ADR-119; amended in session 32) - DONE (2026-11-08, `review-07.md`, candidate `4ed52e5`; no blocking finding; accepted, ADR-131)
 
 - **Scope**: T-21 (`20bbc80`); T-16c (`a8da2cc`, `94b6368`, `0bfa70d`); T-16b (its commits). It reads the code, the
   tests, `ci.yml`, the `tools/ci_*.sh` scripts and the notes, together with the public run summaries the owner pastes.
@@ -2483,6 +2591,42 @@ record with full hashes. The billed-minutes figure: O-23 (b).
     - **(i)** the macOS x86_64 figures of `9a9bc84` against 246 + 20 / 246 + 20 / 239 + 21, and the arm64 record gap
       (ADR-126 item 5).
   - `review-07.md` fixes the expected figures for the a5 dispatch from the T-16d record (ADR-129 item 4).
+- **Session 34 record (ADR-131): DONE, accepted.** `docs/review/review-07.md` on candidate `4ed52e5` (code `9a9bc84`):
+  - no blocking finding, 3 should-fix, 11 notes;
+  - 6c SF-1 closed;
+  - SF-1, SF-2, N-4 and N-5 go to T-16f item 0; N-7 to T-16e; N-3 and N-6 when those files are next touched; N-2's
+    open parts become a5 record items;
+  - the a5 expected figures are its table, by venv name.
+
+  Its line numbers for `tools/ci_platform_venvs.sh` do not match the 122-line file; the lines are 17 to 20, 87, 88,
+  103 and 107.
+
+### Reviewer 8: the a5 closure review, T-16f and the version commit C (session 34; ADR-132, ADR-136) - after the runs on C
+
+- **Reads**:
+  - T-16f's commits:
+    - the self-test, with mutations of the gate (review-07's SF-2 cases, each alone in a copy);
+    - the upload step's condition, path, name, retention and pin;
+    - the `ci.yml` header and the `CONTRIBUTING.md` paragraph;
+    - SF-1 and N-5 fixed.
+  - The diff of C against T-16f's results commit:
+    - version and locks;
+    - the README "Wheels:" and "Other platforms" against ADR-115 item 5, ADR-122 item 3 and ADR-133 item 7;
+    - the classifiers.
+  - The figures of C's runs against review-07's table, by venv name. Figures that rest on pasted summaries are marked S.
+  - When macOS ships: the two runs per shipping leg, their run ids and attempts, the identical wheel hashes, and the
+    platform tags.
+- **Builds**: C in its own scratch folder under `/var/tmp`, never at the canonical root. Its sdist equals CI's. Its
+  wheel differs only in the SBOM and `RECORD` (review-07 item 10).
+- **Checks**: the machine-state rule (ADR-119 item 2) on every new or changed test. Step 3b only if
+  `crates/oradmp-core/src/` changed since a4.
+- **Output**: `docs/review/review-08.md`. **Model: Opus.** The owner starts it with C's full hash.
+
+### Reviewer 8b on T-16e (session 34; ADR-132) - after the a5 tag and T-16e's results commit
+
+- **Scope**: as ADR-129 item 5 gave Reviewer 8 for T-16e, that is plan T-16e items 1 to 13 and its session 34 block,
+  plus N-3, N-6 and N-7 where T-16e touched those files.
+- **Output**: `docs/review/review-08b.md`. **Model: Opus.** T-23 starts after it (rule 7).
 
 ## T-19 The conventional LONG forms of R-040; the ten session 17 fixtures in the tests (session 24; ADR-94, ADR-95, ADR-97) - DONE (2026-10-25, `921971f`; nextest 463 passed + 4 skipped, pytest 250, CI green on `bbf921b`; deviations ruled by ADR-102; item (m) not run, now **T-19 (m)** after T-19b; to be reviewed in Reviewer 6c)
 
@@ -4070,6 +4214,18 @@ nothing is uploaded or tagged; paste the output to the Architect.
 
 ## DuckDB line (session 33; ADR-130; design `duckdb-extension.md`) - T-22 any time; T-23 to T-27 after the a5 tag; none blocks a5
 
+**Session 34 (ADR-135, ADR-136)**:
+- **T-22** may run at any time. It builds in scratch only. Its one repository change is its note under
+  `docs/design/`, which ADR-132 allows before the a5 tag.
+- **T-23** starts after the a5 tag **and** after Reviewer 8b (rule 7).
+- **Q-16 = yes** (2026-11-08): the extension is an unsigned GitHub release asset; the owner's hosts allow unsigned
+  extensions.
+- **T-24 item 4**: `tests/duckdb/` is excluded from the root pytest collection by configuration, and the note shows the
+  root count unchanged.
+- **T-27**: no longer waits for Q-16. It also switches the `duckdb` job to `bash tools/release_build.sh "$GITHUB_SHA"
+  --release --duckdb <version>` at the canonical root on the runner, so that "equal to the job's build" is a gate.
+  The release page may carry this one file (ADR-110 item 4 as amended).
+
 ### T-22 Spike: the Rust extension toolchain against DuckDB 2.0.x (scratch only; no commit except the note)
 
 - **Goal**: the facts that `duckdb-extension.md` section 10 leaves open, before any code enters the repository.
@@ -4243,6 +4399,12 @@ After the cut the budget lapses for standard runners; the dispatch rule for `ext
 - **a5**: one dispatch on C, or two separate runs if macOS ships.
 - **The DuckDB line**: the `duckdb` job runs on push, Linux only, about 10 minutes (T-24 measures it).
 
+**Session 34** (ADR-133, ADR-136):
+- **T-16f**: two runs per macOS leg plus at most two re-run attempts. Unchanged.
+- **a5**: one dispatch on C; when macOS ships, a second separate run of each shipping leg on C (a dispatch or a
+  "Re-run this job" attempt).
+- **T-16e** (after the tag): at most three dispatches, unchanged.
+
 ## Release 0.1.0a5 (session 31; ADR-117, ADR-118, ADR-120) - conditions only; the checklist is written when they hold
 
 - **Due**: T-16c was accepted (ADR-113 item 4, amended).
@@ -4297,8 +4459,81 @@ After the cut the budget lapses for standard runners; the dispatch rule for `ext
      builds of C. Across commits, member lists are compared.
 
   Not conditions: T-16e, Reviewer 8 (unless T-16e joins), the DuckDB line.
+- **Session 34 (ADR-136; it replaces the session 33 list)**. Who does each step is in brackets.
+  1. T-16b closed, T-16d done. **Met.**
+  2. 2014 pre-check passed. **Met.** **Open** [**OWNER**]:
+     - move `SHA256SUMS` and the log of `/var/tmp/oradmp-release.9a9bc84` to `~/evidence/t16d-2014/` and delete that
+       folder;
+     - `/var/tmp/oradmp-release` absent at the a5 build.
+  3. Reviewer 7 with no blocking finding. **Met** (ADR-131).
+  4. Q-15 answered. **Met: yes.**
+     - (a) `CLAUDE.md` rule 8 replaced by ADR-134's text. **Open** [**OWNER**].
+     - (b) ADR-87 item 6, ADR-92 item 1 and ADR-117 item 3 amended. **Met**.
+     - (c) T-16f done, with a verdict per leg. **Open** [Implementer; **OWNER**: commit, push, runs, dry-run download,
+       paste].
+     - (d) Architect session 35 records T-16f and fixes which legs ship and the README facts. **Open**.
+  5. Until the tag, only documents, T-16f and C go to `master` (ADR-132) [**OWNER**].
+  6. **T-16e is not needed for a5. T-16f is needed only for a macOS wheel.** If no leg passes, or the owner declares
+     a5 Linux-only, steps 4 (c) and (d) fall away and a5 has two Linux wheels and the sdist.
+  7. **Version commit C** [Implementer, Sonnet]:
+     - version, locks;
+     - README "Wheels:" and "Other platforms" (ADR-122 item 3, ADR-133 item 7);
+     - classifiers (`Operating System :: MacOS` only if a macOS wheel ships).
 
-## Order of the next tasks (session 33)
+     Then [**OWNER**]:
+     - the push run green;
+     - one dispatch on C, green except the Windows leg of `platforms`, which is red with exactly the known failures;
+     - if macOS ships, a second separate run of each shipping leg, and each shipping artifact downloaded right after
+       its first green run (ADR-133 item 4).
+
+     Every count is stated against review-07's table, by venv name.
+  8. **Reviewer 8**, the closure review of C, with no blocking finding [**OWNER** starts; Opus].
+  9. **Architect session 36: the checklist** (ADR-136 item 9). Gates:
+     - C's hashes;
+     - `SHA256SUMS` with 3 + n lines;
+     - the selection check per file, including `--platform macosx_15_0_<arch>`;
+     - the cross-job sdist line.
+
+     Record items:
+     - the container venvs' version lines (glibc 2.17, Rocky 8, runner);
+     - the SBOM and `RECORD` sizes of C's `wheel` and `manylinux2014` member lists, next to the VM builds';
+     - the macOS evidence of ADR-133 item 6.
+  10. **The release** and the tag on C [**OWNER**].
+
+  Not conditions: T-16e, Reviewer 8b, Windows, the DuckDB line.
+
+## Order of the next tasks (session 34)
+
+Machine rule unchanged (session 16 below). CI runs on the public GitHub repository; it is not a build on the VM.
+**OWNER** marks an owner action. Records: ADR-131 to ADR-136. **Until the a5 tag only documents, T-16f and C go to
+`master`** (ADR-132).
+
+| order | task | can start | runs in parallel with | touches | model | waits for a human? |
+|---|---|---|---|---|---|---|
+| done | **Reviewer 7** (`review-07.md`, accepted, ADR-131); **Q-15 = yes**, **Q-16 = yes** (2026-11-08); this session | - | - | - | - | - |
+| 1 | **OWNER**: push this session's documents; replace `CLAUDE.md` rule 8 with ADR-134's text; move the 2014 pre-check evidence to `~/evidence/t16d-2014/` and delete `/var/tmp/oradmp-release.9a9bc84` | now | rows 9, 10 | `docs/design/`, `CLAUDE.md` | - | yes |
+| 2 | **T-16f** (plan, "Session 34" block): Reviewer 7 fixes, the macOS upload step, two runs per leg, the dry-run download | after row 1 (rule 8 applied) | rows 9, 10 (no VM build at the same time) | `ci.yml`, `tools/ci_platform_*`, `CONTRIBUTING.md`, the note | Sonnet | **OWNER**: commit, push, runs, download, paste |
+| 3 | **Architect 35**: T-16f's verdict per leg; which macOS wheels a5 names; the README facts | after row 2's results commit | rows 9, 10 | `docs/design/` | - | no |
+| 4 | **a5 version commit C**, its push run, one dispatch, the second macOS run(s), the downloads | after row 3 | rows 9, 10 | as ADR-136 item 7 | Sonnet | **OWNER**: commit, push, runs, downloads, paste |
+| 5 | **Reviewer 8**: closure review of C (T-16f and C) | after row 4's runs | rows 9, 10 | `docs/review/` | Opus | **OWNER** starts it |
+| 6 | **Architect 36**: the a5 checklist | after row 5 | - | `docs/design/` | - | no |
+| 7 | **OWNER: release 0.1.0a5** by the checklist; tag on C; the record paste | after row 6 | - (the VM build alone) | the release folders | - | yes |
+| 8 | **T-16e** (Windows), then **Reviewer 8b** | after the a5 tag | row 10 | as its block | Sonnet / Opus | **OWNER**: commits, pushes, dispatches; starts the review |
+| 9 | **T-22** DuckDB spike (scratch only; its note is a docs commit) | now | everything except a VM build | the note only | Sonnet | no (the owner starts it) |
+| 10 | **O-25** (owner): export `T_HUGE` + `T_TAIL` | any time | everything (not while a benchmark runs) | `corpus/sql/` (owner), `ORADMP_WORK` | - | yes |
+| 11 | **T-23**, **T-24**, **Reviewer 9**; then **T-25**, **T-26**, **T-27**, **Reviewer 10** (session 33 rows 9 to 11) | after Reviewer 8b (row 8) and, for T-24, row 9 | as the session 33 table | as the session 33 table | Sonnet / Opus | **OWNER** |
+| 12 | Unchanged owner items: **Q-4**, **R-052** on Q-4's condition, **R-046** (low), the **RHEL 8 host test**, **Data Pump** planning, **Analyst 21** if not done | any time | everything | as before | - | yes |
+
+What the owner does, in order:
+1. Push these documents. Replace rule 8 in `CLAUDE.md` with the quoted text of ADR-134. Move the pre-check evidence and
+   delete `/var/tmp/oradmp-release.9a9bc84`. Check that `/var/tmp/oradmp-release` is absent.
+2. Start the Implementer on T-16f. Push its commit. Run two dispatches (or a dispatch and a "Re-run this job" per macOS
+   leg). Download one artifact per passing leg for the dry run. Paste the summaries.
+3. Ask for Architect session 35.
+4. Push nothing else to `master` before the a5 tag except documents.
+5. Whenever convenient: start T-22; export O-25.
+
+## Order of the next tasks (session 33, history)
 
 Machine rule unchanged (session 16 below). CI runs on the public GitHub repository; it is not a build on the VM.
 **OWNER** marks an owner action. Records: ADR-126 to ADR-130.

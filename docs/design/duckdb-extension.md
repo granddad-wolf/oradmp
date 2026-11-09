@@ -1,6 +1,7 @@
 # DuckDB extension `read_oradmp`: design
 
-Architect session 33, 2026-11-04. Authority: ADR-130 (decided); Q-16, the release channel, needs the project owner.
+Architect session 33, 2026-11-04; session 34, 2026-11-08. Authority: ADR-130 (decided); Q-16, the release channel, was
+answered "yes" on 2026-11-08 (ADR-135).
 Tasks: T-22 to T-27 in `implementation-plan.md`, "DuckDB line". Rule numbers are those of
 `docs/formats/exp_reader_rules.md` v3.9.
 
@@ -149,6 +150,11 @@ or truncates. T-24 fills this table from the fixtures of each type (arch 5.1); u
    (`tests/duckdb/`, outside the default pytest collection, 0 skipped in this job).
 7. Release: Q-16. The recommendation is a GitHub release asset built by `tools/release_build.sh <commit> --duckdb
    <version>` at the canonical root and loaded unsigned. This leaves `CLAUDE.md` rule 8 unchanged.
+   **Session 34 (ADR-135)**: Q-16 = yes.
+   - The extension is released as this asset; the owner's hosts allow unsigned extensions.
+   - The release page carries this one file (ADR-110 item 4 as amended).
+   - From T-27 on, the `duckdb` job builds through `release_build.sh --release --duckdb` at the canonical root.
+   - `tests/duckdb/` is excluded from the root pytest collection by configuration.
 
 ## 10. Open, with the task that settles each
 
@@ -160,4 +166,4 @@ or truncates. T-24 fills this table from the fixtures of each type (arch 5.1); u
 | how `vtab-arrow` (or our own code) converts each type of section 6 | T-24 |
 | the walk slowdown from recording split points (target under 2 %, gate: the 10 % watch band) | T-23 |
 | ordered parallel reads through the C API | T-26 |
-| release channel and signing | Q-16, then T-27 |
+| release channel and signing | Q-16 answered (unsigned GitHub release asset, ADR-135); T-27 |

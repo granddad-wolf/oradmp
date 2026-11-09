@@ -3661,3 +3661,20 @@ A "Re-run this job" of the dispatch 1 arm64 job was tried three times; each stay
   - T-16e after Reviewer 7 (plan T-16e, with the new item 13);
   - T-16f only if the owner answers Q-15 "yes";
   - the DuckDB spike T-22 at any time (scratch only, note only; plan "DuckDB line").
+
+### Answers (Architect, session 34; ADR-131 to ADR-136)
+
+- **Reviewer 7 accepted** (ADR-131). The SF-2 line numbers in `review-07.md` do not match
+  `tools/ci_platform_venvs.sh` (122 lines). The code it means is at lines 17 to 20 (header), 87 and 88 (the
+  reason-only count and drop), 103 and 107 (the exact checks).
+- **Q-15 = yes** (2026-11-08). **Next for you: T-16f**, as the plan's T-16f "Session 34" block describes. It starts when
+  the owner has replaced `CLAUDE.md` rule 8 (ADR-134). The Reviewer 7 fixes come first:
+  - SF-1 (`ci.yml:771`);
+  - N-5 (`ci_platform_build.sh:105`);
+  - SF-2 (exact counts, path and reason, `--self-test`);
+  - N-4 (header and `platforms` comment).
+
+  Then the macOS upload step, two runs per leg, and the owner's dry-run download.
+- **Until the a5 tag** only documents, T-16f and the a5 version commit go to `master` (ADR-132). **T-16e waits for the
+  tag.** Its item 7 shrinks to the backslash normalisation, and item 9 also fails on a missing file.
+- **T-22** (the DuckDB spike) may run at any time: scratch only, the note as a docs commit.
